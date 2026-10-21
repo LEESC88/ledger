@@ -527,7 +527,9 @@ body {
 
 .table-container {
   flex: 1;
+  overflow-x: auto;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   max-height: 530px;
   border: 1px solid var(--border-card);
   border-radius: var(--radius-sm);
@@ -746,5 +748,47 @@ body {
   }
   .overview-stack {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-layout {
+    padding: 12px 12px 32px;
+  }
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+  .header-controls {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .control-unit {
+    flex: 1;
+  }
+  .header-select {
+    width: 100%;
+  }
+  .column-panel {
+    padding: 16px;
+  }
+  .type-toggle {
+    margin-bottom: 12px;
+  }
+  .toggle-btn {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+  .form-actions {
+    margin-top: 14px;
+  }
+  .ledger-table {
+    min-width: 520px;
+  }
+  .table-container {
+    max-height: 420px;
   }
 }
