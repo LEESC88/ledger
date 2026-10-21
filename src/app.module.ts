@@ -1,21 +1,39 @@
+import { join } from 'node:path';
 import { Module } from '@nestjs/common';
-import { createObserveModule } from '@nestjs/observe';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
+import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { Record } from './records/entities/record.entity.js';
+import { RecordsModule } from './records/records.module.js';
 
-export const { ObserveModule, ObserveInstrument } = createObserveModule();
-
+/**
+ * Root Application Module
+ * Integrates global configuration, database connectivity, static hosting, and business modules.
+ */
 @Module({
   imports: [
-    // Distributed tracing, auto-correlated logs, request/job metrics, error
-    // telemetry, alarms, and more — out of the box. Sign up at https://observe.nestjs.com
-    ObserveModule.forRoot({
-      appKey: 'YOUR_APP_KEY',
-      appSecret: 'YOUR_APP_SECRET',
-      serviceId: 'ledger',
+    // 1. Global environment variable support (.env)
+    ConfigModule.forRoot({
+      isGlobal: true,
     }),
+
+    // 2. High-performance SQLite database connection via TypeORM
+    TypeOrmModule.forRoot({
+      type: 'better-sqlite3',
+      database: process.env.DB_DATABASE || 'data/ledger.db',
+      entities: [Record],
+      synchronize: false, // Strict production rule: schema managed by database/schema.sql
+    }),
+
+    // 3. Static asset hosting for frontend web interface (serves public/ at http://localhost:3000)
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'public'),
+    }),
+
+    // 4. Ledger business feature module
+    RecordsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

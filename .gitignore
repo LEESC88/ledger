@@ -45,6 +45,13 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
+# SQLite local databases (never push personal ledger records to Git)
+data/*.db
+data/*.sqlite
+*.db
+*.sqlite
+!data/.gitkeep
+
 # temp directory
 .temp
 .tmp

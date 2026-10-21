@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LEDGER &mdash; Financial Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-glyph">
+          <span class="glyph-core"></span>
+        </div>
+        <span class="brand-title">LEDGER</span>
+      </div>
+
+      <div class="header-controls">
+        <!-- Currency Selector -->
+        <div class="control-unit">
+          <label for="currencySelector" class="control-label">Currency</label>
+          <select id="currencySelector" class="header-select">
+            <option value="RM" selected>RM (MYR)</option>
+            <option value="¥">¥ (CNY/JPY)</option>
+            <option value="$">$ (USD/SGD)</option>
+            <option value="€">€ (EUR)</option>
+            <option value="£">£ (GBP)</option>
+          </select>
+        </div>
+
+        <!-- Month Filter -->
+        <div class="control-unit">
+          <label for="monthFilter" class="control-label">Period</label>
+          <select id="monthFilter" class="header-select">
+            <option value="all">All Records</option>
+            <!-- Injected dynamically -->
+          </select>
+        </div>
+
+        <!-- Refresh Button -->
+        <button id="refreshBtn" class="btn-icon-header" title="Refresh Data">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 3-Column Structured Workstation -->
+    <main class="workstation-grid">
+      
+      <!-- ===================================================================
+           COLUMN 1 (LEFT): Financial Overview (Stacked Metrics)
+           =================================================================== -->
+      <aside class="column-panel column-overview">
+        <div class="panel-heading">
+          <h2 class="section-title">Overview</h2>
+          <span id="balanceTrendBadge" class="status-pill status-neutral">Balanced</span>
+        </div>
+
+        <div class="overview-stack">
+          <!-- Net Balance Card -->
+          <div class="metric-box box-balance">
+            <span class="box-label">Net Liquidity</span>
+            <div class="box-value-row">
+              <span class="val-currency currency-sym">RM</span>
+              <span id="netBalanceValue" class="val-number">0.00</span>
+            </div>
+            <span class="box-subtext">Total Cashflow Balance</span>
+          </div>
+
+          <!-- Total Inflow (Income) -->
+          <div class="metric-box box-income">
+            <div class="box-label-row">
+              <span class="box-label">Total Inflow</span>
+              <span class="type-pill pill-income">+ Income</span>
+            </div>
+            <div class="box-value-row text-income">
+              <span class="val-currency currency-sym">+ RM</span>
+              <span id="totalIncomeValue" class="val-number">0.00</span>
+            </div>
+            <span class="box-subtext">Deposits & Revenues</span>
+          </div>
+
+          <!-- Total Outflow (Expense) -->
+          <div class="metric-box box-expense">
+            <div class="box-label-row">
+              <span class="box-label">Total Outflow</span>
+              <span class="type-pill pill-expense">&minus; Expense</span>
+            </div>
+            <div class="box-value-row text-expense">
+              <span class="val-currency currency-sym">&minus; RM</span>
+              <span id="totalExpenseValue" class="val-number">0.00</span>
+            </div>
+            <span class="box-subtext">Realized Disbursements</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ===================================================================
+           COLUMN 2 (CENTER): Fast Entry Terminal (Post Transaction Form)
+           =================================================================== -->
+      <section class="column-panel column-entry">
+        <div class="panel-heading">
+          <div>
+            <h2 class="section-title">Record Entry</h2>
+            <p class="section-desc">Create financial movement</p>
+          </div>
+        </div>
+
+        <form id="recordForm" class="entry-form" novalidate>
+          <!-- Type Segmented Switch -->
+          <div class="segmented-control">
+            <button type="button" class="segment-btn active" data-type="expense" id="btnTypeExpense">Expense</button>
+            <button type="button" class="segment-btn" data-type="income" id="btnTypeIncome">Income</button>
+          </div>
+
+          <!-- Amount Input -->
+          <div class="form-item">
+            <label for="inputAmount" class="field-label">Amount</label>
+            <div class="amount-field-wrapper">
+              <span class="amount-currency-label currency-sym">RM</span>
+              <input 
+                type="number" 
+                id="inputAmount" 
+                step="0.01" 
+                min="0.01" 
+                placeholder="0.00" 
+                class="amount-input" 
+                required
+              >
+            </div>
+          </div>
+
+          <!-- Category Selection -->
+          <div class="form-item">
+            <label for="selectCategory" class="field-label">Category</label>
+            <select id="selectCategory" class="field-select" required>
+              <!-- Injected by app.js -->
+            </select>
+          </div>
+
+          <!-- Date Input -->
+          <div class="form-item">
+            <label for="inputDate" class="field-label">Date</label>
+            <input 
+              type="date" 
+              id="inputDate" 
+              class="field-input" 
+              required
+            >
+          </div>
+
+          <!-- Note / Description -->
+          <div class="form-item">
+            <label for="inputNote" class="field-label">Note <span class="muted-tag">(Optional)</span></label>
+            <input 
+              type="text" 
+              id="inputNote" 
+              maxlength="255" 
+              placeholder="e.g. Lunch with team" 
+              class="field-input"
+            >
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="submitBtn" class="btn-submit">
+            <span>Commit Transaction</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </form>
+      </section>
+
+      <!-- ===================================================================
+           COLUMN 3 (RIGHT): Audit Ledger Stream
+           =================================================================== -->
+      <section class="column-panel column-ledger">
+        <div class="panel-heading ledger-heading">
+          <div>
+            <h2 class="section-title">Audit Ledger</h2>
+            <p class="section-desc">Transactions journal</p>
+          </div>
+
+          <div class="ledger-filter-tabs">
+            <button class="tab-btn active" data-filter="all">All</button>
+            <button class="tab-btn" data-filter="expense">Expense</button>
+            <button class="tab-btn" data-filter="income">Income</button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="ledger-table" id="recordsTable">
+            <thead>
+              <tr>
+                <th class="th-date">Date</th>
+                <th class="th-category">Category</th>
+                <th class="th-note">Note</th>
+                <th class="th-amount text-right">Amount</th>
+                <th class="th-action text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="recordsTbody">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+
+          <!-- Empty State -->
+          <div id="emptyState" class="empty-state hidden">
+            <div class="empty-circle">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+              </svg>
+            </div>
+            <p class="empty-text">No records found for this period</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Floating Feedback Toast -->
+    <div id="toastNotification" class="toast hidden">
+      <span class="toast-indicator"></span>
+      <span id="toastMessage" class="toast-msg">Operation completed</span>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
