@@ -62,6 +62,14 @@ const elements = {
   chartCategoryCount: document.getElementById('chartCategoryCount'),
   toast: document.getElementById('toastNotification'),
   toastMessage: document.getElementById('toastMessage'),
+  maintenanceBtn: document.getElementById('maintenanceBtn'),
+  retentionModal: document.getElementById('retentionModal'),
+  closeModalBtn: document.getElementById('closeModalBtn'),
+  retentionYearsSelect: document.getElementById('retentionYearsSelect'),
+  retentionMatchCount: document.getElementById('retentionMatchCount'),
+  retentionCutoffDate: document.getElementById('retentionCutoffDate'),
+  downloadArchiveBtn: document.getElementById('downloadArchiveBtn'),
+  purgeOldRecordsBtn: document.getElementById('purgeOldRecordsBtn'),
 };
 
 /**
@@ -134,9 +142,10 @@ function setEntryType(type) {
  */
 async function loadSummary() {
   try {
-    const url = state.currentMonth === 'all'
-      ? '/api/records/summary'
-      : `/api/records/summary?month=${state.currentMonth}`;
+    const url =
+      state.currentMonth === 'all'
+        ? '/api/records/summary'
+        : `/api/records/summary?month=${state.currentMonth}`;
 
     const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to fetch summary');
@@ -319,7 +328,9 @@ elements.recordForm.addEventListener('submit', async (e) => {
       throw new Error(msg);
     }
 
-    showToast(`Recorded ${state.currency} ${formatNumber(amount)} ${state.currentType}`);
+    showToast(
+      `Recorded ${state.currency} ${formatNumber(amount)} ${state.currentType}`,
+    );
     elements.inputAmount.value = '';
     elements.inputNote.value = '';
 
@@ -402,13 +413,16 @@ function renderCategoryChart(breakdown) {
       categoryChartInstance.destroy();
       categoryChartInstance = null;
     }
-    if (elements.chartEmptyOverlay) elements.chartEmptyOverlay.classList.remove('hidden');
-    if (elements.chartCategoryCount) elements.chartCategoryCount.textContent = '0 Categories';
+    if (elements.chartEmptyOverlay)
+      elements.chartEmptyOverlay.classList.remove('hidden');
+    if (elements.chartCategoryCount)
+      elements.chartCategoryCount.textContent = '0 Categories';
     return;
   }
 
   // Active chart rendering
-  if (elements.chartEmptyOverlay) elements.chartEmptyOverlay.classList.add('hidden');
+  if (elements.chartEmptyOverlay)
+    elements.chartEmptyOverlay.classList.add('hidden');
   if (elements.chartCategoryCount) {
     elements.chartCategoryCount.textContent = `${categories.length} Categories`;
   }
@@ -462,7 +476,8 @@ function renderCategoryChart(breakdown) {
           callbacks: {
             label: function (context) {
               const val = Number(context.raw) || 0;
-              const pct = totalExpense > 0 ? ((val / totalExpense) * 100).toFixed(1) : 0;
+              const pct =
+                totalExpense > 0 ? ((val / totalExpense) * 100).toFixed(1) : 0;
               return ` ${state.currency} ${formatNumber(val)} (${pct}%)`;
             },
           },
@@ -480,12 +495,16 @@ function exportToCSV() {
 
   // Filter according to active period selection
   if (state.currentMonth !== 'all') {
-    recordsToExport = recordsToExport.filter((r) => r.date.startsWith(state.currentMonth));
+    recordsToExport = recordsToExport.filter((r) =>
+      r.date.startsWith(state.currentMonth),
+    );
   }
 
   // Filter according to active type tab
   if (state.currentFilter !== 'all') {
-    recordsToExport = recordsToExport.filter((r) => r.type === state.currentFilter);
+    recordsToExport = recordsToExport.filter(
+      (r) => r.type === state.currentFilter,
+    );
   }
 
   if (recordsToExport.length === 0) {
@@ -494,7 +513,15 @@ function exportToCSV() {
   }
 
   // CSV Standard Header Row
-  const headers = ['ID', 'Date', 'Type', 'Category', 'Amount', 'Currency', 'Note'];
+  const headers = [
+    'ID',
+    'Date',
+    'Type',
+    'Category',
+    'Amount',
+    'Currency',
+    'Note',
+  ];
 
   // Format data rows with quotation escaping
   const rows = recordsToExport.map((r) => [
@@ -508,7 +535,9 @@ function exportToCSV() {
   ]);
 
   // Prepend UTF-8 BOM (\uFEFF) to guarantee Excel opens Chinese and Unicode cleanly without garbled characters
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
+  const csvContent =
+    '\uFEFF' +
+    [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
 
   // Generate downloadable Blob and trigger programmatic click
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -519,7 +548,7 @@ function exportToCSV() {
   downloadLink.href = url;
   downloadLink.setAttribute(
     'download',
-    `ledger_export_${periodLabel}_${new Date().toISOString().slice(0, 10)}.csv`
+    `ledger_export_${periodLabel}_${new Date().toISOString().slice(0, 10)}.csv`,
   );
   document.body.appendChild(downloadLink);
   downloadLink.click();
@@ -529,6 +558,115 @@ function exportToCSV() {
   showToast(`Exported ${recordsToExport.length} transactions to CSV`);
 }
 
+// ============================================================================
+// Data Retention & Archiving Modal Controller
+// ============================================================================
+
+/**
+ * Calculates cutoff date string in YYYY-MM-DD format based on retention threshold.
+ */
+function getRetentionCutoffDate(years) {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - years);
+  return date.toISOString().split('T')[0];
+}
+
+function evaluateRetentionEligible() {
+  const years = parseInt(elements.retentionYearsSelect.value) || 3;
+  const cutoffDate = getRetentionCutoffDate(years);
+  elements.retentionCutoffDate.textContent = cutoffDate;
+
+  const matchingRecords = state.records.filter((r) => r.date < cutoffDate);
+  elements.retentionMatchCount.textContent = matchingRecords.length;
+
+  elements.downloadArchiveBtn.disabled = matchingRecords.length === 0;
+  elements.purgeOldRecordsBtn.disabled = matchingRecords.length === 0;
+}
+
+function openRetentionModal() {
+  evaluateRetentionEligible();
+  elements.retentionModal.classList.remove('hidden');
+}
+
+function closeRetentionModal() {
+  elements.retentionModal.classList.add('hidden');
+}
+
+function downLoadArchiveCSV() {
+  const years = parseInt(elements.retentionYearsSelect.value) || 3;
+  const cutoffDate = getRetentionCutoffDate(years);
+  const matchingRecords = state.records.filter((r) => r.date < cutoffDate);
+
+  if (matchingRecords.length === 0) {
+    showToast('No records available for archiving', true);
+    return;
+  }
+
+  const headers = [
+    'ID',
+    'Date',
+    'Type',
+    'Category',
+    'Amount',
+    'Currency',
+    'Note',
+  ];
+  const rows = matchingRecords.map((r) => [
+    r.id,
+    `"${r.date}"`,
+    `"${r.type}"`,
+    `"${(r.category || '').replace(/"/g, '""')}"`,
+    Number(r.amount).toFixed(2),
+    `"${state.currency}"`,
+    `"${(r.note || '').replace(/"/g, '""')}"`,
+  ]);
+
+  const csvContent =
+    '\uFEFF' +
+    [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const downloadLink = document.createElement('a');
+  downloadLink.href = url;
+  downloadLink.setAttribute(
+    'download',
+    `ledger_archive_older_than_${years}y_${cutoffDate}.csv`,
+  );
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+  URL.revokeObjectURL(url);
+
+  showToast(
+    `Downloaded ${matchingRecords.length} archived transactions to CSV`,
+  );
+}
+
+function purgeOldRecords() {
+  const years = parseInt(elements.retentionYearsSelect.value) || 3;
+  if (
+    !confirm(
+      `Are you sure you want to permanetly delete all records older than ${years} years? This action cannot be undone.`,
+    )
+  ) {
+    return;
+  }
+
+  fetch(`/api/records/purge?years=${years}`, {
+    method: 'DELETE',
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error('Failed to purge old records');
+      showToast(`Purged records older than ${years} years`);
+      closeRetentionModal();
+      loadSummary();
+      loadRecords();
+    })
+    .catch((err) => {
+      console.error('Error purging old records:', err);
+      showToast(err.message, true);
+    });
+}
 /**
  * Application Bootstrapper
  */
@@ -552,8 +690,12 @@ function init() {
   setEntryType('expense');
 
   // 4. Toggle buttons
-  elements.btnTypeExpense.addEventListener('click', () => setEntryType('expense'));
-  elements.btnTypeIncome.addEventListener('click', () => setEntryType('income'));
+  elements.btnTypeExpense.addEventListener('click', () =>
+    setEntryType('expense'),
+  );
+  elements.btnTypeIncome.addEventListener('click', () =>
+    setEntryType('income'),
+  );
 
   // 5. Filter tabs
   elements.filterTabs.forEach((tab) => {
@@ -581,6 +723,19 @@ function init() {
 
   // 8. Export CSV button
   elements.exportCsvBtn?.addEventListener('click', exportToCSV);
+
+  // 9. Retention modal event listeners
+  elements.maintenanceBtn?.addEventListener('click', openRetentionModal);
+  elements.closeModalBtn?.addEventListener('click', closeRetentionModal);
+  elements.retentionYearsSelect?.addEventListener(
+    'change',
+    evaluateRetentionEligible,
+  );
+  elements.downloadArchiveBtn?.addEventListener('click', downLoadArchiveCSV);
+  elements.purgeOldRecordsBtn?.addEventListener('click', purgeOldRecords);
+  elements.retentionModal?.addEventListener('click', (e) => {
+    if (e.target === elements.retentionModal) closeRetentionModal();
+  });
 
   // 9. Initial data fetch
   loadSummary();

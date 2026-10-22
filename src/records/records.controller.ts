@@ -7,6 +7,7 @@ import {
   Param,
   Query,
   ParseIntPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { RecordsService } from './records.service.js';
@@ -56,6 +57,43 @@ export class RecordsController {
   })
   async getSummary(@Query('month') month?: string) {
     return await this.recordsService.getSummary(month);
+  }
+
+  /**
+   * HTTP GET /api/records/archive
+   * Retrieves historical records older than the specified retention threshold.
+   */
+  @Get('archive')
+  @ApiOperation({ summary: 'Find records older than retention threshold' })
+  @ApiQuery({
+    name: 'years',
+    required: false,
+    example: 3,
+    description: 'Retention threshold in years (default 3)',
+  })
+  async getArchive(
+    @Query('years', new DefaultValuePipe(3), ParseIntPipe) years: number,
+  ) {
+    return await this.recordsService.findOlderThan(years);
+  }
+
+  /**
+   * HTTP DELETE /api/records/purge
+   * Permanently purges historical records older than the specified retention threshold.
+   * NOTE: Defined before @Delete(':id') to prevent routing collision.
+   */
+  @Delete('purge')
+  @ApiOperation({ summary: 'Permanently purge historical records' })
+  @ApiQuery({
+    name: 'years',
+    required: false,
+    example: 3,
+    description: 'Retention threshold in years (default 3)',
+  })
+  async purge(
+    @Query('years', new DefaultValuePipe(3), ParseIntPipe) years: number,
+  ) {
+    return await this.recordsService.purgeOlderThan(years);
   }
 
   /**

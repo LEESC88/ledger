@@ -78,4 +78,44 @@ export class RecordsService {
       categoryBreakdown,
     };
   }
+
+  /**
+   * Retrieves historical transaction records older than the specified retention threshold.
+   *
+   * @param years - Retention period threshold in years
+   */
+  async findOlderThan(years: number): Promise<Record[]> {
+    const cutoffDate = new Date();
+    cutoffDate.setFullYear(cutoffDate.getFullYear() - years);
+    const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
+
+    return await this.recordRepository
+      .createQueryBuilder('record')
+      .where('record.date < :cutoffDate', {
+        cutoffDate: cutoffDateStr,
+      })
+      .orderBy('record.date', 'ASC')
+      .getMany();
+  }
+
+  /**
+   * Permanently deletes transaction records older than the specified retention threshold.
+   *
+   * @param years - Retention period threshold in years
+   */
+  async purgeOlderThan(
+    years: number,
+  ): Promise<{ purgedCount: number; cutoffDate: string }> {
+    const cutoffDate = new Date();
+    cutoffDate.setFullYear(cutoffDate.getFullYear() - years);
+    const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
+
+    const result = await this.recordRepository
+      .createQueryBuilder()
+      .delete()
+      .from(Record)
+      .where('date < :cutoffDate', { cutoffDate: cutoffDateStr })
+      .execute();
+    return { purgedCount: result.affected ?? 0, cutoffDate: cutoffDateStr };
+  }
 }

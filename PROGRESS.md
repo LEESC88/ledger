@@ -249,6 +249,19 @@
 
 ---
 
+### Step 8: Data Retention & Archiving Policy (Sprint 4 Step 2 - Completed)
+* [✔] **Modal UI Architecture (`public/index.html` & `public/style.css`)**:
+  * Designed bespoke Cyan-White modal dialog (`#retentionModal`) with backdrop blur and header maintenance icon.
+  * Configured retention threshold selector (1, 2, 3, 5 years) with live eligible record count feedback.
+  * Dual-action controls: "1. Download Archive CSV" and "2. Purge Old Records" with confirmation safeguards.
+* [✔] **Backend Retention Service & Endpoints (`src/records/`)**:
+  * User-implemented `purgeOlderThan(years)` and `findOlderThan(years)` in [`src/records/records.service.ts`](src/records/records.service.ts).
+  * User-implemented REST routing `DELETE /api/records/purge` and `GET /api/records/archive` with Swagger documentation in [`src/records/records.controller.ts`](src/records/records.controller.ts).
+* [✔] **Client-Side Maintenance Controller (`public/app.js`)**:
+  * User-implemented interactive modal controller, live eligible count evaluation, and backend purge execution.
+
+---
+
 ## 🎯 Next Immediate Steps (下一步操作)
-1. **[Code Verification]**: Verify interactive category donut chart and CSV export live in the browser.
+1. **[Live Interactive Verification]**: Open `http://localhost:3000`, test the header maintenance button, check historical archive preview, and verify CSV export & purge safeguards.
 2. **[Sprint 5: Mobile App & Packaging]**: Integrate Capacitor / PWA manifest to transform the application into an installable mobile experience.
