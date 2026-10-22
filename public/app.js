@@ -57,6 +57,9 @@ const elements = {
   totalIncomeValue: document.getElementById('totalIncomeValue'),
   totalExpenseValue: document.getElementById('totalExpenseValue'),
   balanceTrendBadge: document.getElementById('balanceTrendBadge'),
+  exportCsvBtn: document.getElementById('exportCsvBtn'),
+  chartEmptyOverlay: document.getElementById('chartEmptyOverlay'),
+  chartCategoryCount: document.getElementById('chartCategoryCount'),
   toast: document.getElementById('toastNotification'),
   toastMessage: document.getElementById('toastMessage'),
 };
@@ -157,6 +160,9 @@ async function loadSummary() {
       elements.balanceTrendBadge.className = 'status-pill status-neutral';
       elements.balanceTrendBadge.textContent = 'Balanced';
     }
+
+    // Render Category Breakdown Donut Chart
+    renderCategoryChart(data.categoryBreakdown);
   } catch (err) {
     console.error('Error loading summary:', err);
   }
@@ -364,6 +370,166 @@ function escapeHtml(str) {
 }
 
 /**
+ * Chart.js Instance & Color Harmony Palette (Cyan-White Theme)
+ */
+let categoryChartInstance = null;
+
+const CHART_PALETTE = [
+  '#0D9488', // Teal Cyan (Brand Main)
+  '#059669', // Emerald Green
+  '#F59E0B', // Amber Gold
+  '#E11D48', // Rose Pink
+  '#6366F1', // Indigo Blue
+  '#0284C7', // Sky Blue
+  '#8B5CF6', // Purple Accent
+  '#64748B', // Neutral Slate
+];
+
+/**
+ * Render Category Breakdown Donut Chart
+ */
+function renderCategoryChart(breakdown) {
+  const chartCanvas = document.getElementById('categoryChart');
+  if (!chartCanvas) return;
+
+  const categories = Object.keys(breakdown || {});
+  const amounts = Object.values(breakdown || {}).map(Number);
+  const totalExpense = amounts.reduce((sum, val) => sum + val, 0);
+
+  // If no expenses exist, display empty state placeholder
+  if (categories.length === 0 || totalExpense <= 0) {
+    if (categoryChartInstance) {
+      categoryChartInstance.destroy();
+      categoryChartInstance = null;
+    }
+    if (elements.chartEmptyOverlay) elements.chartEmptyOverlay.classList.remove('hidden');
+    if (elements.chartCategoryCount) elements.chartCategoryCount.textContent = '0 Categories';
+    return;
+  }
+
+  // Active chart rendering
+  if (elements.chartEmptyOverlay) elements.chartEmptyOverlay.classList.add('hidden');
+  if (elements.chartCategoryCount) {
+    elements.chartCategoryCount.textContent = `${categories.length} Categories`;
+  }
+
+  // Destroy previous chart instance to prevent memory leaks and ghost canvas renders
+  if (categoryChartInstance) {
+    categoryChartInstance.destroy();
+  }
+
+  const ctx = chartCanvas.getContext('2d');
+  categoryChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: categories,
+      datasets: [
+        {
+          data: amounts,
+          backgroundColor: CHART_PALETTE.slice(0, categories.length),
+          borderWidth: 2,
+          borderColor: '#FFFFFF',
+          hoverOffset: 4,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            boxWidth: 8,
+            boxHeight: 8,
+            usePointStyle: true,
+            pointStyle: 'circle',
+            font: {
+              family: "'Plus Jakarta Sans', sans-serif",
+              size: 11,
+              weight: '500',
+            },
+            color: '#475569',
+            padding: 8,
+          },
+        },
+        tooltip: {
+          backgroundColor: '#0F172A',
+          padding: 8,
+          cornerRadius: 6,
+          callbacks: {
+            label: function (context) {
+              const val = Number(context.raw) || 0;
+              const pct = totalExpense > 0 ? ((val / totalExpense) * 100).toFixed(1) : 0;
+              return ` ${state.currency} ${formatNumber(val)} (${pct}%)`;
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Export Filtered Records as RFC 4180 Compliant CSV
+ */
+function exportToCSV() {
+  let recordsToExport = state.records;
+
+  // Filter according to active period selection
+  if (state.currentMonth !== 'all') {
+    recordsToExport = recordsToExport.filter((r) => r.date.startsWith(state.currentMonth));
+  }
+
+  // Filter according to active type tab
+  if (state.currentFilter !== 'all') {
+    recordsToExport = recordsToExport.filter((r) => r.type === state.currentFilter);
+  }
+
+  if (recordsToExport.length === 0) {
+    showToast('No records available to export', true);
+    return;
+  }
+
+  // CSV Standard Header Row
+  const headers = ['ID', 'Date', 'Type', 'Category', 'Amount', 'Currency', 'Note'];
+
+  // Format data rows with quotation escaping
+  const rows = recordsToExport.map((r) => [
+    r.id,
+    `"${r.date}"`,
+    `"${r.type}"`,
+    `"${(r.category || '').replace(/"/g, '""')}"`,
+    Number(r.amount).toFixed(2),
+    `"${state.currency}"`,
+    `"${(r.note || '').replace(/"/g, '""')}"`,
+  ]);
+
+  // Prepend UTF-8 BOM (\uFEFF) to guarantee Excel opens Chinese and Unicode cleanly without garbled characters
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
+
+  // Generate downloadable Blob and trigger programmatic click
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const downloadLink = document.createElement('a');
+
+  const periodLabel = state.currentMonth === 'all' ? 'all' : state.currentMonth;
+  downloadLink.href = url;
+  downloadLink.setAttribute(
+    'download',
+    `ledger_export_${periodLabel}_${new Date().toISOString().slice(0, 10)}.csv`
+  );
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+  URL.revokeObjectURL(url);
+
+  showToast(`Exported ${recordsToExport.length} transactions to CSV`);
+}
+
+/**
  * Application Bootstrapper
  */
 function init() {
@@ -413,7 +579,10 @@ function init() {
     showToast('Ledger data synced');
   });
 
-  // 8. Initial data fetch
+  // 8. Export CSV button
+  elements.exportCsvBtn?.addEventListener('click', exportToCSV);
+
+  // 9. Initial data fetch
   loadSummary();
   loadRecords();
 }

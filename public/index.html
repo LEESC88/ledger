@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <!-- Chart.js Modern Data Visualization Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="app-layout">
@@ -100,6 +102,25 @@
             <span class="box-subtext">Realized Disbursements</span>
           </div>
         </div>
+
+        <!-- Expense Category Distribution (Donut Chart) -->
+        <div class="chart-container-card">
+          <div class="chart-header">
+            <span class="box-label">Expense Distribution</span>
+            <span id="chartCategoryCount" class="chart-badge">0 Categories</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="categoryChart"></canvas>
+            <div id="chartEmptyOverlay" class="chart-empty">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>No expense records</span>
+            </div>
+          </div>
+        </div>
       </aside>
 
       <!-- ===================================================================
@@ -189,10 +210,23 @@
             <p class="section-desc">Transactions journal</p>
           </div>
 
-          <div class="ledger-filter-tabs">
-            <button class="tab-btn active" data-filter="all">All</button>
-            <button class="tab-btn" data-filter="expense">Expense</button>
-            <button class="tab-btn" data-filter="income">Income</button>
+          <div class="ledger-header-actions">
+            <!-- Filter Tabs -->
+            <div class="ledger-filter-tabs">
+              <button class="tab-btn active" data-filter="all">All</button>
+              <button class="tab-btn" data-filter="expense">Expense</button>
+              <button class="tab-btn" data-filter="income">Income</button>
+            </div>
+
+            <!-- Export CSV Action Button -->
+            <button id="exportCsvBtn" class="btn-export-csv" title="Export Ledger as CSV">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Export CSV</span>
+            </button>
           </div>
         </div>
 

@@ -724,6 +724,95 @@ body {
 }
 
 /* ==========================================================================
+   Chart & Visual Analytics Card
+   ========================================================================== */
+
+.chart-container-card {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-card);
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.chart-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  background: var(--brand-cyan-subtle);
+  color: var(--brand-cyan);
+  border-radius: var(--radius-full);
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-sm);
+  transition: opacity var(--transition-quick);
+}
+
+.chart-empty.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Ledger Actions & Export CSV Button
+   ========================================================================== */
+
+.ledger-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-export-csv {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-quick);
+}
+
+.btn-export-csv:hover {
+  background: var(--brand-cyan-subtle);
+  color: var(--brand-cyan);
+  border-color: var(--brand-cyan);
+}
+
+/* ==========================================================================
    Responsive Adaptations
    ========================================================================== */
 

@@ -237,6 +237,18 @@
 
 ---
 
+### Step 7: Visual Analytics & Financial Data Export (Sprint 4 - In Progress)
+* [✔] **Chart.js Donut Chart Engine (`public/index.html` & `public/app.js`)**:
+  * Integrated Chart.js v4 CDN into application layout.
+  * Engineered `renderCategoryChart()` with responsive doughnut configuration (`cutout: '70%'`) and Cyan-White color harmony palette.
+  * Real-time sync with `/api/records/summary`'s `categoryBreakdown` with automated empty-state fallbacks.
+* [✔] **Client-side RFC 4180 CSV Financial Statement Exporter**:
+  * Engineered zero-latency browser export via native `Blob` and dynamic URI triggering.
+  * Prefixed UTF-8 Byte Order Mark (`\uFEFF`) to prevent character encoding corruption in Microsoft Excel.
+  * Honors active month and type filters for targeted ledger export.
+
+---
+
 ## 🎯 Next Immediate Steps (下一步操作)
-1. **[Sprint 4: Visual Analytics]**: Integrate Chart.js CDN for interactive expense category breakdown donuts/pie charts.
-2. **[P2 Smart Extensions]**: Monthly budget threshold alerts and CSV statement export.
+1. **[Code Verification]**: Verify interactive category donut chart and CSV export live in the browser.
+2. **[Sprint 5: Mobile App & Packaging]**: Integrate Capacitor / PWA manifest to transform the application into an installable mobile experience.
