@@ -72,7 +72,6 @@ const elements = {
   chartCategoryCount: document.getElementById('chartCategoryCount'),
   toast: document.getElementById('toastNotification'),
   toastMessage: document.getElementById('toastMessage'),
-  maintenanceBtn: document.getElementById('maintenanceBtn'),
 
   // Retention Modal
   retentionModal: document.getElementById('retentionModal'),
@@ -105,6 +104,12 @@ const elements = {
   avatarFileInput: document.getElementById('avatarFileInput'),
   accountModalName: document.getElementById('accountModalName'),
   accountModalEmail: document.getElementById('accountModalEmail'),
+  usernameViewRow: document.getElementById('usernameViewRow'),
+  usernameEditRow: document.getElementById('usernameEditRow'),
+  editUsernameBtn: document.getElementById('editUsernameBtn'),
+  usernameInput: document.getElementById('usernameInput'),
+  saveUsernameBtn: document.getElementById('saveUsernameBtn'),
+  cancelUsernameBtn: document.getElementById('cancelUsernameBtn'),
   uploadAvatarTextBtn: document.getElementById('uploadAvatarTextBtn'),
   resetAvatarBtn: document.getElementById('resetAvatarBtn'),
   accountMemberSince: document.getElementById('accountMemberSince'),
@@ -744,31 +749,95 @@ function isDarkModeActive() {
 }
 
 /**
- * Resolve user avatar with custom avatar fallback to Google metadata
+ * Generate a pristine vector SVG initials avatar as a fallback
  */
-function getUserAvatar(user) {
-  if (!user) return 'https://www.gravatar.com/avatar/?d=mp';
-  const custom = localStorage.getItem('ledger_custom_avatar_' + user.id);
-  if (custom) return custom;
-  return (
-    user.user_metadata?.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'
-  );
+function getInitialsAvatar(name) {
+  const initial = (name || 'U').trim().charAt(0).toUpperCase();
+  return `data:image/svg+xml,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+      <rect width="100" height="100" rx="50" fill="#0D9488"/>
+      <text x="50" y="55" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="700" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central">${initial}</text>
+    </svg>
+  `)}`;
 }
 
 /**
- * Calculate user cumulative usage duration
+ * Get the current user display name with custom override support
+ */
+function getUserDisplayName(user) {
+  if (!user) return 'User';
+  const customName = localStorage.getItem('ledger_custom_name_' + user.id);
+  if (customName && customName.trim()) return customName.trim();
+  const meta = user.user_metadata || {};
+  return meta.full_name || meta.name || user.email?.split('@')[0] || 'User';
+}
+
+/**
+ * Resolve user avatar with custom avatar fallback to Google metadata or SVG initials
+ */
+function getUserAvatar(user) {
+  if (!user) return getInitialsAvatar('U');
+  const custom = localStorage.getItem('ledger_custom_avatar_' + user.id);
+  if (custom) return custom;
+  const meta = user.user_metadata || {};
+  const googlePic = meta.avatar_url || meta.picture;
+  if (googlePic) return googlePic;
+  const name = getUserDisplayName(user);
+  return getInitialsAvatar(name);
+}
+
+/**
+ * Safely assign avatar source with fallback on image error
+ */
+function setAvatarWithFallback(imgEl, user) {
+  if (!imgEl) return;
+  const url = getUserAvatar(user);
+  imgEl.onerror = () => {
+    imgEl.onerror = null;
+    imgEl.src = getInitialsAvatar(getUserDisplayName(user));
+  };
+  imgEl.src = url;
+}
+
+/**
+ * Calculate user cumulative usage duration in days
  */
 function formatUsageDuration(firstLoginIso) {
-  if (!firstLoginIso) return '1 Day Active';
-  const diffMs = Date.now() - new Date(firstLoginIso).getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays <= 0) {
-    return diffHours <= 1
-      ? 'Joined today (< 1 hour)'
-      : `Joined today (${diffHours} hours active)`;
+  if (!firstLoginIso) return '1 Day';
+  const diffMs = Math.max(0, Date.now() - new Date(firstLoginIso).getTime());
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+  return `${days} ${days === 1 ? 'Day' : 'Days'}`;
+}
+
+/**
+ * Username Inline Edit Handlers
+ */
+function showUsernameEdit() {
+  elements.usernameViewRow?.classList.add('hidden');
+  elements.usernameEditRow?.classList.remove('hidden');
+  if (elements.usernameInput) {
+    elements.usernameInput.value = getUserDisplayName(state.user);
+    elements.usernameInput.focus();
+    elements.usernameInput.select();
   }
-  return `${diffDays + 1} Days Active`;
+}
+
+function cancelUsernameEdit() {
+  elements.usernameEditRow?.classList.add('hidden');
+  elements.usernameViewRow?.classList.remove('hidden');
+}
+
+function saveUsername() {
+  if (!state.user) return;
+  const newName = (elements.usernameInput?.value || '').trim();
+  if (!newName) {
+    return showToast('Username cannot be empty', true);
+  }
+  localStorage.setItem('ledger_custom_name_' + state.user.id, newName);
+  updateAuthUI(state.user);
+  updateAccountModalData();
+  cancelUsernameEdit();
+  showToast(`Username updated to "${newName}"`);
 }
 
 /**
@@ -818,20 +887,21 @@ function openAccountModal() {
 }
 
 function closeAccountModal() {
+  cancelUsernameEdit();
   elements.accountModal?.classList.add('hidden');
 }
 
 function updateAccountModalData() {
   if (!state.user) return;
-  const avatarUrl = getUserAvatar(state.user);
-  const displayName =
-    state.user.user_metadata?.full_name || state.user.email.split('@')[0];
+  setAvatarWithFallback(elements.accountModalAvatar, state.user);
+  const displayName = getUserDisplayName(state.user);
 
-  if (elements.accountModalAvatar) elements.accountModalAvatar.src = avatarUrl;
   if (elements.accountModalName)
     elements.accountModalName.textContent = displayName;
   if (elements.accountModalEmail)
     elements.accountModalEmail.textContent = state.user.email;
+
+  cancelUsernameEdit();
 
   const firstLoginKey = 'ledger_first_login_' + state.user.id;
   let firstLogin = localStorage.getItem(firstLoginKey);
@@ -941,15 +1011,14 @@ function updateAuthUI(user) {
     elements.loginLandingView?.classList.add('hidden');
     elements.appLayout?.classList.remove('hidden');
 
-    const avatarUrl = getUserAvatar(user);
-    const displayName =
-      user.user_metadata?.full_name || user.email.split('@')[0];
+    const displayName = getUserDisplayName(user);
 
     if (elements.userName) elements.userName.textContent = displayName;
     if (elements.dropdownUserName)
       elements.dropdownUserName.textContent = `u/${displayName.replace(/\s+/g, '_')}`;
-    if (elements.userAvatar) elements.userAvatar.src = avatarUrl;
-    if (elements.dropdownAvatar) elements.dropdownAvatar.src = avatarUrl;
+
+    setAvatarWithFallback(elements.userAvatar, user);
+    setAvatarWithFallback(elements.dropdownAvatar, user);
 
     // Track first login date for usage duration
     const firstLoginKey = 'ledger_first_login_' + user.id;
@@ -1025,7 +1094,6 @@ async function init() {
   elements.exportCsvBtn?.addEventListener('click', exportToCSV);
 
   // 10. Retention modal event listeners
-  elements.maintenanceBtn?.addEventListener('click', openRetentionModal);
   elements.closeModalBtn?.addEventListener('click', closeRetentionModal);
   elements.retentionYearsSelect?.addEventListener(
     'change',
@@ -1066,6 +1134,15 @@ async function init() {
     handleAvatarFileSelected,
   );
   elements.resetAvatarBtn?.addEventListener('click', resetToGoogleAvatar);
+
+  // Username Editing Event Listeners
+  elements.editUsernameBtn?.addEventListener('click', showUsernameEdit);
+  elements.saveUsernameBtn?.addEventListener('click', saveUsername);
+  elements.cancelUsernameBtn?.addEventListener('click', cancelUsernameEdit);
+  elements.usernameInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') saveUsername();
+    if (e.key === 'Escape') cancelUsernameEdit();
+  });
 
   elements.closeAccountModalBtn?.addEventListener('click', closeAccountModal);
   elements.closeAccountModalFooterBtn?.addEventListener(

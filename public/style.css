@@ -816,6 +816,10 @@ body {
    Account Information Modal Styles
    ========================================================================== */
 
+.hidden {
+  display: none !important;
+}
+
 .profile-card-center {
   display: flex;
   flex-direction: column;
@@ -828,14 +832,21 @@ body {
 
 .profile-avatar-wrapper {
   position: relative;
-  margin-bottom: 12px;
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 12px;
+  flex-shrink: 0;
 }
 
 .account-modal-avatar {
   width: 84px;
   height: 84px;
+  min-width: 84px;
+  min-height: 84px;
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
   object-fit: cover;
+  display: block;
   background: var(--brand-cyan-subtle);
   border: 2.5px solid var(--brand-cyan);
   box-shadow: 0 4px 16px -2px var(--brand-cyan-glow);
@@ -864,11 +875,101 @@ body {
   transform: scale(1.08);
 }
 
+/* Username Inline Edit Styles */
+.username-display-group {
+  margin-bottom: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.username-view-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .account-profile-name {
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 2px;
+}
+
+.btn-icon-edit-name {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  border-radius: var(--radius-xs);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-quick);
+}
+
+.btn-icon-edit-name:hover {
+  background: var(--bg-hover);
+  color: var(--brand-cyan);
+}
+
+.username-edit-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.input-edit-username {
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  width: 160px;
+  outline: none;
+  transition: border-color var(--transition-quick);
+}
+
+.input-edit-username:focus {
+  border-color: var(--brand-cyan);
+  box-shadow: 0 0 0 2px var(--brand-cyan-glow);
+}
+
+.btn-save-username {
+  background: var(--brand-cyan);
+  border: none;
+  border-radius: var(--radius-xs);
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: background var(--transition-quick);
+}
+
+.btn-save-username:hover {
+  background: var(--brand-cyan-hover);
+}
+
+.btn-cancel-username {
+  background: transparent;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xs);
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-quick);
+}
+
+.btn-cancel-username:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
 }
 
 .account-profile-email {
@@ -917,6 +1018,18 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+.account-info-grid.account-info-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 520px) {
+  .account-info-grid.account-info-grid-3 {
+    grid-template-columns: 1fr;
+  }
 }
 
 .info-cell {
