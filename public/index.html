@@ -12,9 +12,133 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Supabase Official Client SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function () {
+      try {
+        const theme = localStorage.getItem('ledger_theme') || 'system';
+        document.documentElement.setAttribute('data-theme', theme);
+        const meta = document.querySelector('meta[name="color-scheme"]');
+        if (meta) {
+          meta.content = theme === 'system' ? 'light dark' : theme;
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
-  <div class="app-layout">
+  <!-- =====================================================================
+       SPLIT-SCREEN LOGIN & LANDING VIEW (Initial Welcome Gate)
+       ===================================================================== -->
+  <div id="loginLandingView" class="login-landing-container">
+    <!-- Left Hero & Branding Pane -->
+    <div class="landing-hero-pane">
+      <div class="landing-hero-glow"></div>
+      <div class="landing-hero-glow-secondary"></div>
+      <div class="landing-hero-content">
+        <div class="brand brand-large">
+          <div class="brand-glyph glyph-lg">
+            <span class="glyph-core"></span>
+          </div>
+          <span class="brand-title title-lg">LEDGER</span>
+        </div>
+
+        <div class="landing-tagline-group">
+          <span class="badge-pill-cyan">Personal Financial Intelligence</span>
+          <h1 class="landing-headline">Precision Ledger for Modern Life</h1>
+          <p class="landing-subhead">
+            Local-first performance paired with cloud sync. Manage multiple currencies, track category breakdowns, and take complete control over your cash flow.
+          </p>
+        </div>
+
+        <!-- Pillar Value Highlights -->
+        <div class="landing-pillars">
+          <div class="pillar-card">
+            <div class="pillar-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+              </svg>
+            </div>
+            <div>
+              <h4 class="pillar-title">Offline & Mobile-Ready</h4>
+              <p class="pillar-desc">Lightweight SQLite database lives on your local device for instant latency.</p>
+            </div>
+          </div>
+
+          <div class="pillar-card">
+            <div class="pillar-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+              </svg>
+            </div>
+            <div>
+              <h4 class="pillar-title">Cloud Synchronization</h4>
+              <p class="pillar-desc">Dual PostgreSQL engine with Supabase and Google OAuth protection.</p>
+            </div>
+          </div>
+
+          <div class="pillar-card">
+            <div class="pillar-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+            </div>
+            <div>
+              <h4 class="pillar-title">Visual Analytics & Pruning</h4>
+              <p class="pillar-desc">Interactive donut category charts, CSV export, and safe multi-year retention.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="landing-hero-footer">
+          <span>&copy; 2026 LEDGER &bull; Local-First Personal Finance</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Authentication Pane -->
+    <div class="landing-auth-pane">
+      <div class="auth-card">
+        <div class="auth-card-header">
+          <div class="auth-brand-badge">
+            <div class="brand-glyph">
+              <span class="glyph-core"></span>
+            </div>
+          </div>
+          <h2 class="auth-title">Welcome to LEDGER</h2>
+          <p class="auth-subtitle">Sign in with your Google account to access your personal ledger and synchronized records.</p>
+        </div>
+
+        <div class="auth-actions">
+          <button id="landingGoogleLoginBtn" class="btn-google-large">
+            <svg class="google-icon-lg" width="20" height="20" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+        </div>
+
+        <div class="auth-security-notice">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>End-to-End User Isolation &bull; OAuth 2.0 Protected</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MAIN APPLICATION WORKSTATION (Shown when authenticated)
+       ===================================================================== -->
+  <div id="appLayout" class="app-layout hidden">
     <!-- Top Navigation Header -->
     <header class="app-header">
       <div class="brand">
@@ -64,29 +188,83 @@
         <!-- Vertical Divider -->
         <div class="header-divider"></div>
 
-        <!-- Auth Module (Google Login & Profile) -->
+        <!-- Auth Module (Reddit-Style Profile Dropdown Trigger) -->
         <div id="authContainer" class="auth-cluster">
-          <!-- Logged Out State: Google Sign-In Button -->
-          <button id="googleLoginBtn" class="btn-google-login">
-            <svg class="google-icon" width="15" height="15" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-            <span>Sign in with Google</span>
-          </button>
-
-          <!-- Logged In State: User Capsule (Hidden by default) -->
-          <div id="userProfilePill" class="user-profile-pill hidden">
+          <!-- Logged In State: User Capsule / Pill -->
+          <button id="userProfilePill" class="user-profile-pill" aria-haspopup="true" aria-expanded="false" title="User Menu">
             <img id="userAvatar" class="user-avatar" src="" alt="Avatar" />
             <span id="userName" class="user-name">User</span>
-            <button id="logoutBtn" class="btn-logout" title="Sign Out">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="pill-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <!-- Reddit-Inspired Profile Dropdown Menu -->
+          <div id="profileDropdown" class="profile-dropdown hidden" role="menu">
+            <!-- 1. View Profile Header -->
+            <button id="menuViewProfileBtn" class="dropdown-header-btn" role="menuitem">
+              <img id="dropdownAvatar" class="dropdown-avatar" src="" alt="Avatar" />
+              <div class="dropdown-user-info">
+                <span class="dropdown-view-label">View Profile</span>
+                <span id="dropdownUserName" class="dropdown-user-sub">u/user</span>
+              </div>
+            </button>
+
+            <div class="dropdown-divider"></div>
+
+            <!-- 2. Edit Avatar -->
+            <button id="menuEditAvatarBtn" class="dropdown-item" role="menuitem">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+              <span>Edit Avatar</span>
+            </button>
+
+            <!-- 3. Display Mode (Segmented Theme Switcher) -->
+            <div class="dropdown-theme-section">
+              <div class="dropdown-theme-header">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <span>Display Mode</span>
+              </div>
+              <div class="theme-segmented-switch">
+                <button type="button" class="theme-segment-btn" data-theme-val="light" title="Light Theme">Light</button>
+                <button type="button" class="theme-segment-btn" data-theme-val="dark" title="Dark Theme">Dark</button>
+                <button type="button" class="theme-segment-btn active" data-theme-val="system" title="Follow System">Auto</button>
+              </div>
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <!-- 4. Settings -->
+            <button id="menuSettingsBtn" class="dropdown-item" role="menuitem">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span>Settings</span>
+            </button>
+
+            <div class="dropdown-divider"></div>
+
+            <!-- 5. Log Out -->
+            <button id="menuLogoutBtn" class="dropdown-item dropdown-item-danger" role="menuitem">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                 <polyline points="16 17 21 12 16 7"></polyline>
                 <line x1="21" y1="12" x2="9" y2="12"></line>
               </svg>
+              <span>Log Out</span>
             </button>
           </div>
         </div>
@@ -363,6 +541,85 @@
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
             <span>2. Purge Old Records</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Information & Profile Modal -->
+    <div id="accountModal" class="modal-overlay hidden">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <div class="modal-title-row">
+            <div class="modal-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <div>
+              <h3 class="modal-title">Account Information</h3>
+              <p class="modal-subtitle">Profile details and software usage statistics</p>
+            </div>
+          </div>
+          <button id="closeAccountModalBtn" class="btn-close-modal" aria-label="Close modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Profile Card & Avatar Preview -->
+          <div class="profile-card-center">
+            <div class="profile-avatar-wrapper">
+              <img id="accountModalAvatar" class="account-modal-avatar" src="" alt="User Avatar" />
+              <button id="accountAvatarUploadBtn" class="avatar-edit-badge" title="Change Avatar">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </button>
+            </div>
+            <input type="file" id="avatarFileInput" accept="image/png, image/jpeg, image/webp" class="hidden" />
+
+            <h4 id="accountModalName" class="account-profile-name">User Name</h4>
+            <span id="accountModalEmail" class="account-profile-email">user@gmail.com</span>
+
+            <div class="avatar-action-links">
+              <button id="uploadAvatarTextBtn" class="text-link-cyan">Change Avatar</button>
+              <span class="text-divider">&bull;</span>
+              <button id="resetAvatarBtn" class="text-link-muted">Reset to Google Photo</button>
+            </div>
+          </div>
+
+          <!-- Account Details Card -->
+          <div class="account-info-grid">
+            <div class="info-cell">
+              <span class="cell-label">Authentication Provider</span>
+              <span class="cell-val">
+                <span class="provider-badge">
+                  <span class="dot-online"></span> Google OAuth
+                </span>
+              </span>
+            </div>
+
+            <div class="info-cell">
+              <span class="cell-label">Member Since</span>
+              <span id="accountMemberSince" class="cell-val">Oct 23, 2026</span>
+            </div>
+
+            <div class="info-cell">
+              <span class="cell-label">Software Usage Duration</span>
+              <span id="accountUsageDuration" class="cell-val stat-highlight-sm">1 Day Active</span>
+            </div>
+
+            <div class="info-cell">
+              <span class="cell-label">Total Transactions Logged</span>
+              <span id="accountTransactionCount" class="cell-val">0 Records</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="closeAccountModalFooterBtn" class="btn-modal-secondary">
+            <span>Done</span>
           </button>
         </div>
       </div>

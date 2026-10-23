@@ -43,6 +43,12 @@ let supabaseClient = null;
 
 // DOM Elements
 const elements = {
+  // Views
+  loginLandingView: document.getElementById('loginLandingView'),
+  appLayout: document.getElementById('appLayout'),
+  landingGoogleLoginBtn: document.getElementById('landingGoogleLoginBtn'),
+
+  // Header Controls
   currencySelector: document.getElementById('currencySelector'),
   monthFilter: document.getElementById('monthFilter'),
   refreshBtn: document.getElementById('refreshBtn'),
@@ -67,6 +73,8 @@ const elements = {
   toast: document.getElementById('toastNotification'),
   toastMessage: document.getElementById('toastMessage'),
   maintenanceBtn: document.getElementById('maintenanceBtn'),
+
+  // Retention Modal
   retentionModal: document.getElementById('retentionModal'),
   closeModalBtn: document.getElementById('closeModalBtn'),
   retentionYearsSelect: document.getElementById('retentionYearsSelect'),
@@ -74,11 +82,34 @@ const elements = {
   retentionCutoffDate: document.getElementById('retentionCutoffDate'),
   downloadArchiveBtn: document.getElementById('downloadArchiveBtn'),
   purgeOldRecordsBtn: document.getElementById('purgeOldRecordsBtn'),
+
+  // Reddit-Inspired Profile Dropdown Elements
   userProfilePill: document.getElementById('userProfilePill'),
   userAvatar: document.getElementById('userAvatar'),
   userName: document.getElementById('userName'),
-  googleLoginBtn: document.getElementById('googleLoginBtn'),
-  logoutBtn: document.getElementById('logoutBtn'),
+  profileDropdown: document.getElementById('profileDropdown'),
+  menuViewProfileBtn: document.getElementById('menuViewProfileBtn'),
+  dropdownAvatar: document.getElementById('dropdownAvatar'),
+  dropdownUserName: document.getElementById('dropdownUserName'),
+  menuEditAvatarBtn: document.getElementById('menuEditAvatarBtn'),
+  themeSegmentBtns: document.querySelectorAll('.theme-segment-btn'),
+  menuSettingsBtn: document.getElementById('menuSettingsBtn'),
+  menuLogoutBtn: document.getElementById('menuLogoutBtn'),
+
+  // Account Information Modal Elements
+  accountModal: document.getElementById('accountModal'),
+  closeAccountModalBtn: document.getElementById('closeAccountModalBtn'),
+  closeAccountModalFooterBtn: document.getElementById('closeAccountModalFooterBtn'),
+  accountModalAvatar: document.getElementById('accountModalAvatar'),
+  accountAvatarUploadBtn: document.getElementById('accountAvatarUploadBtn'),
+  avatarFileInput: document.getElementById('avatarFileInput'),
+  accountModalName: document.getElementById('accountModalName'),
+  accountModalEmail: document.getElementById('accountModalEmail'),
+  uploadAvatarTextBtn: document.getElementById('uploadAvatarTextBtn'),
+  resetAvatarBtn: document.getElementById('resetAvatarBtn'),
+  accountMemberSince: document.getElementById('accountMemberSince'),
+  accountUsageDuration: document.getElementById('accountUsageDuration'),
+  accountTransactionCount: document.getElementById('accountTransactionCount'),
 };
 
 /**
@@ -443,6 +474,7 @@ function renderCategoryChart(breakdown) {
     categoryChartInstance.destroy();
   }
 
+  const isDark = isDarkModeActive();
   const ctx = chartCanvas.getContext('2d');
   categoryChartInstance = new Chart(ctx, {
     type: 'doughnut',
@@ -453,7 +485,7 @@ function renderCategoryChart(breakdown) {
           data: amounts,
           backgroundColor: CHART_PALETTE.slice(0, categories.length),
           borderWidth: 2,
-          borderColor: '#FFFFFF',
+          borderColor: isDark ? '#111827' : '#FFFFFF',
           hoverOffset: 4,
         },
       ],
@@ -476,12 +508,12 @@ function renderCategoryChart(breakdown) {
               size: 11,
               weight: '500',
             },
-            color: '#475569',
+            color: isDark ? '#9CA3AF' : '#475569',
             padding: 8,
           },
         },
         tooltip: {
-          backgroundColor: '#0F172A',
+          backgroundColor: isDark ? '#1F2937' : '#0F172A',
           padding: 8,
           cornerRadius: 6,
           callbacks: {
@@ -699,6 +731,165 @@ function purgeOldRecords() {
 // ============================================================================
 
 /**
+ * Determine if Dark Theme is actively rendered
+ */
+function isDarkModeActive() {
+  const theme = document.documentElement.getAttribute('data-theme');
+  if (theme === 'dark') return true;
+  if (theme === 'light') return false;
+  return (
+    window.matchMedia &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
+}
+
+/**
+ * Resolve user avatar with custom avatar fallback to Google metadata
+ */
+function getUserAvatar(user) {
+  if (!user) return 'https://www.gravatar.com/avatar/?d=mp';
+  const custom = localStorage.getItem('ledger_custom_avatar_' + user.id);
+  if (custom) return custom;
+  return (
+    user.user_metadata?.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'
+  );
+}
+
+/**
+ * Calculate user cumulative usage duration
+ */
+function formatUsageDuration(firstLoginIso) {
+  if (!firstLoginIso) return '1 Day Active';
+  const diffMs = Date.now() - new Date(firstLoginIso).getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays <= 0) {
+    return diffHours <= 1
+      ? 'Joined today (< 1 hour)'
+      : `Joined today (${diffHours} hours active)`;
+  }
+  return `${diffDays + 1} Days Active`;
+}
+
+/**
+ * Set application visual theme (system, light, dark)
+ */
+function setAppTheme(theme) {
+  localStorage.setItem('ledger_theme', theme);
+  document.documentElement.setAttribute('data-theme', theme);
+  const meta = document.querySelector('meta[name="color-scheme"]');
+  if (meta) {
+    meta.content = theme === 'system' ? 'light dark' : theme;
+  }
+  elements.themeSegmentBtns.forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.themeVal === theme);
+  });
+  if (categoryChartInstance && state.summary?.categoryBreakdown) {
+    renderCategoryChart(state.summary.categoryBreakdown);
+  }
+}
+
+/**
+ * Profile Dropdown Toggle and Close Handlers (Reddit-Style)
+ */
+function toggleProfileDropdown(e) {
+  e?.stopPropagation();
+  const isHidden = elements.profileDropdown?.classList.contains('hidden');
+  if (isHidden) {
+    elements.profileDropdown?.classList.remove('hidden');
+    elements.userProfilePill?.setAttribute('aria-expanded', 'true');
+  } else {
+    closeProfileDropdown();
+  }
+}
+
+function closeProfileDropdown() {
+  elements.profileDropdown?.classList.add('hidden');
+  elements.userProfilePill?.setAttribute('aria-expanded', 'false');
+}
+
+/**
+ * Account Information Modal Handlers
+ */
+function openAccountModal() {
+  closeProfileDropdown();
+  updateAccountModalData();
+  elements.accountModal?.classList.remove('hidden');
+}
+
+function closeAccountModal() {
+  elements.accountModal?.classList.add('hidden');
+}
+
+function updateAccountModalData() {
+  if (!state.user) return;
+  const avatarUrl = getUserAvatar(state.user);
+  const displayName =
+    state.user.user_metadata?.full_name || state.user.email.split('@')[0];
+
+  if (elements.accountModalAvatar) elements.accountModalAvatar.src = avatarUrl;
+  if (elements.accountModalName)
+    elements.accountModalName.textContent = displayName;
+  if (elements.accountModalEmail)
+    elements.accountModalEmail.textContent = state.user.email;
+
+  const firstLoginKey = 'ledger_first_login_' + state.user.id;
+  let firstLogin = localStorage.getItem(firstLoginKey);
+  if (!firstLogin) {
+    firstLogin = new Date().toISOString();
+    localStorage.setItem(firstLoginKey, firstLogin);
+  }
+
+  if (elements.accountMemberSince) {
+    elements.accountMemberSince.textContent = new Date(
+      firstLogin,
+    ).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  }
+  if (elements.accountUsageDuration) {
+    elements.accountUsageDuration.textContent = formatUsageDuration(firstLogin);
+  }
+  if (elements.accountTransactionCount) {
+    elements.accountTransactionCount.textContent = `${state.records.length} Records`;
+  }
+}
+
+/**
+ * Custom Avatar Upload & Reset Handlers
+ */
+function handleAvatarFileSelected(e) {
+  const file = e.target.files?.[0];
+  if (!file || !state.user) return;
+  if (!file.type.startsWith('image/')) {
+    return showToast('Please select a valid image file', true);
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    return showToast('Image file too large (max 2MB)', true);
+  }
+
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    const dataUrl = evt.target.result;
+    localStorage.setItem('ledger_custom_avatar_' + state.user.id, dataUrl);
+    updateAuthUI(state.user);
+    updateAccountModalData();
+    showToast('Custom avatar updated successfully');
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetToGoogleAvatar() {
+  if (!state.user) return;
+  localStorage.removeItem('ledger_custom_avatar_' + state.user.id);
+  updateAuthUI(state.user);
+  updateAccountModalData();
+  showToast('Reset to original Google profile photo');
+}
+
+/**
  * Dynamically fetch public configuration and initialize Supabase client
  */
 async function initSupabaseClient() {
@@ -721,7 +912,8 @@ async function initSupabaseClient() {
  * Initiate Google OAuth Sign-in Flow
  */
 async function signInWithGoogle() {
-  if (!supabaseClient) return showToast('Supabase client not initialized', true);
+  if (!supabaseClient)
+    return showToast('Supabase client not initialized', true);
   await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
@@ -736,6 +928,8 @@ async function signInWithGoogle() {
 async function signOutUser() {
   if (!supabaseClient) return;
   await supabaseClient.auth.signOut();
+  state.user = null;
+  updateAuthUI(null);
   showToast('Signed out successfully');
 }
 
@@ -744,18 +938,29 @@ async function signOutUser() {
  */
 function updateAuthUI(user) {
   if (user) {
-    elements.googleLoginBtn?.classList.add('hidden');
-    elements.userProfilePill?.classList.remove('hidden');
-    if (elements.userName)
-      elements.userName.textContent =
-        user.user_metadata?.full_name || user.email;
-    if (elements.userAvatar)
-      elements.userAvatar.src =
-        user.user_metadata?.avatar_url ||
-        'https://www.gravatar.com/avatar/?d=mp';
+    elements.loginLandingView?.classList.add('hidden');
+    elements.appLayout?.classList.remove('hidden');
+
+    const avatarUrl = getUserAvatar(user);
+    const displayName =
+      user.user_metadata?.full_name || user.email.split('@')[0];
+
+    if (elements.userName) elements.userName.textContent = displayName;
+    if (elements.dropdownUserName)
+      elements.dropdownUserName.textContent = `u/${displayName.replace(/\s+/g, '_')}`;
+    if (elements.userAvatar) elements.userAvatar.src = avatarUrl;
+    if (elements.dropdownAvatar) elements.dropdownAvatar.src = avatarUrl;
+
+    // Track first login date for usage duration
+    const firstLoginKey = 'ledger_first_login_' + user.id;
+    if (!localStorage.getItem(firstLoginKey)) {
+      localStorage.setItem(firstLoginKey, new Date().toISOString());
+    }
   } else {
-    elements.googleLoginBtn?.classList.remove('hidden');
-    elements.userProfilePill?.classList.add('hidden');
+    elements.loginLandingView?.classList.remove('hidden');
+    elements.appLayout?.classList.add('hidden');
+    closeProfileDropdown();
+    closeAccountModal();
   }
 }
 
@@ -832,11 +1037,63 @@ async function init() {
     if (e.target === elements.retentionModal) closeRetentionModal();
   });
 
-  // 11. Google Auth event listeners
-  elements.googleLoginBtn?.addEventListener('click', signInWithGoogle);
-  elements.logoutBtn?.addEventListener('click', signOutUser);
+  // 11. Reddit-Style Profile Dropdown & Modal Event Listeners
+  elements.landingGoogleLoginBtn?.addEventListener('click', signInWithGoogle);
+  elements.userProfilePill?.addEventListener('click', toggleProfileDropdown);
+  document.addEventListener('click', (e) => {
+    if (
+      !elements.profileDropdown?.classList.contains('hidden') &&
+      !elements.profileDropdown?.contains(e.target) &&
+      !elements.userProfilePill?.contains(e.target)
+    ) {
+      closeProfileDropdown();
+    }
+  });
 
-  // 12. Initial data fetch
+  elements.menuViewProfileBtn?.addEventListener('click', openAccountModal);
+  elements.menuEditAvatarBtn?.addEventListener('click', () => {
+    closeProfileDropdown();
+    elements.avatarFileInput?.click();
+  });
+  elements.accountAvatarUploadBtn?.addEventListener('click', () =>
+    elements.avatarFileInput?.click(),
+  );
+  elements.uploadAvatarTextBtn?.addEventListener('click', () =>
+    elements.avatarFileInput?.click(),
+  );
+  elements.avatarFileInput?.addEventListener(
+    'change',
+    handleAvatarFileSelected,
+  );
+  elements.resetAvatarBtn?.addEventListener('click', resetToGoogleAvatar);
+
+  elements.closeAccountModalBtn?.addEventListener('click', closeAccountModal);
+  elements.closeAccountModalFooterBtn?.addEventListener(
+    'click',
+    closeAccountModal,
+  );
+  elements.accountModal?.addEventListener('click', (e) => {
+    if (e.target === elements.accountModal) closeAccountModal();
+  });
+
+  elements.menuSettingsBtn?.addEventListener('click', () => {
+    closeProfileDropdown();
+    openRetentionModal();
+  });
+  elements.menuLogoutBtn?.addEventListener('click', signOutUser);
+
+  // Theme switcher segmented controls
+  elements.themeSegmentBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setAppTheme(btn.dataset.themeVal);
+    });
+  });
+
+  // Apply initial theme from localStorage
+  const savedTheme = localStorage.getItem('ledger_theme') || 'system';
+  setAppTheme(savedTheme);
+
+  // 12. Initial data fetch (Loads records for offline or active database)
   loadSummary();
   loadRecords();
 
@@ -858,10 +1115,15 @@ async function init() {
       if (data?.session?.user) {
         state.user = data.session.user;
         updateAuthUI(state.user);
+      } else {
+        updateAuthUI(null);
       }
+    } else {
+      updateAuthUI(null);
     }
   } catch (authErr) {
     console.warn('Supabase Auth init skipped:', authErr);
+    updateAuthUI(null);
   }
 }
 
