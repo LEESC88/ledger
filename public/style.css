@@ -176,6 +176,106 @@ body {
 }
 
 /* ==========================================================================
+   Auth & User Profile Header Components
+   ========================================================================== */
+
+.header-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--border-input);
+  margin: 0 4px;
+}
+
+.auth-cluster {
+  display: flex;
+  align-items: center;
+}
+
+.btn-google-login {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-full);
+  padding: 5px 12px;
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all var(--transition-quick);
+}
+
+.btn-google-login:hover {
+  background: var(--bg-hover);
+  border-color: var(--brand-cyan);
+  box-shadow: 0 2px 8px -2px rgba(13, 148, 136, 0.2);
+  transform: translateY(-0.5px);
+}
+
+.btn-google-login.hidden {
+  display: none;
+}
+
+.google-icon {
+  flex-shrink: 0;
+}
+
+.user-profile-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-full);
+  padding: 3px 6px 3px 4px;
+  transition: all var(--transition-quick);
+}
+
+.user-profile-pill.hidden {
+  display: none;
+}
+
+.user-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--brand-cyan-subtle);
+  border: 1px solid rgba(13, 148, 136, 0.3);
+}
+
+.user-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-logout {
+  background: transparent;
+  border: none;
+  padding: 3px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-quick);
+}
+
+.btn-logout:hover {
+  background: var(--expense-subtle);
+  color: var(--expense-rose);
+}
+
+/* ==========================================================================
    3-Column Workstation Layout (Left-to-Right Flow)
    ========================================================================== */
 

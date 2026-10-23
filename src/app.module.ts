@@ -17,13 +17,45 @@ import { RecordsModule } from './records/records.module.js';
       isGlobal: true,
     }),
 
-    // 2. High-performance SQLite database connection via TypeORM
-    TypeOrmModule.forRoot({
-      type: 'better-sqlite3',
-      database: process.env.DB_DATABASE || 'data/ledger.db',
-      entities: [Record],
-      synchronize: false, // Strict production rule: schema managed by database/schema.sql
-    }),
+    // ==========================================================================
+    // 🎯 YOUR TURN: Connect to Supabase Cloud PostgreSQL
+    // ==========================================================================
+    // Update TypeOrmModule.forRoot to dynamically connect to Supabase PostgreSQL
+    // when process.env.DATABASE_URL is set, or fall back to local SQLite:
+    //
+    // Hint:
+    // TypeOrmModule.forRoot(
+    //   process.env.DATABASE_URL
+    //     ? {
+    //         type: 'postgres',
+    //         url: process.env.DATABASE_URL,
+    //         ssl: { rejectUnauthorized: false }, // Crucial for Supabase Cloud SSL
+    //         entities: [Record],
+    //         synchronize: false,
+    //       }
+    //     : {
+    //         type: 'better-sqlite3',
+    //         database: process.env.DB_DATABASE || 'data/ledger.db',
+    //         entities: [Record],
+    //         synchronize: false,
+    //       },
+    // ),
+    TypeOrmModule.forRoot(
+      process.env.DATABASE_URL
+        ? {
+            type: 'postgres',
+            url: process.env.DATABASE_URL,
+            ssl: { rejectUnauthorized: false }, // Crucial for Supabase Cloud SSL
+            entities: [Record],
+            synchronize: false,
+          }
+        : {
+            type: 'better-sqlite3',
+            database: process.env.DB_DATABASE || 'data/ledger.db',
+            entities: [Record],
+            synchronize: false,
+          },
+    ),
 
     // 3. Static asset hosting for frontend web interface (serves public/ at http://localhost:3000)
     ServeStaticModule.forRoot({

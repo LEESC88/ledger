@@ -29,6 +29,7 @@ const CATEGORIES = {
 
 // Application State
 let state = {
+  user: null, // Track currently authenticated Google user
   currency: localStorage.getItem('ledger_currency') || 'RM',
   currentType: 'expense',
   currentFilter: 'all',
@@ -36,6 +37,9 @@ let state = {
   records: [],
   summary: null,
 };
+
+// Supabase Client Instance (Dynamically loaded from backend)
+let supabase = null;
 
 // DOM Elements
 const elements = {
@@ -70,6 +74,11 @@ const elements = {
   retentionCutoffDate: document.getElementById('retentionCutoffDate'),
   downloadArchiveBtn: document.getElementById('downloadArchiveBtn'),
   purgeOldRecordsBtn: document.getElementById('purgeOldRecordsBtn'),
+  userProfilePill: document.getElementById('userProfilePill'),
+  userAvatar: document.getElementById('userAvatar'),
+  userName: document.getElementById('userName'),
+  googleLoginBtn: document.getElementById('googleLoginBtn'),
+  logoutBtn: document.getElementById('logoutBtn'),
 };
 
 /**
@@ -667,10 +676,106 @@ function purgeOldRecords() {
       showToast(err.message, true);
     });
 }
+
+// ============================================================================
+// 🎯 YOUR TURN: Step 3 - Google OAuth Authentication Handlers
+// ============================================================================
+// Implement the following 3 functions below:
+//
+// 1. async function signInWithGoogle()
+//    - Triggers Google OAuth sign-in via Supabase:
+//      if (!supabase) return showToast('Supabase client not initialized', true);
+//      await supabase.auth.signInWithOAuth({
+//        provider: 'google',
+//        options: {
+//          redirectTo: window.location.origin,
+//        },
+//      });
+//
+// ============================================================================
+// Google OAuth & Supabase Authentication Handlers
+// ============================================================================
+
+/**
+ * Dynamically fetch public configuration and initialize Supabase client
+ */
+async function initSupabaseClient() {
+  try {
+    const res = await fetch('/api/records/config');
+    if (!res.ok) return;
+    const config = await res.json();
+    if (config.supabaseUrl && config.supabaseAnonKey && window.supabase) {
+      supabase = window.supabase.createClient(
+        config.supabaseUrl,
+        config.supabaseAnonKey,
+      );
+    }
+  } catch (err) {
+    console.error('Failed to load client configuration:', err);
+  }
+}
+
+/**
+ * Initiate Google OAuth Sign-in Flow
+ */
+async function signInWithGoogle() {
+  if (!supabase) return showToast('Supabase client not initialized', true);
+  await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin,
+    },
+  });
+}
+
+/**
+ * Sign out current authenticated user session
+ */
+async function signOutUser() {
+  if (!supabase) return;
+  await supabase.auth.signOut();
+  showToast('Signed out successfully');
+}
+
+/**
+ * Update UI presentation based on authentication state
+ */
+function updateAuthUI(user) {
+  if (user) {
+    elements.googleLoginBtn?.classList.add('hidden');
+    elements.userProfilePill?.classList.remove('hidden');
+    if (elements.userName)
+      elements.userName.textContent =
+        user.user_metadata?.full_name || user.email;
+    if (elements.userAvatar)
+      elements.userAvatar.src =
+        user.user_metadata?.avatar_url ||
+        'https://www.gravatar.com/avatar/?d=mp';
+  } else {
+    elements.googleLoginBtn?.classList.remove('hidden');
+    elements.userProfilePill?.classList.add('hidden');
+  }
+}
+
 /**
  * Application Bootstrapper
  */
-function init() {
+async function init() {
+  // 0. Dynamically load Supabase configuration from backend and listen for auth state
+  await initSupabaseClient();
+
+  if (supabase) {
+    supabase.auth.onAuthStateChange((event, session) => {
+      state.user = session?.user || null;
+      updateAuthUI(state.user);
+      if (event === 'SIGNED_IN') {
+        showToast(
+          `Welcome, ${state.user.user_metadata?.full_name || state.user.email}!`,
+        );
+      }
+    });
+  }
+
   // 1. Currency setup
   elements.currencySelector.value = state.currency;
   updateCurrencySymbols();
@@ -737,7 +842,11 @@ function init() {
     if (e.target === elements.retentionModal) closeRetentionModal();
   });
 
-  // 9. Initial data fetch
+  // 10. Google Auth event listeners
+  elements.googleLoginBtn?.addEventListener('click', signInWithGoogle);
+  elements.logoutBtn?.addEventListener('click', signOutUser);
+
+  // 11. Initial data fetch
   loadSummary();
   loadRecords();
 }

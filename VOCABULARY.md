@@ -183,3 +183,17 @@
 | **`Cutoff Date`** | 截止日期分水岭 | 计算历史数据的分水岭时间点（如今天减去 3 年），早于该日期的属于“历史老账”，晚于该日期的属于“当前活跃数据”。 |
 | **`Data Retention Policy`** | 数据保留合规策略 | 商业金融与云数据库核心策略：设定数据在系统中的存活期限，定期归档清理以维持数据库性能与免费配额。 |
 | **`Modal Dialog`** | 模态弹窗对话框 | 阻断式全屏遮罩弹窗，用于执行归档、危险删除等高风险操作，强迫用户集中注意力确认。 |
+
+---
+
+## 十一、 云端 PostgreSQL 与 Supabase 数据库集成 (Cloud PostgreSQL & Supabase Integration)
+
+| 代码 / 单词 | 字面直译 (我: me) | 底层真正作用与意义 |
+| :--- | :--- | :--- |
+| **`pg` (node-postgres)** | Node 官方 PostgreSQL 驱动 | Node.js 与 PostgreSQL 通信的核心底层协议驱动，TypeORM 连接云端 Postgres 的必备插件。 |
+| **`DATABASE_URL`** | 数据库统一连接串 (URI) | 包含协议、用户名、密码、主机域名、端口和数据库名的标准单行连接字符串。 |
+| **`ssl: { rejectUnauthorized: false }`** | SSL 传输层安全配置 | 云数据库通信必须开启安全加密（TLS/SSL）；设为 false 允许云端托管的自签名安全证书正常握手。 |
+| **`BIGSERIAL`** | 64 位大整数自增主键 | PostgreSQL 专属主键类型，支持多达 $9 \times 10^{18}$ 笔数据，彻底杜绝数据量爆表溢出。 |
+| **`TIMESTAMPTZ`** | 带时区的时间戳 (Timestamp with Time Zone) | PostgreSQL 高级时间类型，在全球任何时区存入或读取时都能自动转换，防止跨国记账出现时差错乱。 |
+| **`Session Pooler (端口 6543/5432)`** | Supabase 连接池代理 (Supavisor) | Supabase 官方提供的高并发连接池，不仅防止数据库连接被耗尽，而且自带对 IPv4 网络的原生兼容。 |
+| **`Dynamic DB Driver Switching`** | 动态双驱动热切换 | 在 `AppModule` 中根据环境变量判断：有 `DATABASE_URL` 连云端 Supabase，没有则无缝降级使用本地 SQLite。 |

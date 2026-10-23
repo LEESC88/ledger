@@ -60,6 +60,19 @@ export class RecordsController {
   }
 
   /**
+   * HTTP GET /api/records/config
+   * Safely provides public client configuration (e.g., Supabase Anon Key) from environment variables.
+   */
+  @Get('config')
+  @ApiOperation({ summary: 'Get public client configuration' })
+  getClientConfig() {
+    return {
+      supabaseUrl: process.env.SUPABASE_URL || '',
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
+    };
+  }
+
+  /**
    * HTTP GET /api/records/archive
    * Retrieves historical records older than the specified retention threshold.
    */

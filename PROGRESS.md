@@ -262,6 +262,27 @@
 
 ---
 
+### Step 9: Cloud Database Migration - Supabase PostgreSQL Dual-Driver (Completed)
+* [✔] **PostgreSQL Driver Setup**:
+  * Installed `pg` and `@types/pg` packages into project dependencies.
+* [✔] **PostgreSQL Cloud DDL Schema**:
+  * Authored [`database/schema.postgres.sql`](database/schema.postgres.sql) with PostgreSQL datatypes (`BIGSERIAL`, `TIMESTAMPTZ`, check constraints, and performance indexes).
+* [✔] **Dynamic Dual-Driver Configuration**:
+  * Implemented environment-driven fallback in [`src/app.module.ts`](src/app.module.ts): connects to Supabase PostgreSQL when `DATABASE_URL` is configured, seamlessly falls back to local SQLite when unset.
+
+---
+
+### Step 10: Google OAuth & Zero-Leak Client Security (Completed)
+* [✔] **Zero-Leak Backend Configuration Endpoint (`src/records/records.controller.ts`)**:
+  * Implemented `GET /api/records/config` to safely inject public Supabase settings from server `.env` to browser client memory, preventing key leakage into Git history.
+* [✔] **Bespoke Auth UI Header Capsule (`public/index.html` & `public/style.css`)**:
+  * Designed Google sign-in button and user profile capsule (high-res avatar, display name/email, and logout trigger).
+* [✔] **Client-Side Auth Lifecycle (`public/app.js`)**:
+  * Integrated `@supabase/supabase-js` v2 with dynamic runtime initialization (`initSupabaseClient()`).
+  * Implemented Google OAuth flow (`signInWithOAuth`), session signout, and reactive auth state listening (`onAuthStateChange`).
+
+---
+
 ## 🎯 Next Immediate Steps (下一步操作)
-1. **[Live Interactive Verification]**: Open `http://localhost:3000`, test the header maintenance button, check historical archive preview, and verify CSV export & purge safeguards.
-2. **[Sprint 5: Mobile App & Packaging]**: Integrate Capacitor / PWA manifest to transform the application into an installable mobile experience.
+1. **[Live Auth Test]**: Run `npm run start:dev`, open `http://localhost:3000`, click **Sign in with Google**, and verify real-time avatar/name display in the navigation bar.
+2. **[Multi-User Mobile App Packaging]**: Package the application via Capacitor for testing across independent devices.
