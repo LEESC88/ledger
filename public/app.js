@@ -39,7 +39,7 @@ let state = {
 };
 
 // Supabase Client Instance (Dynamically loaded from backend)
-let supabase = null;
+let supabaseClient = null;
 
 // DOM Elements
 const elements = {
@@ -98,9 +98,10 @@ function formatNumber(amount) {
 function updateCurrencySymbols() {
   const sym = state.currency;
   document.querySelectorAll('.currency-sym').forEach((el) => {
-    if (el.textContent.includes('+')) {
+    const text = el.textContent || '';
+    if (text.includes('+')) {
       el.textContent = `+ ${sym}`;
-    } else if (el.textContent.includes('-') || el.textContent.includes('−')) {
+    } else if (text.includes('-') || text.includes('−')) {
       el.textContent = `− ${sym}`;
     } else {
       el.textContent = sym;
@@ -194,9 +195,9 @@ async function loadRecords() {
     const res = await fetch('/api/records');
     if (!res.ok) throw new Error('Failed to fetch records');
     const data = await res.json();
-    state.records = data;
+    state.records = Array.isArray(data) ? data : [];
 
-    updateMonthFilterDropdown(data);
+    updateMonthFilterDropdown(state.records);
     renderTable();
   } catch (err) {
     console.error('Error loading records:', err);
@@ -208,6 +209,7 @@ async function loadRecords() {
  * Populate Month Selector dynamically
  */
 function updateMonthFilterDropdown(records) {
+  if (!Array.isArray(records)) return;
   const months = new Set();
   records.forEach((r) => {
     if (r.date && r.date.length >= 7) {
@@ -292,7 +294,7 @@ function renderTable() {
 /**
  * Handle Form Submission (Post Transaction)
  */
-elements.recordForm.addEventListener('submit', async (e) => {
+async function handleRecordSubmit(e) {
   e.preventDefault();
 
   const amount = parseFloat(elements.inputAmount.value);
@@ -351,7 +353,7 @@ elements.recordForm.addEventListener('submit', async (e) => {
     elements.submitBtn.disabled = false;
     elements.submitBtn.style.opacity = '1';
   }
-});
+}
 
 /**
  * Delete Record Action
@@ -705,7 +707,7 @@ async function initSupabaseClient() {
     if (!res.ok) return;
     const config = await res.json();
     if (config.supabaseUrl && config.supabaseAnonKey && window.supabase) {
-      supabase = window.supabase.createClient(
+      supabaseClient = window.supabase.createClient(
         config.supabaseUrl,
         config.supabaseAnonKey,
       );
@@ -719,8 +721,8 @@ async function initSupabaseClient() {
  * Initiate Google OAuth Sign-in Flow
  */
 async function signInWithGoogle() {
-  if (!supabase) return showToast('Supabase client not initialized', true);
-  await supabase.auth.signInWithOAuth({
+  if (!supabaseClient) return showToast('Supabase client not initialized', true);
+  await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo: window.location.origin,
@@ -732,8 +734,8 @@ async function signInWithGoogle() {
  * Sign out current authenticated user session
  */
 async function signOutUser() {
-  if (!supabase) return;
-  await supabase.auth.signOut();
+  if (!supabaseClient) return;
+  await supabaseClient.auth.signOut();
   showToast('Signed out successfully');
 }
 
@@ -761,22 +763,10 @@ function updateAuthUI(user) {
  * Application Bootstrapper
  */
 async function init() {
-  // 0. Dynamically load Supabase configuration from backend and listen for auth state
-  await initSupabaseClient();
+  // 1. Transaction form submission
+  elements.recordForm?.addEventListener('submit', handleRecordSubmit);
 
-  if (supabase) {
-    supabase.auth.onAuthStateChange((event, session) => {
-      state.user = session?.user || null;
-      updateAuthUI(state.user);
-      if (event === 'SIGNED_IN') {
-        showToast(
-          `Welcome, ${state.user.user_metadata?.full_name || state.user.email}!`,
-        );
-      }
-    });
-  }
-
-  // 1. Currency setup
+  // 2. Currency setup
   elements.currencySelector.value = state.currency;
   updateCurrencySymbols();
 
@@ -787,14 +777,14 @@ async function init() {
     renderTable();
   });
 
-  // 2. Default date to today
+  // 3. Default date to today
   const today = new Date().toISOString().split('T')[0];
   elements.inputDate.value = today;
 
-  // 3. Category options
+  // 4. Category options & initial entry type
   setEntryType('expense');
 
-  // 4. Toggle buttons
+  // 5. Toggle buttons (Expense / Income)
   elements.btnTypeExpense.addEventListener('click', () =>
     setEntryType('expense'),
   );
@@ -802,7 +792,7 @@ async function init() {
     setEntryType('income'),
   );
 
-  // 5. Filter tabs
+  // 6. Filter tabs
   elements.filterTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       elements.filterTabs.forEach((t) => t.classList.remove('active'));
@@ -812,24 +802,24 @@ async function init() {
     });
   });
 
-  // 6. Month selector
+  // 7. Month selector
   elements.monthFilter.addEventListener('change', (e) => {
     state.currentMonth = e.target.value;
     loadSummary();
     renderTable();
   });
 
-  // 7. Refresh button
+  // 8. Refresh button
   elements.refreshBtn.addEventListener('click', () => {
     loadSummary();
     loadRecords();
     showToast('Ledger data synced');
   });
 
-  // 8. Export CSV button
+  // 9. Export CSV button
   elements.exportCsvBtn?.addEventListener('click', exportToCSV);
 
-  // 9. Retention modal event listeners
+  // 10. Retention modal event listeners
   elements.maintenanceBtn?.addEventListener('click', openRetentionModal);
   elements.closeModalBtn?.addEventListener('click', closeRetentionModal);
   elements.retentionYearsSelect?.addEventListener(
@@ -842,14 +832,42 @@ async function init() {
     if (e.target === elements.retentionModal) closeRetentionModal();
   });
 
-  // 10. Google Auth event listeners
+  // 11. Google Auth event listeners
   elements.googleLoginBtn?.addEventListener('click', signInWithGoogle);
   elements.logoutBtn?.addEventListener('click', signOutUser);
 
-  // 11. Initial data fetch
+  // 12. Initial data fetch
   loadSummary();
   loadRecords();
+
+  // 13. Dynamically load Supabase configuration and listen for auth state
+  try {
+    await initSupabaseClient();
+    if (supabaseClient) {
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        state.user = session?.user || null;
+        updateAuthUI(state.user);
+        if (event === 'SIGNED_IN') {
+          showToast(
+            `Welcome, ${state.user.user_metadata?.full_name || state.user.email}!`,
+          );
+        }
+      });
+
+      const { data } = await supabaseClient.auth.getSession();
+      if (data?.session?.user) {
+        state.user = data.session.user;
+        updateAuthUI(state.user);
+      }
+    }
+  } catch (authErr) {
+    console.warn('Supabase Auth init skipped:', authErr);
+  }
 }
 
-// Start
-document.addEventListener('DOMContentLoaded', init);
+// Start Application
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
