@@ -1,5 +1,6 @@
 {
   "version": "1.2.0",
   "releaseDate": "2026-10-26",
-  "notes": "Mobile UI overhaul, responsive card ledger, quick amount chips, and one-click update system."
+  "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk",
+  "notes": "High-contrast Light Mode UI, mobile card ledger, quick amount chips, direct Supabase Cloud sync, and one-click APK update."
 }

@@ -19,16 +19,12 @@
   <!-- Supabase Official Client SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <meta name="referrer" content="no-referrer">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="light">
   <script>
     (function () {
       try {
-        const theme = localStorage.getItem('ledger_theme') || 'system';
-        document.documentElement.setAttribute('data-theme', theme);
-        const meta = document.querySelector('meta[name="color-scheme"]');
-        if (meta) {
-          meta.content = theme === 'system' ? 'light dark' : theme;
-        }
+        localStorage.setItem('ledger_theme', 'light');
+        document.documentElement.setAttribute('data-theme', 'light');
       } catch (e) {}
     })();
   </script>
@@ -229,32 +225,9 @@
               <span>Edit Avatar</span>
             </button>
 
-            <!-- 3. Display Mode (Segmented Theme Switcher) -->
-            <div class="dropdown-theme-section">
-              <div class="dropdown-theme-header">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="5"></circle>
-                  <line x1="12" y1="1" x2="12" y2="3"></line>
-                  <line x1="12" y1="21" x2="12" y2="23"></line>
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                  <line x1="1" y1="12" x2="3" y2="12"></line>
-                  <line x1="21" y1="12" x2="23" y2="12"></line>
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                </svg>
-                <span>Display Mode</span>
-              </div>
-              <div class="theme-segmented-switch">
-                <button type="button" class="theme-segment-btn" data-theme-val="light" title="Light Theme">Light</button>
-                <button type="button" class="theme-segment-btn" data-theme-val="dark" title="Dark Theme">Dark</button>
-                <button type="button" class="theme-segment-btn active" data-theme-val="system" title="Follow System">Auto</button>
-              </div>
-            </div>
-
             <div class="dropdown-divider"></div>
 
-            <!-- 4. Settings -->
+            <!-- 3. Settings -->
             <button id="menuSettingsBtn" class="dropdown-item" role="menuitem">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="3"></circle>

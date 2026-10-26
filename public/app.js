@@ -1348,16 +1348,10 @@ async function purgeOldRecords() {
 // ============================================================================
 
 /**
- * Determine if Dark Theme is actively rendered
+ * Determine if Dark Theme is actively rendered (Locked to high-contrast light mode)
  */
 function isDarkModeActive() {
-  const theme = document.documentElement.getAttribute('data-theme');
-  if (theme === 'dark') return true;
-  if (theme === 'light') return false;
-  return (
-    window.matchMedia &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
+  return false;
 }
 
 /**
@@ -1453,18 +1447,15 @@ function saveUsername() {
 }
 
 /**
- * Set application visual theme (system, light, dark)
+ * Set application visual theme (Locked to high-contrast light mode)
  */
-function setAppTheme(theme) {
-  localStorage.setItem('ledger_theme', theme);
-  document.documentElement.setAttribute('data-theme', theme);
+function setAppTheme() {
+  localStorage.setItem('ledger_theme', 'light');
+  document.documentElement.setAttribute('data-theme', 'light');
   const meta = document.querySelector('meta[name="color-scheme"]');
   if (meta) {
-    meta.content = theme === 'system' ? 'light dark' : theme;
+    meta.content = 'light';
   }
-  elements.themeSegmentBtns.forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.themeVal === theme);
-  });
   if (categoryChartInstance && state.summary?.categoryBreakdown) {
     renderCategoryChart(state.summary.categoryBreakdown);
   }
@@ -1681,7 +1672,13 @@ async function registerServiceWorker() {
   }
 }
 
-function showUpdateAvailablePrompt(versionLabel) {
+let pendingUpdateVersion = null;
+let pendingApkDownloadUrl = 'https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk';
+
+function showUpdateAvailablePrompt(versionLabel, apkUrl) {
+  pendingUpdateVersion = versionLabel;
+  if (apkUrl) pendingApkDownloadUrl = apkUrl;
+
   if (elements.updateBannerText) {
     elements.updateBannerText.textContent = `🎉 New update available (v${versionLabel})! Tap Update Now to apply.`;
   }
@@ -1690,11 +1687,18 @@ function showUpdateAvailablePrompt(versionLabel) {
     elements.updateStatusText.textContent = `New version v${versionLabel} is ready to install!`;
   }
   if (elements.checkUpdateBtnText) {
-    elements.checkUpdateBtnText.textContent = `Install v${versionLabel}`;
+    elements.checkUpdateBtnText.textContent = `Update to v${versionLabel}`;
   }
 }
 
 async function applyAppUpdate() {
+  // If running inside Capacitor Android APK and a remote GitHub update exists, trigger APK download
+  if (window.Capacitor && pendingUpdateVersion && pendingUpdateVersion !== APP_VERSION) {
+    showToast(`🚀 Downloading latest APK (v${pendingUpdateVersion})...`);
+    window.open(pendingApkDownloadUrl, '_system');
+    return;
+  }
+
   showToast('🚀 Applying latest update and refreshing...');
   try {
     if (swRegistration && swRegistration.waiting) {
@@ -1728,13 +1732,32 @@ async function checkForAppUpdates(isManual = false) {
       await swRegistration.update().catch(() => {});
     }
 
-    const res = await fetch(`/version.json?t=${Date.now()}`, { cache: 'no-store' });
-    if (res.ok) {
-      const data = await res.json();
-      const remoteVersion = data?.version || APP_VERSION;
+    let remoteData = null;
+    try {
+      const ghRes = await fetch(
+        `https://raw.githubusercontent.com/LEESC88/ledger/master/public/version.json?t=${Date.now()}`,
+        { cache: 'no-store' },
+      );
+      if (ghRes.ok) {
+        remoteData = await ghRes.json();
+      }
+    } catch (e) {
+      // Fallback to local version.json
+    }
+
+    if (!remoteData) {
+      const localRes = await fetch(`/version.json?t=${Date.now()}`, { cache: 'no-store' });
+      if (localRes.ok) {
+        remoteData = await localRes.json();
+      }
+    }
+
+    if (remoteData) {
+      const remoteVersion = remoteData.version || APP_VERSION;
+      const apkUrl = remoteData.apkUrl || pendingApkDownloadUrl;
 
       if (remoteVersion !== APP_VERSION || (swRegistration && swRegistration.waiting)) {
-        showUpdateAvailablePrompt(remoteVersion);
+        showUpdateAvailablePrompt(remoteVersion, apkUrl);
         if (isManual) {
           await applyAppUpdate();
         }
@@ -1756,7 +1779,9 @@ async function checkForAppUpdates(isManual = false) {
     if (isManual) {
       if (elements.checkUpdateBtn) elements.checkUpdateBtn.disabled = false;
       if (elements.checkUpdateIcon) elements.checkUpdateIcon.classList.remove('sync-spinner-icon');
-      if (elements.checkUpdateBtnText) elements.checkUpdateBtnText.textContent = 'Check & Update';
+      if (elements.checkUpdateBtnText && (!pendingUpdateVersion || pendingUpdateVersion === APP_VERSION)) {
+        elements.checkUpdateBtnText.textContent = 'Check & Update';
+      }
     }
   }
 }
