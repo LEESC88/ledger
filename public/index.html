@@ -264,6 +264,56 @@
       </div>
     </header>
 
+    <!-- ===================================================================
+         P2: Top Monthly Budget Tracker Banner
+         =================================================================== -->
+    <section id="budgetTrackerBanner" class="budget-tracker-banner">
+      <div class="budget-tracker-inner">
+        <!-- Left: Details & Quick Edit -->
+        <div class="budget-meta-left">
+          <div class="budget-icon-capsule">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+          </div>
+          <div class="budget-info-block">
+            <div class="budget-title-line">
+              <span class="budget-label">Monthly Budget</span>
+              <span id="budgetPeriodLabel" class="budget-period-badge">All Records</span>
+              <button id="quickEditBudgetBtn" class="btn-budget-edit" title="Set Budget Limit">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                <span>Edit Limit</span>
+              </button>
+            </div>
+            <div class="budget-numbers-line">
+              <span class="budget-spent-txt">Spent: <strong id="budgetSpentVal">RM 0.00</strong></span>
+              <span class="budget-slash">/</span>
+              <span class="budget-cap-txt">Limit: <strong id="budgetLimitVal">RM 3,000.00</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Dynamic Visual Progress Bar & Alert Stats -->
+        <div class="budget-progress-block">
+          <div class="budget-bar-track">
+            <div id="budgetProgressBar" class="budget-bar-fill progress-normal" style="width: 0%"></div>
+          </div>
+          <div class="budget-status-row">
+            <div class="budget-pct-badge">
+              <span id="budgetPctVal" class="budget-pct-text">0%</span>
+              <span class="budget-pct-sub">of budget spent</span>
+            </div>
+            <div class="budget-rem-badge">
+              <span id="budgetRemainingLabel" class="budget-rem-text">Remaining: RM 3,000.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 3-Column Structured Workstation -->
     <main class="workstation-grid">
       
@@ -640,6 +690,58 @@
           <button id="closeAccountModalFooterBtn" class="btn-modal-secondary">
             <span>Done</span>
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P2: Monthly Budget Settings Modal -->
+    <div id="budgetModal" class="modal-overlay hidden">
+      <div class="modal-dialog modal-dialog-sm">
+        <div class="modal-header">
+          <div class="modal-title-row">
+            <div class="modal-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="modal-title">Monthly Budget Limit</h3>
+              <p class="modal-subtitle">Set spending target for <span id="budgetModalMonthText">All Months</span></p>
+            </div>
+          </div>
+          <button id="closeBudgetModalBtn" class="btn-close-modal" aria-label="Close modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="budget-form-group">
+            <label for="budgetInputAmount" class="field-label">Budget Limit (<span class="currency-sym">RM</span>)</label>
+            <div class="budget-input-wrapper">
+              <span class="currency-sym budget-input-prefix">RM</span>
+              <input
+                type="number"
+                id="budgetInputAmount"
+                class="budget-amount-input"
+                placeholder="e.g. 3000"
+                step="50"
+                min="1"
+              />
+            </div>
+          </div>
+
+          <div class="budget-preset-section">
+            <span class="preset-label">Quick Presets:</span>
+            <div class="budget-preset-pills">
+              <button type="button" class="preset-pill" data-amount="1000">1,000</button>
+              <button type="button" class="preset-pill" data-amount="2000">2,000</button>
+              <button type="button" class="preset-pill" data-amount="3000">3,000</button>
+              <button type="button" class="preset-pill" data-amount="5000">5,000</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="cancelBudgetBtn" class="btn-modal-secondary">Cancel</button>
+          <button id="saveBudgetBtn" class="btn-modal-primary">Save Limit</button>
         </div>
       </div>
     </div>

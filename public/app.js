@@ -35,6 +35,7 @@ let state = {
   currentFilter: 'all',
   currentMonth: 'all',
   searchQuery: '',
+  monthlyBudget: 3000, // P2: Default monthly budget ceiling
   records: [],
   summary: null,
 };
@@ -87,6 +88,23 @@ const elements = {
   searchInput: document.getElementById('searchInput'),
   clearSearchBtn: document.getElementById('clearSearchBtn'),
   searchResultCount: document.getElementById('searchResultCount'),
+
+  // P2: Budget Tracker Elements
+  budgetTrackerBanner: document.getElementById('budgetTrackerBanner'),
+  budgetPeriodLabel: document.getElementById('budgetPeriodLabel'),
+  quickEditBudgetBtn: document.getElementById('quickEditBudgetBtn'),
+  budgetSpentVal: document.getElementById('budgetSpentVal'),
+  budgetLimitVal: document.getElementById('budgetLimitVal'),
+  budgetProgressBar: document.getElementById('budgetProgressBar'),
+  budgetPctVal: document.getElementById('budgetPctVal'),
+  budgetRemainingLabel: document.getElementById('budgetRemainingLabel'),
+  budgetModal: document.getElementById('budgetModal'),
+  budgetModalMonthText: document.getElementById('budgetModalMonthText'),
+  closeBudgetModalBtn: document.getElementById('closeBudgetModalBtn'),
+  cancelBudgetBtn: document.getElementById('cancelBudgetBtn'),
+  saveBudgetBtn: document.getElementById('saveBudgetBtn'),
+  budgetInputAmount: document.getElementById('budgetInputAmount'),
+  budgetPresetBtns: document.querySelectorAll('.preset-pill'),
 
   // Reddit-Inspired Profile Dropdown Elements
   userProfilePill: document.getElementById('userProfilePill'),
@@ -203,6 +221,156 @@ function getAuthHeaders(extraHeaders = {}) {
 }
 
 /**
+ * P2: Monthly Budget Tracker Helpers & UI Rendering
+ */
+function getBudgetStorageKey(month) {
+  const userKey = state.user?.id || 'guest';
+  return `ledger_budget_${userKey}_${month || 'default'}`;
+}
+
+async function loadBudget(month) {
+  const targetMonth = month === 'all' ? 'default' : (month || 'default');
+  const cacheKey = getBudgetStorageKey(targetMonth);
+  const defaultKey = getBudgetStorageKey('default');
+
+  // 1. Initial read from local cache for instant UI feedback
+  const cached = localStorage.getItem(cacheKey) || localStorage.getItem(defaultKey);
+  if (cached && !isNaN(Number(cached))) {
+    state.monthlyBudget = Number(cached);
+  } else {
+    state.monthlyBudget = 3000;
+  }
+
+  // 2. Sync with cloud / database endpoint
+  try {
+    const res = await fetch(`/api/budgets?month=${encodeURIComponent(targetMonth)}`, {
+      headers: getAuthHeaders(),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.amount !== null && !isNaN(Number(data.amount))) {
+        state.monthlyBudget = Number(data.amount);
+        localStorage.setItem(cacheKey, state.monthlyBudget);
+      }
+    }
+  } catch (err) {
+    console.warn('Could not sync budget with server:', err);
+  }
+
+  renderBudgetTracker();
+}
+
+async function persistBudget(amount, month) {
+  const targetMonth = month === 'all' ? 'default' : (month || 'default');
+  const cacheKey = getBudgetStorageKey(targetMonth);
+
+  // Update memory state & localStorage immediately
+  state.monthlyBudget = Number(amount);
+  localStorage.setItem(cacheKey, state.monthlyBudget);
+  localStorage.setItem(getBudgetStorageKey('default'), state.monthlyBudget);
+
+  renderBudgetTracker();
+
+  // Persist to backend database (Supabase / SQLite)
+  try {
+    await fetch('/api/budgets', {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        month: targetMonth,
+        amount: state.monthlyBudget,
+      }),
+    });
+  } catch (err) {
+    console.error('Failed to persist budget to database:', err);
+  }
+}
+
+function renderBudgetTracker() {
+  if (!elements.budgetTrackerBanner) return;
+
+  const totalExpense = Number(state.summary?.totalExpense || 0);
+  const budgetLimit = Number(state.monthlyBudget || 3000);
+  const sym = state.currency || 'RM';
+
+  // Calculate percentage (can exceed 100%)
+  const percentage = budgetLimit > 0 ? Math.round((totalExpense / budgetLimit) * 100) : 0;
+  const barWidth = Math.min(Math.max(percentage, 0), 100);
+
+  // Update Labels
+  if (elements.budgetPeriodLabel) {
+    elements.budgetPeriodLabel.textContent =
+      state.currentMonth === 'all' ? 'All Records' : state.currentMonth;
+  }
+  if (elements.budgetSpentVal) {
+    elements.budgetSpentVal.textContent = `${sym} ${formatNumber(totalExpense)}`;
+  }
+  if (elements.budgetLimitVal) {
+    elements.budgetLimitVal.textContent = `${sym} ${formatNumber(budgetLimit)}`;
+  }
+  if (elements.budgetPctVal) {
+    elements.budgetPctVal.textContent = `${percentage}%`;
+  }
+
+  // Update Progress Bar Width
+  if (elements.budgetProgressBar) {
+    elements.budgetProgressBar.style.width = `${barWidth}%`;
+    elements.budgetProgressBar.classList.remove('progress-normal', 'progress-warning', 'progress-danger');
+  }
+
+  elements.budgetPctVal?.classList.remove('text-warning', 'text-danger');
+  elements.budgetRemainingLabel?.classList.remove('text-warning', 'text-danger');
+
+  // Apply Dynamic Status Colors: <85% Normal Green, 85%-99% Warning Orange, >=100% Danger Red
+  if (percentage >= 100) {
+    elements.budgetProgressBar?.classList.add('progress-danger');
+    elements.budgetPctVal?.classList.add('text-danger');
+    elements.budgetRemainingLabel?.classList.add('text-danger');
+    const overspend = totalExpense - budgetLimit;
+    if (elements.budgetRemainingLabel) {
+      elements.budgetRemainingLabel.textContent = `Exceeded by: ${sym} ${formatNumber(overspend)}`;
+    }
+  } else if (percentage >= 85) {
+    elements.budgetProgressBar?.classList.add('progress-warning');
+    elements.budgetPctVal?.classList.add('text-warning');
+    elements.budgetRemainingLabel?.classList.add('text-warning');
+    const remaining = budgetLimit - totalExpense;
+    if (elements.budgetRemainingLabel) {
+      elements.budgetRemainingLabel.textContent = `Remaining: ${sym} ${formatNumber(remaining)}`;
+    }
+  } else {
+    elements.budgetProgressBar?.classList.add('progress-normal');
+    const remaining = budgetLimit - totalExpense;
+    if (elements.budgetRemainingLabel) {
+      elements.budgetRemainingLabel.textContent = `Remaining: ${sym} ${formatNumber(remaining)}`;
+    }
+  }
+}
+
+function openBudgetModal() {
+  if (!elements.budgetModal) return;
+  const targetLabel = state.currentMonth === 'all' ? 'Default / All Months' : state.currentMonth;
+  if (elements.budgetModalMonthText) elements.budgetModalMonthText.textContent = targetLabel;
+  if (elements.budgetInputAmount) elements.budgetInputAmount.value = state.monthlyBudget || 3000;
+  elements.budgetModal.classList.remove('hidden');
+  elements.budgetInputAmount?.focus();
+}
+
+function closeBudgetModal() {
+  elements.budgetModal?.classList.add('hidden');
+}
+
+function handleSaveBudget() {
+  const val = parseFloat(elements.budgetInputAmount?.value);
+  if (isNaN(val) || val <= 0) {
+    return showToast('Please enter a valid positive budget limit', true);
+  }
+  persistBudget(val, state.currentMonth);
+  closeBudgetModal();
+  showToast(`Monthly budget limit updated to ${state.currency} ${formatNumber(val)}`);
+}
+
+/**
  * Fetch and Render Financial Summary
  */
 async function loadSummary() {
@@ -237,6 +405,9 @@ async function loadSummary() {
 
     // Render Category Breakdown Donut Chart
     renderCategoryChart(data.categoryBreakdown);
+
+    // Render P2 Monthly Budget Tracker
+    await loadBudget(state.currentMonth);
   } catch (err) {
     console.error('Error loading summary:', err);
   }
@@ -1210,9 +1381,30 @@ async function init() {
     if (e.target === elements.accountModal) closeAccountModal();
   });
 
+  // P2: Budget Tracker Event Listeners
+  elements.quickEditBudgetBtn?.addEventListener('click', openBudgetModal);
+  elements.closeBudgetModalBtn?.addEventListener('click', closeBudgetModal);
+  elements.cancelBudgetBtn?.addEventListener('click', closeBudgetModal);
+  elements.saveBudgetBtn?.addEventListener('click', handleSaveBudget);
+  elements.budgetModal?.addEventListener('click', (e) => {
+    if (e.target === elements.budgetModal) closeBudgetModal();
+  });
+  elements.budgetPresetBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const amt = btn.dataset.amount;
+      if (elements.budgetInputAmount && amt) {
+        elements.budgetInputAmount.value = amt;
+      }
+    });
+  });
+  elements.budgetInputAmount?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleSaveBudget();
+    if (e.key === 'Escape') closeBudgetModal();
+  });
+
   elements.menuSettingsBtn?.addEventListener('click', () => {
     closeProfileDropdown();
-    openRetentionModal();
+    openBudgetModal();
   });
   elements.menuLogoutBtn?.addEventListener('click', signOutUser);
 
