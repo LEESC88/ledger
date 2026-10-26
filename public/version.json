@@ -1,6 +1,6 @@
 {
-  "version": "1.2.1",
+  "version": "1.2.2",
   "releaseDate": "2026-10-26",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk",
-  "notes": "Restored high-contrast Dark/Light/System theme, added native Android OAuth loopback bridge (fixes localhost:3000 redirect on mobile), and added Quick Sync ID login."
+  "notes": "100% Serverless Zero-Port architecture with native Android Deep Link Google Login (com.leesc88.ledger://oauth), high-contrast Dark & Light themes, and Quick Cloud Sync ID."
 }

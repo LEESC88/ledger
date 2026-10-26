@@ -40,7 +40,8 @@ Built on a **Local-First + Direct BaaS (Supabase PostgreSQL)** architecture, LED
   - **Quick Amount Chips**: One-tap `+10`, `+20`, `+50`, `+100`, and `Reset` buttons for rapid single-handed entry.
   - **44px+ Touch Targets**: Compliant with mobile accessibility guidelines.
 - **☁️ Multi-Tenant Cloud Sync & Flexible Identity**:
-  - Sign in with **Google OAuth 2.0** or configure a **Custom Sync User ID** (e.g., `my-family-ledger`) to share and sync records across phones and desktops.
+  - **Native Google OAuth 2.0**: Zero-port system deep linking (`com.leesc88.ledger://oauth`) for seamless single-tap authentication directly back into the Android app.
+  - **Quick Cloud Sync ID**: Enter any custom Sync ID (e.g. `souchen` or `family-ledger`) for instant cloud synchronization across multiple phones and desktops without needing a browser redirect.
 - **⚡ Offline-First Draft Queue**:
   - Record expenses anywhere—even on a plane or in a subway. Offline entries update dashboard metrics immediately and auto-sync upon reconnection.
 - **📊 Dynamic Monthly Budget & Category Analytics**:
@@ -119,8 +120,9 @@ Open `http://localhost:3000` in your browser.
 2. **原生级移动端交互体验**
    - **自适应卡片账单**：在手机屏幕上自动将传统表格转换为清爽的双栏卡片布局，拒绝横向滚动条。
    - **快捷金额胶囊**：内置 `+10`、`+20`、`+50`、`+100` 与 `Reset` 快捷按钮，单手即可快速完成记账。
-3. **多端数据同步（Google 登录 & 自定义同步 ID）**
-   - 支持 **Google OAuth 2.0** 一键登录，也支持在右上角个人菜单中自定义 **Sync ID（用户 ID）**，轻松在手机与电脑之间实时同步同一份账本。
+3. **多端数据同步（原生 Google 登录 & 免跳转 Sync ID）**
+   - **原生 Google OAuth 2.0**：支持专属系统深度链接协议（`com.leesc88.ledger://oauth`），手机端授权后直接秒唤醒 App 完成登录，彻底摆脱本地 3000 端口与外部服务器依赖。
+   - **免跳转 Sync ID 登录**：在登录页直接输入任意同步 ID（如 `souchen`），免开浏览器一键进入，多台手机与电脑输入相同 ID 即可实时同步同一本账。
 4. **月度预算监控与分类图表**
    - 实时计算当月总收入、总支出、净结余与预算使用率，超过 80% 自动变黄预警，超过 100% 变红提醒，并配有直观的分类占比环形图。
 5. **一键检查与更新（One-Click Update）**

@@ -6,7 +6,7 @@
  */
 
 // Current Client Release Version
-const APP_VERSION = '1.2.1';
+const APP_VERSION = '1.2.2';
 
 // Default Public Supabase BaaS Cloud Configuration (Enables standalone Mobile APK without Node server)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -1674,7 +1674,7 @@ async function signInWithGoogle() {
   if (!supabaseClient)
     return showToast('Supabase client not initialized', true);
   const redirectTarget = window.Capacitor
-    ? 'http://localhost:3000'
+    ? 'com.leesc88.ledger://oauth'
     : window.location.origin;
   await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
