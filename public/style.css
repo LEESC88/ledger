@@ -2278,6 +2278,97 @@ body {
 }
 
 /* ==========================================================================
+   P3: Network & Cloud Sync Status Pill
+   ========================================================================== */
+.sync-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-quick);
+  line-height: 1;
+}
+
+.sync-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  transition: all var(--transition-quick);
+}
+
+/* Online / All Synced State */
+.sync-pill-online {
+  color: var(--text-muted);
+}
+.sync-pill-online .sync-status-dot {
+  background: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+.sync-pill-online:hover {
+  border-color: #10B981;
+  color: #10B981;
+}
+
+/* Offline Draft Mode State */
+.sync-pill-offline {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #D97706;
+}
+.sync-pill-offline .sync-status-dot {
+  background: #F59E0B;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+  animation: pulse-dot 1.5s infinite;
+}
+
+/* Active Syncing State */
+.sync-pill-syncing {
+  background: rgba(13, 148, 136, 0.1);
+  border-color: rgba(13, 148, 136, 0.4);
+  color: var(--brand-cyan);
+}
+.sync-pill-syncing .sync-status-dot {
+  display: none;
+}
+.sync-spinner-icon {
+  animation: spin 1s linear infinite;
+  color: var(--brand-cyan);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+/* Table Row Draft Badge */
+.tag-draft {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #D97706;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-xs);
+  padding: 1px 5px;
+  margin-left: 6px;
+  letter-spacing: 0.02em;
+}
+
+/* ==========================================================================
    Responsive Adaptations
    ========================================================================== */
 

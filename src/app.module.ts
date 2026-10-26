@@ -1,4 +1,6 @@
-import { join } from 'node:path';
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -7,6 +9,17 @@ import { Record } from './records/entities/record.entity.js';
 import { RecordsModule } from './records/records.module.js';
 import { Budget } from './budgets/entities/budget.entity.js';
 import { BudgetsModule } from './budgets/budgets.module.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const projectRoot = join(__dirname, '..');
+const publicPath = existsSync(join(projectRoot, 'public'))
+  ? join(projectRoot, 'public')
+  : join(process.cwd(), 'public');
+const dbPath =
+  process.env.DB_DATABASE ||
+  (existsSync(join(projectRoot, 'data', 'ledger.db'))
+    ? join(projectRoot, 'data', 'ledger.db')
+    : join(process.cwd(), 'data', 'ledger.db'));
 
 /**
  * Root Application Module
@@ -17,6 +30,7 @@ import { BudgetsModule } from './budgets/budgets.module.js';
     // 1. Global environment variable support (.env)
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: [join(projectRoot, '.env'), join(process.cwd(), '.env')],
     }),
 
     TypeOrmModule.forRoot(
@@ -30,7 +44,7 @@ import { BudgetsModule } from './budgets/budgets.module.js';
           }
         : {
             type: 'better-sqlite3',
-            database: process.env.DB_DATABASE || 'data/ledger.db',
+            database: dbPath,
             entities: [Record, Budget],
             synchronize: false,
           },
@@ -38,7 +52,7 @@ import { BudgetsModule } from './budgets/budgets.module.js';
 
     // 3. Static asset hosting for frontend web interface (serves public/ at http://localhost:3000)
     ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'public'),
+      rootPath: publicPath,
     }),
 
     // 4. Feature modules

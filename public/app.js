@@ -36,6 +36,8 @@ let state = {
   currentMonth: 'all',
   searchQuery: '',
   monthlyBudget: 3000, // P2: Default monthly budget ceiling
+  isOnline: navigator.onLine, // P3: Network connectivity state
+  isSyncing: false, // P3: Active background synchronization flag
   records: [],
   summary: null,
 };
@@ -88,6 +90,11 @@ const elements = {
   searchInput: document.getElementById('searchInput'),
   clearSearchBtn: document.getElementById('clearSearchBtn'),
   searchResultCount: document.getElementById('searchResultCount'),
+
+  // P3: Network & Cloud Sync Elements
+  syncStatusPill: document.getElementById('syncStatusPill'),
+  syncStatusText: document.getElementById('syncStatusText'),
+  syncSpinnerIcon: document.getElementById('syncSpinnerIcon'),
 
   // P2: Budget Tracker Elements
   budgetTrackerBanner: document.getElementById('budgetTrackerBanner'),
@@ -218,6 +225,181 @@ function getAuthHeaders(extraHeaders = {}) {
     headers['x-user-id'] = state.user.id;
   }
   return headers;
+}
+
+/**
+ * P3: Offline Draft Queue & Cloud Synchronization Manager
+ */
+function getOfflineQueueStorageKey() {
+  const userKey = state.user?.id || 'guest';
+  return `ledger_offline_queue_${userKey}`;
+}
+
+function getOfflineQueue() {
+  try {
+    const raw = localStorage.getItem(getOfflineQueueStorageKey());
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveOfflineQueue(queue) {
+  try {
+    localStorage.setItem(getOfflineQueueStorageKey(), JSON.stringify(queue));
+  } catch (e) {
+    console.error('Failed to save offline queue:', e);
+  }
+  updateSyncStatusUI();
+}
+
+function updateSyncStatusUI() {
+  if (!elements.syncStatusPill || !elements.syncStatusText) return;
+
+  const queue = getOfflineQueue();
+  state.isOnline = navigator.onLine;
+
+  if (state.isSyncing) {
+    elements.syncStatusPill.className = 'sync-status-pill sync-pill-syncing';
+    elements.syncSpinnerIcon?.classList.remove('hidden');
+    elements.syncStatusText.textContent = `Syncing (${queue.length})...`;
+    elements.syncStatusPill.title = `Syncing ${queue.length} offline records to cloud...`;
+    return;
+  }
+
+  elements.syncSpinnerIcon?.classList.add('hidden');
+
+  if (!state.isOnline) {
+    elements.syncStatusPill.className = 'sync-status-pill sync-pill-offline';
+    elements.syncStatusText.textContent =
+      queue.length > 0 ? `Offline (${queue.length})` : 'Offline Mode';
+    elements.syncStatusPill.title =
+      'Offline: Network disconnected. Transactions are queued locally and will sync once reconnected.';
+  } else if (queue.length > 0) {
+    elements.syncStatusPill.className = 'sync-status-pill sync-pill-offline';
+    elements.syncStatusText.textContent = `${queue.length} Pending (Click to Sync)`;
+    elements.syncStatusPill.title = `${queue.length} offline drafts waiting to upload. Click to sync now.`;
+  } else {
+    elements.syncStatusPill.className = 'sync-status-pill sync-pill-online';
+    elements.syncStatusText.textContent = 'Cloud Synced';
+    elements.syncStatusPill.title = 'Online: All records are fully synchronized with cloud.';
+  }
+}
+
+async function syncOfflineDrafts() {
+  if (state.isSyncing) return;
+  if (!navigator.onLine) {
+    showToast('Cannot sync: Device is currently offline', true);
+    return;
+  }
+
+  const queue = getOfflineQueue();
+  if (queue.length === 0) {
+    updateSyncStatusUI();
+    return;
+  }
+
+  state.isSyncing = true;
+  updateSyncStatusUI();
+
+  let successCount = 0;
+  const remainingQueue = [];
+
+  for (const item of queue) {
+    try {
+      const res = await fetch('/api/records', {
+        method: 'POST',
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(item.payload),
+      });
+
+      if (!res.ok) {
+        remainingQueue.push(item);
+      } else {
+        successCount++;
+      }
+    } catch (err) {
+      console.warn('Sync failed for draft item:', err);
+      remainingQueue.push(item);
+    }
+  }
+
+  saveOfflineQueue(remainingQueue);
+  state.isSyncing = false;
+  updateSyncStatusUI();
+
+  if (successCount > 0) {
+    showToast(`✅ Synced ${successCount} offline transaction(s) to cloud!`);
+    await Promise.all([loadRecords(), loadSummary()]);
+  }
+}
+
+function calculateLocalSummaryMetrics() {
+  let records = state.records;
+  if (state.currentMonth !== 'all') {
+    records = records.filter((r) => r.date && r.date.startsWith(state.currentMonth));
+  }
+
+  let totalIncome = 0;
+  let totalExpense = 0;
+  const categoryBreakdown = {};
+
+  for (const record of records) {
+    const amt = Number(record.amount || 0);
+    if (record.type === 'income') {
+      totalIncome += amt;
+    } else {
+      totalExpense += amt;
+      categoryBreakdown[record.category] = (categoryBreakdown[record.category] || 0) + amt;
+    }
+  }
+
+  state.summary = {
+    month: state.currentMonth,
+    totalIncome: Number(totalIncome.toFixed(2)),
+    totalExpense: Number(totalExpense.toFixed(2)),
+    netBalance: Number((totalIncome - totalExpense).toFixed(2)),
+    categoryBreakdown,
+  };
+
+  if (elements.netBalanceValue) elements.netBalanceValue.textContent = formatNumber(state.summary.netBalance);
+  if (elements.totalIncomeValue) elements.totalIncomeValue.textContent = formatNumber(state.summary.totalIncome);
+  if (elements.totalExpenseValue) elements.totalExpenseValue.textContent = formatNumber(state.summary.totalExpense);
+
+  renderCategoryChart(categoryBreakdown);
+  renderBudgetTracker();
+}
+
+function saveOfflineRecord(payload) {
+  const queue = getOfflineQueue();
+  const draftId = `draft-${Date.now()}`;
+  const draftItem = {
+    id: draftId,
+    payload,
+    createdAt: new Date().toISOString(),
+  };
+  queue.unshift(draftItem);
+  saveOfflineQueue(queue);
+
+  // Prepend draft to state.records for instant UI rendering
+  const draftRecord = {
+    id: draftId,
+    type: payload.type,
+    amount: payload.amount,
+    category: payload.category,
+    date: payload.date,
+    note: payload.note,
+    isDraft: true,
+  };
+  state.records = [draftRecord, ...state.records];
+
+  updateMonthFilterDropdown(state.records);
+  renderTable();
+  calculateLocalSummaryMetrics();
+
+  showToast(`⚡ Offline: Saved locally (${queue.length} pending sync)`);
+  if (elements.inputAmount) elements.inputAmount.value = '';
+  if (elements.inputNote) elements.inputNote.value = '';
 }
 
 /**
@@ -409,7 +591,8 @@ async function loadSummary() {
     // Render P2 Monthly Budget Tracker
     await loadBudget(state.currentMonth);
   } catch (err) {
-    console.error('Error loading summary:', err);
+    console.warn('Error loading summary (offline fallback):', err);
+    calculateLocalSummaryMetrics();
   }
 }
 
@@ -417,17 +600,49 @@ async function loadSummary() {
  * Fetch and Render All Records
  */
 async function loadRecords() {
+  const userKey = state.user?.id || 'guest';
+  const cacheKey = `ledger_cached_records_${userKey}`;
+  const queue = getOfflineQueue();
+  const draftRecords = queue.map((item) => ({
+    id: item.id,
+    type: item.payload.type,
+    amount: item.payload.amount,
+    category: item.payload.category,
+    date: item.payload.date,
+    note: item.payload.note,
+    isDraft: true,
+  }));
+
   try {
     const res = await fetch('/api/records', { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch records');
     const data = await res.json();
-    state.records = Array.isArray(data) ? data : [];
+    const serverRecords = Array.isArray(data) ? data : [];
 
+    // Cache latest server records for offline use
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify(serverRecords));
+    } catch (e) {
+      console.warn('Failed to cache records to localStorage:', e);
+    }
+
+    state.records = [...draftRecords, ...serverRecords];
     updateMonthFilterDropdown(state.records);
     renderTable();
   } catch (err) {
-    console.error('Error loading records:', err);
-    showToast('Failed to load transaction history', true);
+    console.warn('Network offline or fetch failed, loading from local cache:', err);
+    let cachedRecords = [];
+    try {
+      const cachedRaw = localStorage.getItem(cacheKey);
+      if (cachedRaw) cachedRecords = JSON.parse(cachedRaw);
+    } catch (e) {
+      console.warn('Failed to parse cached records:', e);
+    }
+
+    state.records = [...draftRecords, ...cachedRecords];
+    updateMonthFilterDropdown(state.records);
+    renderTable();
+    calculateLocalSummaryMetrics();
   }
 }
 
@@ -509,10 +724,14 @@ function renderTable() {
       const isIncome = record.type === 'income';
       const sign = isIncome ? `+ ${sym} ` : `− ${sym} `;
       const amountClass = isIncome ? 'amount-income' : 'amount-expense';
+      const isDraft = record.isDraft || String(record.id).startsWith('draft-');
+      const draftBadge = isDraft
+        ? `<span class="tag-draft" title="Saved locally. Pending upload to cloud.">⚡ Pending</span>`
+        : '';
 
       return `
-        <tr data-id="${record.id}">
-          <td class="col-date">${escapeHtml(record.date)}</td>
+        <tr data-id="${record.id}" class="${isDraft ? 'row-draft' : ''}">
+          <td class="col-date">${escapeHtml(record.date)}${draftBadge}</td>
           <td class="col-category">
             <span class="category-tag">
               <span class="category-dot" style="background: ${isIncome ? '#059669' : '#0D9488'}"></span>
@@ -526,7 +745,7 @@ function renderTable() {
             ${sign}${formatNumber(record.amount)}
           </td>
           <td class="col-actions text-center">
-            <button class="btn-del" onclick="handleDelete(${record.id})" title="Delete entry">
+            <button class="btn-del" onclick="handleDelete('${record.id}')" title="Delete entry">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -569,6 +788,12 @@ async function handleRecordSubmit(e) {
     ...(note ? { note } : {}),
   };
 
+  // P3: Save immediately to local queue if device is offline
+  if (!navigator.onLine) {
+    saveOfflineRecord(payload);
+    return;
+  }
+
   try {
     elements.submitBtn.disabled = true;
     elements.submitBtn.style.opacity = '0.7';
@@ -580,7 +805,7 @@ async function handleRecordSubmit(e) {
     });
 
     if (!res.ok) {
-      const errorData = await res.json();
+      const errorData = await res.json().catch(() => ({}));
       const msg = Array.isArray(errorData.message)
         ? errorData.message.join(', ')
         : errorData.message || 'Transaction failed';
@@ -595,8 +820,18 @@ async function handleRecordSubmit(e) {
 
     await Promise.all([loadRecords(), loadSummary()]);
   } catch (err) {
-    console.error('Error creating record:', err);
-    showToast(err.message, true);
+    console.error('Network or server error during record creation:', err);
+    // Graceful fallback to offline draft on connection error or network drop
+    if (
+      !navigator.onLine ||
+      err.name === 'TypeError' ||
+      err.message?.includes('fetch') ||
+      err.message?.includes('Failed to fetch')
+    ) {
+      saveOfflineRecord(payload);
+    } else {
+      showToast(err.message, true);
+    }
   } finally {
     elements.submitBtn.disabled = false;
     elements.submitBtn.style.opacity = '1';
@@ -607,7 +842,20 @@ async function handleRecordSubmit(e) {
  * Delete Record Action
  */
 window.handleDelete = async function (id) {
+  const isDraft = String(id).startsWith('draft-');
   if (!confirm(`Are you sure you want to delete transaction #${id}?`)) {
+    return;
+  }
+
+  if (isDraft) {
+    let queue = getOfflineQueue();
+    queue = queue.filter((item) => String(item.id) !== String(id));
+    saveOfflineQueue(queue);
+
+    state.records = state.records.filter((r) => String(r.id) !== String(id));
+    renderTable();
+    calculateLocalSummaryMetrics();
+    showToast('Draft transaction removed');
     return;
   }
 
@@ -1246,6 +1494,7 @@ function updateAuthUI(user) {
     closeProfileDropdown();
     closeAccountModal();
   }
+  updateSyncStatusUI();
 }
 
 /**
@@ -1422,6 +1671,38 @@ async function init() {
   // 12. Initial data fetch (Loads records for offline or active database)
   loadSummary();
   loadRecords();
+
+  // P3: Network & Cloud Sync Listeners
+  window.addEventListener('online', () => {
+    state.isOnline = true;
+    updateSyncStatusUI();
+    showToast('🌐 Network reconnected! Syncing drafts...');
+    syncOfflineDrafts();
+  });
+
+  window.addEventListener('offline', () => {
+    state.isOnline = false;
+    updateSyncStatusUI();
+    showToast('⚡ Device is offline. Transactions will be saved locally.', true);
+  });
+
+  elements.syncStatusPill?.addEventListener('click', () => {
+    if (!navigator.onLine) {
+      showToast('Device is offline. Will automatically sync once reconnected.', true);
+      return;
+    }
+    const queue = getOfflineQueue();
+    if (queue.length > 0) {
+      syncOfflineDrafts();
+    } else {
+      showToast('All transactions are up to date with cloud.');
+    }
+  });
+
+  updateSyncStatusUI();
+  if (navigator.onLine && getOfflineQueue().length > 0) {
+    syncOfflineDrafts();
+  }
 
   // 13. Dynamically load Supabase configuration and listen for auth state
   try {

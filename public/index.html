@@ -8,6 +8,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0D9488">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
   <!-- Chart.js Modern Data Visualization Engine -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Supabase Official Client SDK -->
@@ -174,6 +180,15 @@
         <!-- Refresh Button -->
         <button id="refreshBtn" class="btn-icon-header" title="Refresh Data">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        </button>
+
+        <!-- P3: Network & Cloud Sync Status Pill -->
+        <button id="syncStatusPill" class="sync-status-pill sync-pill-online" title="Cloud sync status: Connected">
+          <span class="sync-status-dot"></span>
+          <span id="syncStatusText" class="sync-status-text">Synced</span>
+          <svg id="syncSpinnerIcon" class="sync-spinner-icon hidden" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
           </svg>
         </button>
