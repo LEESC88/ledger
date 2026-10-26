@@ -1,6 +1,6 @@
 {
-  "version": "1.2.3",
+  "version": "1.3.0",
   "releaseDate": "2026-10-26",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk",
-  "notes": "Pure Google OAuth 2.0 authentication with native Android Deep Link (com.leesc88.ledger://oauth), high-contrast Dark & Light modes, and zero-port serverless operation."
+  "notes": "Minimalist Pro Max Multi-Page Mobile UI (Ledger / + Create Calculator Modal / Analytics / Settings), full Chinese & English bilingual switch, single-screen Login view, and tucked-away Sign Out in Settings."
 }

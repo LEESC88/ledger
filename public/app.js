@@ -1,12 +1,12 @@
 /**
  * ============================================================================
- * LEDGER — Client Application Engine (Cyan-White Theme Edition)
- * Pure Vanilla JavaScript • Zero External Dependencies
+ * LEDGER — Client Application Engine (Minimalist Pro Max Edition v1.3.0)
+ * Pure Vanilla JavaScript • Multi-Page Mobile Architecture • Bilingual (EN/中文)
  * ============================================================================
  */
 
 // Current Client Release Version
-const APP_VERSION = '1.2.3';
+const APP_VERSION = '1.3.0';
 
 // Default Public Supabase BaaS Cloud Configuration (Enables standalone Mobile APK without Node server)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -37,22 +37,222 @@ const CATEGORIES = {
   ],
 };
 
+// Visual Category Metadata (Icons + Bilingual Labels)
+const CATEGORY_META = {
+  'Food & Dining': { icon: '🍽️', en: 'Dining', zh: '餐饮美食' },
+  Transportation: { icon: '🚗', en: 'Transport', zh: '交通出行' },
+  Shopping: { icon: '🛍️', en: 'Shopping', zh: '购物消费' },
+  'Housing & Utilities': { icon: '🏠', en: 'Housing', zh: '居家水电' },
+  Entertainment: { icon: '🎬', en: 'Leisure', zh: '休闲娱乐' },
+  Healthcare: { icon: '💊', en: 'Medical', zh: '医疗健康' },
+  Subscriptions: { icon: '🔄', en: 'Subscript.', zh: '会员订阅' },
+  'Other Expense': { icon: '📦', en: 'Other', zh: '其他支出' },
+  Salary: { icon: '💰', en: 'Salary', zh: '薪资收入' },
+  Freelance: { icon: '💻', en: 'Freelance', zh: '兼职副业' },
+  'Investment & Dividends': { icon: '📈', en: 'Invest', zh: '投资理财' },
+  Bonus: { icon: '🎁', en: 'Bonus', zh: '奖金补贴' },
+  Refund: { icon: '↩️', en: 'Refund', zh: '退款报销' },
+  'Other Income': { icon: '✨', en: 'Other', zh: '其他收入' },
+};
+
+// Full Bilingual Dictionary (English & Simplified Chinese)
+const I18N = {
+  en: {
+    login_subtitle: 'Minimalist Personal Finance & Cloud Ledger',
+    feat_instant: 'Instant Record',
+    feat_analytics: 'Smart Analytics',
+    feat_sync: 'Cloud Sync',
+    continue_google: 'Continue with Google',
+    login_encrypted_note: 'End-to-end isolated cloud storage via Google OAuth 2.0',
+    sync_synced: 'Synced',
+    sync_offline: 'Offline',
+    sync_syncing: 'Syncing',
+    all_months: 'All Months',
+    view_profile: 'Account Profile',
+    change_avatar: 'Change Avatar',
+    appearance: 'Appearance',
+    theme_light: 'Light',
+    theme_dark: 'Dark',
+    theme_auto: 'Auto',
+    preferences: 'Preferences',
+    kpi_balance: 'Net Balance',
+    kpi_income: 'Income',
+    kpi_expense: 'Expense',
+    status_balanced: 'Balanced',
+    status_surplus: 'Surplus',
+    status_deficit: 'Deficit',
+    audit_ledger: 'Transactions',
+    search_placeholder: 'Search notes or categories...',
+    filter_all: 'All',
+    filter_expense: 'Expense',
+    filter_income: 'Income',
+    btn_new: 'Create',
+    col_date: 'Date',
+    col_category: 'Category',
+    col_note: 'Note',
+    col_amount: 'Amount',
+    empty_ledger: 'No transactions recorded yet.',
+    tap_create_first: '+ Tap to record your first entry',
+    monthly_budget: 'Monthly Budget',
+    all_records: 'All Records',
+    btn_set_budget: 'Set Limit',
+    spent: 'Spent:',
+    limit: 'Limit:',
+    remaining: 'Remaining',
+    exceeded_by: 'Exceeded by',
+    expense_structure: 'Expense Breakdown',
+    categories_unit: 'Categories',
+    no_expenses_period: 'No expenses in this period',
+    member_since: 'Member Since',
+    active_days: 'Active Days',
+    total_records: 'Transactions',
+    language_label: 'Language / 语言',
+    language_desc: 'Switch interface display language',
+    appearance_desc: 'High-contrast Light & Dark theme',
+    currency_label: 'Default Currency',
+    currency_desc: 'Display symbol for all amounts',
+    data_export_label: 'Data Backup & Archive',
+    data_export_desc: 'Export CSV or clean up old records',
+    btn_export_csv: 'Export CSV',
+    btn_archive: 'Archive',
+    app_version_label: 'Application Version',
+    up_to_date: 'Up to date',
+    btn_check_update: 'Check Update',
+    btn_sign_out: 'Sign Out of Account',
+    new_entry_title: 'New Transaction',
+    note_placeholder: 'Add a note (optional)...',
+    select_category: 'Category',
+    btn_save_entry: 'Save Transaction',
+    set_budget_title: 'Monthly Budget Limit',
+    target_period: 'Target Period:',
+    budget_Ceiling_label: 'Budget Limit Amount',
+    quick_select: 'Quick Presets',
+    btn_cancel: 'Cancel',
+    btn_save_budget: 'Save Limit',
+    retention_title: 'Data Retention & Archive',
+    retention_desc: 'Export and clean up historical records older than your selected threshold.',
+    archive_older_than: 'Archive records older than:',
+    year_1: '1 Year',
+    years_2: '2 Years',
+    years_3: '3 Years (Recommended)',
+    years_5: '5 Years',
+    records_found: 'Matching records:',
+    before_date: 'Before',
+    btn_download_csv: '1. Download CSV',
+    btn_purge_records: '2. Delete Old Records',
+    nav_ledger: 'Ledger',
+    nav_create: 'Create',
+    nav_analytics: 'Analytics',
+    nav_settings: 'Settings',
+  },
+  zh: {
+    login_subtitle: '极简个人财务与云端记账本',
+    feat_instant: '极速记账',
+    feat_analytics: '智能图表',
+    feat_sync: '云端同步',
+    continue_google: '使用 Google 账号继续',
+    login_encrypted_note: '基于 Google OAuth 2.0 的独立加密云端存储',
+    sync_synced: '已同步',
+    sync_offline: '离线模式',
+    sync_syncing: '同步中',
+    all_months: '所有月份',
+    view_profile: '个人资料',
+    change_avatar: '更换头像',
+    appearance: '外观模式',
+    theme_light: '浅色',
+    theme_dark: '深色',
+    theme_auto: '跟随系统',
+    preferences: '偏好设置',
+    kpi_balance: '净结余',
+    kpi_income: '总收入',
+    kpi_expense: '总支出',
+    status_balanced: '收支平衡',
+    status_surplus: '结余盈余',
+    status_deficit: '支出超支',
+    audit_ledger: '账单明细',
+    search_placeholder: '搜索备注或分类...',
+    filter_all: '全部',
+    filter_expense: '支出',
+    filter_income: '收入',
+    btn_new: '记一笔',
+    col_date: '日期',
+    col_category: '分类',
+    col_note: '备注',
+    col_amount: '金额',
+    empty_ledger: '暂无记账记录',
+    tap_create_first: '+ 点击记下第一笔账单',
+    monthly_budget: '每月预算监控',
+    all_records: '全部周期',
+    btn_set_budget: '设置预算',
+    spent: '已用:',
+    limit: '预算:',
+    remaining: '剩余可用',
+    exceeded_by: '已超支',
+    expense_structure: '支出分类占比',
+    categories_unit: '个分类',
+    no_expenses_period: '当前周期暂无支出数据',
+    member_since: '加入时间',
+    active_days: '记账天数',
+    total_records: '累计笔数',
+    language_label: '语言设置 / Language',
+    language_desc: '切换应用界面显示语言',
+    appearance_desc: '高对比度浅色与深色模式',
+    currency_label: '默认货币符号',
+    currency_desc: '应用于所有账单金额显示',
+    data_export_label: '数据备份与归档',
+    data_export_desc: '导出 CSV 报表或清理旧账单',
+    btn_export_csv: '导出 CSV',
+    btn_archive: '归档清理',
+    app_version_label: '应用版本信息',
+    up_to_date: '已是最新版本',
+    btn_check_update: '检查更新',
+    btn_sign_out: '退出当前账号 (Log Out)',
+    new_entry_title: '记一笔账',
+    note_placeholder: '添加备注说明（选填）...',
+    select_category: '选择分类',
+    btn_save_entry: '保存账单',
+    set_budget_title: '设置每月预算上限',
+    target_period: '目标月份:',
+    budget_Ceiling_label: '月度预算金额',
+    quick_select: '快捷额度',
+    btn_cancel: '取消',
+    btn_save_budget: '保存预算',
+    retention_title: '历史数据归档与清理',
+    retention_desc: '将早于指定年限的历史账单导出备份为 CSV，并可选择从云端清理。',
+    archive_older_than: '清理早于以下年限的记录:',
+    year_1: '1 年前',
+    years_2: '2 年前',
+    years_3: '3 年前（推荐）',
+    years_5: '5 年前',
+    records_found: '符合条件笔数:',
+    before_date: '早于',
+    btn_download_csv: '1. 下载备份 CSV',
+    btn_purge_records: '2. 清理历史记录',
+    nav_ledger: '明细',
+    nav_create: '记账',
+    nav_analytics: '图表',
+    nav_settings: '设置',
+  },
+};
+
 // Application State
 let state = {
-  user: null, // Track currently authenticated Google user
+  user: null,
+  lang: localStorage.getItem('ledger_lang') || 'zh',
+  activePage: 'ledger',
   currency: localStorage.getItem('ledger_currency') || 'RM',
   currentType: 'expense',
   currentFilter: 'all',
   currentMonth: 'all',
   searchQuery: '',
-  monthlyBudget: 3000, // P2: Default monthly budget ceiling
-  isOnline: navigator.onLine, // P3: Network connectivity state
-  isSyncing: false, // P3: Active background synchronization flag
+  monthlyBudget: 3000,
+  isOnline: navigator.onLine,
+  isSyncing: false,
   records: [],
   summary: null,
 };
 
-// Supabase Client Instance (Dynamically loaded from backend)
+// Supabase Client Instance
 let supabaseClient = null;
 
 // DOM Elements
@@ -61,6 +261,19 @@ const elements = {
   loginLandingView: document.getElementById('loginLandingView'),
   appLayout: document.getElementById('appLayout'),
   landingGoogleLoginBtn: document.getElementById('landingGoogleLoginBtn'),
+
+  // Multi-Page Views & Navigation
+  appPages: document.querySelectorAll('.app-page'),
+  bottomNavItems: document.querySelectorAll('.bottom-nav-item[data-nav-target]'),
+  openCreateModalBtn: document.getElementById('openCreateModalBtn'),
+  desktopCreateBtn: document.getElementById('desktopCreateBtn'),
+  emptyCreateBtn: document.getElementById('emptyCreateBtn'),
+
+  // Create Entry Modal & Calculator
+  createEntryModal: document.getElementById('createEntryModal'),
+  closeCreateModalBtn: document.getElementById('closeCreateModalBtn'),
+  categoryGridContainer: document.getElementById('categoryGridContainer'),
+  calcKeys: document.querySelectorAll('.calc-key[data-calc]'),
 
   // Header Controls
   currencySelector: document.getElementById('currencySelector'),
@@ -101,12 +314,12 @@ const elements = {
   clearSearchBtn: document.getElementById('clearSearchBtn'),
   searchResultCount: document.getElementById('searchResultCount'),
 
-  // P3: Network & Cloud Sync Elements
+  // Network & Cloud Sync Elements
   syncStatusPill: document.getElementById('syncStatusPill'),
   syncStatusText: document.getElementById('syncStatusText'),
   syncSpinnerIcon: document.getElementById('syncSpinnerIcon'),
 
-  // P2: Budget Tracker Elements
+  // Budget Tracker Elements
   budgetTrackerBanner: document.getElementById('budgetTrackerBanner'),
   budgetPeriodLabel: document.getElementById('budgetPeriodLabel'),
   quickEditBudgetBtn: document.getElementById('quickEditBudgetBtn'),
@@ -122,7 +335,7 @@ const elements = {
   saveBudgetBtn: document.getElementById('saveBudgetBtn'),
   budgetInputAmount: document.getElementById('budgetInputAmount'),
   budgetPresetBtns: document.querySelectorAll('.preset-pill'),
-  quickAmtChips: document.querySelectorAll('.quick-amt-chip'),
+  quickAmtChips: document.querySelectorAll('[data-quick-amt]'),
 
   // App Version & One-Click Update Elements
   updateNotificationBanner: document.getElementById('updateNotificationBanner'),
@@ -136,7 +349,7 @@ const elements = {
   checkUpdateBtnText: document.getElementById('checkUpdateBtnText'),
   openRetentionFromSettingsBtn: document.getElementById('openRetentionFromSettingsBtn'),
 
-  // Reddit-Inspired Profile Dropdown Elements
+  // Profile Dropdown & Settings Elements
   userProfilePill: document.getElementById('userProfilePill'),
   userAvatar: document.getElementById('userAvatar'),
   userName: document.getElementById('userName'),
@@ -146,15 +359,11 @@ const elements = {
   dropdownUserName: document.getElementById('dropdownUserName'),
   menuEditAvatarBtn: document.getElementById('menuEditAvatarBtn'),
   themeSegmentBtns: document.querySelectorAll('.theme-segment-btn'),
+  langSegmentBtns: document.querySelectorAll('.lang-segment-btn'),
   menuSettingsBtn: document.getElementById('menuSettingsBtn'),
   menuLogoutBtn: document.getElementById('menuLogoutBtn'),
 
-  // Account Information Modal Elements
-  accountModal: document.getElementById('accountModal'),
-  closeAccountModalBtn: document.getElementById('closeAccountModalBtn'),
-  closeAccountModalFooterBtn: document.getElementById(
-    'closeAccountModalFooterBtn',
-  ),
+  // Inline Account Profile Elements (in Settings Page)
   accountModalAvatar: document.getElementById('accountModalAvatar'),
   accountAvatarUploadBtn: document.getElementById('accountAvatarUploadBtn'),
   avatarFileInput: document.getElementById('avatarFileInput'),
@@ -172,6 +381,193 @@ const elements = {
   accountUsageDuration: document.getElementById('accountUsageDuration'),
   accountTransactionCount: document.getElementById('accountTransactionCount'),
 };
+
+/**
+ * Translate helper for current language
+ */
+function t(key) {
+  const dict = I18N[state.lang] || I18N.en;
+  return dict[key] || I18N.en[key] || key;
+}
+
+/**
+ * Get localized category label & icon
+ */
+function getCategoryDisplayLabel(cat) {
+  const meta = CATEGORY_META[cat];
+  if (!meta) return cat;
+  return state.lang === 'zh' ? meta.zh : meta.en;
+}
+
+function getCategoryIcon(cat) {
+  return CATEGORY_META[cat]?.icon || '📌';
+}
+
+/**
+ * Switch Application Language (EN / 中文)
+ */
+function setAppLanguage(lang) {
+  const validLang = lang === 'zh' ? 'zh' : 'en';
+  state.lang = validLang;
+  localStorage.setItem('ledger_lang', validLang);
+  document.documentElement.setAttribute('lang', validLang === 'zh' ? 'zh-CN' : 'en');
+
+  elements.langSegmentBtns.forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.langVal === validLang);
+  });
+
+  // Translate all static [data-i18n] elements
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = el.getAttribute('data-i18n');
+    if (key) el.textContent = t(key);
+  });
+
+  // Translate all [data-i18n-placeholder] inputs
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (key) el.setAttribute('placeholder', t(key));
+  });
+
+  // Re-render dynamic components with new language
+  renderCategoryGrid(state.currentType);
+  updateMonthFilterDropdown(state.records);
+  renderTable();
+  renderBudgetTracker();
+  updateSyncStatusUI();
+  updateAccountModalData();
+  if (state.summary) {
+    updateSummaryStatusBadge(state.summary.netBalance);
+    renderCategoryChart(state.summary.categoryBreakdown);
+  }
+}
+
+/**
+ * Switch Active Page View (ledger | analytics | settings)
+ */
+function switchAppPage(pageName) {
+  const target = ['ledger', 'analytics', 'settings'].includes(pageName)
+    ? pageName
+    : 'ledger';
+  state.activePage = target;
+
+  elements.appPages.forEach((page) => {
+    const isMatch = page.dataset.page === target;
+    page.classList.toggle('active', isMatch);
+    page.classList.toggle('hidden', !isMatch);
+  });
+
+  elements.bottomNavItems.forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.navTarget === target);
+  });
+
+  closeProfileDropdown();
+
+  if (target === 'analytics') {
+    renderBudgetTracker();
+    if (state.summary?.categoryBreakdown) {
+      setTimeout(() => renderCategoryChart(state.summary.categoryBreakdown), 30);
+    }
+  } else if (target === 'settings') {
+    updateAccountModalData();
+  }
+}
+
+/**
+ * Open & Close Create Transaction Sheet/Modal
+ */
+function openCreateModal() {
+  closeProfileDropdown();
+  if (elements.inputDate && !elements.inputDate.value) {
+    elements.inputDate.value = new Date().toISOString().split('T')[0];
+  }
+  renderCategoryGrid(state.currentType);
+  elements.createEntryModal?.classList.remove('hidden');
+}
+
+function closeCreateModal() {
+  elements.createEntryModal?.classList.add('hidden');
+}
+
+/**
+ * Render Visual Category Grid inside Create Modal
+ */
+function renderCategoryGrid(type) {
+  const list = CATEGORIES[type] || [];
+  if (!elements.selectCategory) return;
+
+  const currentVal = elements.selectCategory.value;
+  elements.selectCategory.innerHTML = list
+    .map((cat) => `<option value="${cat}">${cat}</option>`)
+    .join('');
+
+  const selectedCat = list.includes(currentVal) ? currentVal : list[0];
+  elements.selectCategory.value = selectedCat;
+
+  if (!elements.categoryGridContainer) return;
+
+  elements.categoryGridContainer.innerHTML = list
+    .map((cat) => {
+      const isSelected = cat === selectedCat;
+      const icon = getCategoryIcon(cat);
+      const label = getCategoryDisplayLabel(cat);
+      return `
+        <button type="button" class="cat-chip-btn ${isSelected ? 'active' : ''}" data-cat-val="${escapeHtml(cat)}">
+          <span class="cat-chip-icon">${icon}</span>
+          <span class="cat-chip-label">${escapeHtml(label)}</span>
+        </button>
+      `;
+    })
+    .join('');
+
+  elements.categoryGridContainer.querySelectorAll('.cat-chip-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const chosen = btn.getAttribute('data-cat-val');
+      if (chosen && elements.selectCategory) {
+        elements.selectCategory.value = chosen;
+      }
+      elements.categoryGridContainer
+        .querySelectorAll('.cat-chip-btn')
+        .forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+}
+
+/**
+ * Handle Calculator Numpad Input in Create Modal
+ */
+function handleCalculatorKey(key) {
+  if (!elements.inputAmount) return;
+  let raw = String(elements.inputAmount.value || '');
+
+  if (key === 'backspace') {
+    elements.inputAmount.value = raw.slice(0, -1);
+    return;
+  }
+
+  if (key === '.') {
+    if (!raw.includes('.')) {
+      elements.inputAmount.value = raw ? `${raw}.` : '0.';
+    }
+    return;
+  }
+
+  // Digit 0-9
+  if (/^\d$/.test(key)) {
+    if (raw === '0') {
+      elements.inputAmount.value = key;
+      return;
+    }
+    const parts = raw.split('.');
+    if (parts.length === 2 && parts[1].length >= 2) {
+      return; // Max 2 decimal places
+    }
+    if (raw.replace('.', '').length >= 9) {
+      return; // Prevent overflow
+    }
+    elements.inputAmount.value = raw + key;
+  }
+}
 
 /**
  * Format numeric value with commas and 2 decimals
@@ -217,7 +613,7 @@ function showToast(message, isError = false) {
 
   toastTimeout = setTimeout(() => {
     elements.toast.classList.add('hidden');
-  }, 2800);
+  }, 2600);
 }
 
 /**
@@ -226,17 +622,13 @@ function showToast(message, isError = false) {
 function setEntryType(type) {
   state.currentType = type;
   if (type === 'expense') {
-    elements.btnTypeExpense.classList.add('active');
-    elements.btnTypeIncome.classList.remove('active');
+    elements.btnTypeExpense?.classList.add('active');
+    elements.btnTypeIncome?.classList.remove('active');
   } else {
-    elements.btnTypeIncome.classList.add('active');
-    elements.btnTypeExpense.classList.remove('active');
+    elements.btnTypeIncome?.classList.add('active');
+    elements.btnTypeExpense?.classList.remove('active');
   }
-
-  const list = CATEGORIES[type] || [];
-  elements.selectCategory.innerHTML = list
-    .map((cat) => `<option value="${cat}">${cat}</option>`)
-    .join('');
+  renderCategoryGrid(type);
 }
 
 /**
@@ -251,7 +643,7 @@ function getAuthHeaders(extraHeaders = {}) {
 }
 
 /**
- * P3: Offline Draft Queue & Cloud Synchronization Manager
+ * Offline Draft Queue & Cloud Synchronization Manager
  */
 function getOfflineQueueStorageKey() {
   const userKey = state.user?.id || 'guest';
@@ -285,8 +677,7 @@ function updateSyncStatusUI() {
   if (state.isSyncing) {
     elements.syncStatusPill.className = 'sync-status-pill sync-pill-syncing';
     elements.syncSpinnerIcon?.classList.remove('hidden');
-    elements.syncStatusText.textContent = `Syncing (${queue.length})...`;
-    elements.syncStatusPill.title = `Syncing ${queue.length} offline records to cloud...`;
+    elements.syncStatusText.textContent = `${t('sync_syncing')} (${queue.length})`;
     return;
   }
 
@@ -295,24 +686,23 @@ function updateSyncStatusUI() {
   if (!state.isOnline) {
     elements.syncStatusPill.className = 'sync-status-pill sync-pill-offline';
     elements.syncStatusText.textContent =
-      queue.length > 0 ? `Offline (${queue.length})` : 'Offline Mode';
-    elements.syncStatusPill.title =
-      'Offline: Network disconnected. Transactions are queued locally and will sync once reconnected.';
+      queue.length > 0 ? `${t('sync_offline')} (${queue.length})` : t('sync_offline');
   } else if (queue.length > 0) {
     elements.syncStatusPill.className = 'sync-status-pill sync-pill-offline';
-    elements.syncStatusText.textContent = `${queue.length} Pending (Click to Sync)`;
-    elements.syncStatusPill.title = `${queue.length} offline drafts waiting to upload. Click to sync now.`;
+    elements.syncStatusText.textContent = `${queue.length} Pending`;
   } else {
     elements.syncStatusPill.className = 'sync-status-pill sync-pill-online';
-    elements.syncStatusText.textContent = 'Cloud Synced';
-    elements.syncStatusPill.title = 'Online: All records are fully synchronized with cloud.';
+    elements.syncStatusText.textContent = t('sync_synced');
   }
 }
 
 async function syncOfflineDrafts() {
   if (state.isSyncing) return;
   if (!navigator.onLine) {
-    showToast('Cannot sync: Device is currently offline', true);
+    showToast(
+      state.lang === 'zh' ? '当前处于离线状态，无法同步' : 'Cannot sync while offline',
+      true,
+    );
     return;
   }
 
@@ -360,7 +750,6 @@ async function syncOfflineDrafts() {
         }
       }
     } catch (err) {
-      console.warn('Sync failed for draft item:', err);
       remainingQueue.push(item);
     }
   }
@@ -370,8 +759,27 @@ async function syncOfflineDrafts() {
   updateSyncStatusUI();
 
   if (successCount > 0) {
-    showToast(`✅ Synced ${successCount} offline transaction(s) to cloud!`);
+    showToast(
+      state.lang === 'zh'
+        ? `✅ 已同步 ${successCount} 笔离线账单`
+        : `✅ Synced ${successCount} offline transaction(s)!`,
+    );
     await Promise.all([loadRecords(), loadSummary()]);
+  }
+}
+
+function updateSummaryStatusBadge(netBalance) {
+  if (!elements.balanceTrendBadge) return;
+  const net = Number(netBalance || 0);
+  if (net > 0) {
+    elements.balanceTrendBadge.className = 'status-pill status-positive';
+    elements.balanceTrendBadge.textContent = t('status_surplus');
+  } else if (net < 0) {
+    elements.balanceTrendBadge.className = 'status-pill status-negative';
+    elements.balanceTrendBadge.textContent = t('status_deficit');
+  } else {
+    elements.balanceTrendBadge.className = 'status-pill status-neutral';
+    elements.balanceTrendBadge.textContent = t('status_balanced');
   }
 }
 
@@ -403,10 +811,14 @@ function calculateLocalSummaryMetrics() {
     categoryBreakdown,
   };
 
-  if (elements.netBalanceValue) elements.netBalanceValue.textContent = formatNumber(state.summary.netBalance);
-  if (elements.totalIncomeValue) elements.totalIncomeValue.textContent = formatNumber(state.summary.totalIncome);
-  if (elements.totalExpenseValue) elements.totalExpenseValue.textContent = formatNumber(state.summary.totalExpense);
+  if (elements.netBalanceValue)
+    elements.netBalanceValue.textContent = formatNumber(state.summary.netBalance);
+  if (elements.totalIncomeValue)
+    elements.totalIncomeValue.textContent = formatNumber(state.summary.totalIncome);
+  if (elements.totalExpenseValue)
+    elements.totalExpenseValue.textContent = formatNumber(state.summary.totalExpense);
 
+  updateSummaryStatusBadge(state.summary.netBalance);
   renderCategoryChart(categoryBreakdown);
   renderBudgetTracker();
 }
@@ -422,7 +834,6 @@ function saveOfflineRecord(payload) {
   queue.unshift(draftItem);
   saveOfflineQueue(queue);
 
-  // Prepend draft to state.records for instant UI rendering
   const draftRecord = {
     id: draftId,
     type: payload.type,
@@ -438,13 +849,18 @@ function saveOfflineRecord(payload) {
   renderTable();
   calculateLocalSummaryMetrics();
 
-  showToast(`⚡ Offline: Saved locally (${queue.length} pending sync)`);
+  showToast(
+    state.lang === 'zh'
+      ? `⚡ 已离线保存（待同步 ${queue.length} 笔）`
+      : `⚡ Offline: Saved locally (${queue.length} pending)`,
+  );
   if (elements.inputAmount) elements.inputAmount.value = '';
   if (elements.inputNote) elements.inputNote.value = '';
+  closeCreateModal();
 }
 
 /**
- * P2: Monthly Budget Tracker Helpers & UI Rendering
+ * Monthly Budget Tracker Helpers & UI Rendering
  */
 function getBudgetStorageKey(month) {
   const userKey = state.user?.id || 'guest';
@@ -452,11 +868,10 @@ function getBudgetStorageKey(month) {
 }
 
 async function loadBudget(month) {
-  const targetMonth = month === 'all' ? 'default' : (month || 'default');
+  const targetMonth = month === 'all' ? 'default' : month || 'default';
   const cacheKey = getBudgetStorageKey(targetMonth);
   const defaultKey = getBudgetStorageKey('default');
 
-  // 1. Initial read from local cache for instant UI feedback
   const cached = localStorage.getItem(cacheKey) || localStorage.getItem(defaultKey);
   if (cached && !isNaN(Number(cached))) {
     state.monthlyBudget = Number(cached);
@@ -465,7 +880,6 @@ async function loadBudget(month) {
   }
   renderBudgetTracker();
 
-  // 2. Sync with cloud (Direct Supabase BaaS or fallback to local endpoint)
   const userId = state.user?.id;
   if (!userId) return;
 
@@ -498,15 +912,14 @@ async function loadBudget(month) {
       }
     }
   } catch (err) {
-    console.warn('Could not sync budget with cloud:', err);
+    // Uses cached budget when offline
   }
 }
 
 async function persistBudget(amount, month) {
-  const targetMonth = month === 'all' ? 'default' : (month || 'default');
+  const targetMonth = month === 'all' ? 'default' : month || 'default';
   const cacheKey = getBudgetStorageKey(targetMonth);
 
-  // Update memory state & localStorage immediately
   state.monthlyBudget = Number(amount);
   localStorage.setItem(cacheKey, state.monthlyBudget);
   localStorage.setItem(getBudgetStorageKey('default'), state.monthlyBudget);
@@ -515,7 +928,6 @@ async function persistBudget(amount, month) {
   const userId = state.user?.id;
   if (!userId) return;
 
-  // Persist directly to Supabase BaaS
   try {
     if (supabaseClient) {
       const { error } = await supabaseClient
@@ -536,7 +948,7 @@ async function persistBudget(amount, month) {
       }),
     });
   } catch (err) {
-    console.error('Failed to persist budget to database:', err);
+    console.error('Failed to persist budget:', err);
   }
 }
 
@@ -547,14 +959,12 @@ function renderBudgetTracker() {
   const budgetLimit = Number(state.monthlyBudget || 3000);
   const sym = state.currency || 'RM';
 
-  // Calculate percentage (can exceed 100%)
   const percentage = budgetLimit > 0 ? Math.round((totalExpense / budgetLimit) * 100) : 0;
   const barWidth = Math.min(Math.max(percentage, 0), 100);
 
-  // Update Labels
   if (elements.budgetPeriodLabel) {
     elements.budgetPeriodLabel.textContent =
-      state.currentMonth === 'all' ? 'All Records' : state.currentMonth;
+      state.currentMonth === 'all' ? t('all_records') : state.currentMonth;
   }
   if (elements.budgetSpentVal) {
     elements.budgetSpentVal.textContent = `${sym} ${formatNumber(totalExpense)}`;
@@ -566,23 +976,25 @@ function renderBudgetTracker() {
     elements.budgetPctVal.textContent = `${percentage}%`;
   }
 
-  // Update Progress Bar Width
   if (elements.budgetProgressBar) {
     elements.budgetProgressBar.style.width = `${barWidth}%`;
-    elements.budgetProgressBar.classList.remove('progress-normal', 'progress-warning', 'progress-danger');
+    elements.budgetProgressBar.classList.remove(
+      'progress-normal',
+      'progress-warning',
+      'progress-danger',
+    );
   }
 
   elements.budgetPctVal?.classList.remove('text-warning', 'text-danger');
   elements.budgetRemainingLabel?.classList.remove('text-warning', 'text-danger');
 
-  // Apply Dynamic Status Colors: <85% Normal Green, 85%-99% Warning Orange, >=100% Danger Red
   if (percentage >= 100) {
     elements.budgetProgressBar?.classList.add('progress-danger');
     elements.budgetPctVal?.classList.add('text-danger');
     elements.budgetRemainingLabel?.classList.add('text-danger');
     const overspend = totalExpense - budgetLimit;
     if (elements.budgetRemainingLabel) {
-      elements.budgetRemainingLabel.textContent = `Exceeded by: ${sym} ${formatNumber(overspend)}`;
+      elements.budgetRemainingLabel.textContent = `${t('exceeded_by')}: ${sym} ${formatNumber(overspend)}`;
     }
   } else if (percentage >= 85) {
     elements.budgetProgressBar?.classList.add('progress-warning');
@@ -590,22 +1002,24 @@ function renderBudgetTracker() {
     elements.budgetRemainingLabel?.classList.add('text-warning');
     const remaining = budgetLimit - totalExpense;
     if (elements.budgetRemainingLabel) {
-      elements.budgetRemainingLabel.textContent = `Remaining: ${sym} ${formatNumber(remaining)}`;
+      elements.budgetRemainingLabel.textContent = `${t('remaining')}: ${sym} ${formatNumber(remaining)}`;
     }
   } else {
     elements.budgetProgressBar?.classList.add('progress-normal');
     const remaining = budgetLimit - totalExpense;
     if (elements.budgetRemainingLabel) {
-      elements.budgetRemainingLabel.textContent = `Remaining: ${sym} ${formatNumber(remaining)}`;
+      elements.budgetRemainingLabel.textContent = `${t('remaining')}: ${sym} ${formatNumber(remaining)}`;
     }
   }
 }
 
 function openBudgetModal() {
   if (!elements.budgetModal) return;
-  const targetLabel = state.currentMonth === 'all' ? 'Default / All Months' : state.currentMonth;
+  const targetLabel =
+    state.currentMonth === 'all' ? t('all_records') : state.currentMonth;
   if (elements.budgetModalMonthText) elements.budgetModalMonthText.textContent = targetLabel;
-  if (elements.budgetInputAmount) elements.budgetInputAmount.value = state.monthlyBudget || 3000;
+  if (elements.budgetInputAmount)
+    elements.budgetInputAmount.value = state.monthlyBudget || 3000;
   elements.budgetModal.classList.remove('hidden');
   elements.budgetInputAmount?.focus();
 }
@@ -617,11 +1031,18 @@ function closeBudgetModal() {
 function handleSaveBudget() {
   const val = parseFloat(elements.budgetInputAmount?.value);
   if (isNaN(val) || val <= 0) {
-    return showToast('Please enter a valid positive budget limit', true);
+    return showToast(
+      state.lang === 'zh' ? '请输入大于 0 的有效预算金额' : 'Please enter a valid budget amount',
+      true,
+    );
   }
   persistBudget(val, state.currentMonth);
   closeBudgetModal();
-  showToast(`Monthly budget limit updated to ${state.currency} ${formatNumber(val)}`);
+  showToast(
+    state.lang === 'zh'
+      ? `预算已更新为 ${state.currency} ${formatNumber(val)}`
+      : `Monthly budget updated to ${state.currency} ${formatNumber(val)}`,
+  );
 }
 
 /**
@@ -629,6 +1050,12 @@ function handleSaveBudget() {
  */
 async function loadSummary() {
   try {
+    if (supabaseClient && state.user?.id) {
+      calculateLocalSummaryMetrics();
+      await loadBudget(state.currentMonth);
+      return;
+    }
+
     const url =
       state.currentMonth === 'all'
         ? '/api/records/summary'
@@ -639,32 +1066,16 @@ async function loadSummary() {
     const data = await res.json();
     state.summary = data;
 
-    // Render Metrics
     elements.netBalanceValue.textContent = formatNumber(data.netBalance);
     elements.totalIncomeValue.textContent = formatNumber(data.totalIncome);
     elements.totalExpenseValue.textContent = formatNumber(data.totalExpense);
 
-    // Update Status Pill
-    const net = Number(data.netBalance);
-    if (net > 0) {
-      elements.balanceTrendBadge.className = 'status-pill status-positive';
-      elements.balanceTrendBadge.textContent = 'Surplus';
-    } else if (net < 0) {
-      elements.balanceTrendBadge.className = 'status-pill status-negative';
-      elements.balanceTrendBadge.textContent = 'Deficit';
-    } else {
-      elements.balanceTrendBadge.className = 'status-pill status-neutral';
-      elements.balanceTrendBadge.textContent = 'Balanced';
-    }
-
-    // Render Category Breakdown Donut Chart
+    updateSummaryStatusBadge(data.netBalance);
     renderCategoryChart(data.categoryBreakdown);
-
-    // Render P2 Monthly Budget Tracker
     await loadBudget(state.currentMonth);
   } catch (err) {
-    console.warn('Error loading summary (offline fallback):', err);
     calculateLocalSummaryMetrics();
+    await loadBudget(state.currentMonth);
   }
 }
 
@@ -689,19 +1100,19 @@ async function loadRecords() {
     try {
       localStorage.setItem(cacheKey, JSON.stringify(serverRecords));
     } catch (e) {
-      console.warn('Failed to cache records to localStorage:', e);
+      // Ignore storage quota warning
     }
 
     state.records = [...draftRecords, ...serverRecords];
     updateMonthFilterDropdown(state.records);
     renderTable();
     calculateLocalSummaryMetrics();
+    updateAccountModalData();
   };
 
   const userId = state.user?.id;
 
   try {
-    // 1. Direct Supabase Query (Fastest, zero server dependency)
     if (supabaseClient && userId) {
       const { data, error } = await supabaseClient
         .from('records')
@@ -716,25 +1127,24 @@ async function loadRecords() {
       }
     }
 
-    // 2. Fallback to local server endpoint
     const res = await fetch('/api/records', { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch records');
     const data = await res.json();
     applyRecords(Array.isArray(data) ? data : []);
   } catch (err) {
-    console.warn('Network offline or fetch failed, loading from local cache:', err);
     let cachedRecords = [];
     try {
       const cachedRaw = localStorage.getItem(cacheKey);
       if (cachedRaw) cachedRecords = JSON.parse(cachedRaw);
     } catch (e) {
-      console.warn('Failed to parse cached records:', e);
+      // Ignore parse error
     }
 
     state.records = [...draftRecords, ...cachedRecords];
     updateMonthFilterDropdown(state.records);
     renderTable();
     calculateLocalSummaryMetrics();
+    updateAccountModalData();
   }
 }
 
@@ -742,7 +1152,7 @@ async function loadRecords() {
  * Populate Month Selector dynamically
  */
 function updateMonthFilterDropdown(records) {
-  if (!Array.isArray(records)) return;
+  if (!Array.isArray(records) || !elements.monthFilter) return;
   const months = new Set();
   records.forEach((r) => {
     if (r.date && r.date.length >= 7) {
@@ -753,7 +1163,7 @@ function updateMonthFilterDropdown(records) {
   const sortedMonths = Array.from(months).sort().reverse();
   const currentValue = elements.monthFilter.value;
 
-  let optionsHtml = '<option value="all">All Records</option>';
+  let optionsHtml = `<option value="all">${escapeHtml(t('all_months'))}</option>`;
   sortedMonths.forEach((m) => {
     optionsHtml += `<option value="${m}">${m}</option>`;
   });
@@ -768,32 +1178,30 @@ function updateMonthFilterDropdown(records) {
  * Render Audit Ledger Table
  */
 function renderTable() {
+  if (!elements.recordsTbody) return;
   let filtered = state.records;
 
-  // Filter by Month
   if (state.currentMonth !== 'all') {
-    filtered = filtered.filter((r) => r.date.startsWith(state.currentMonth));
+    filtered = filtered.filter((r) => r.date && r.date.startsWith(state.currentMonth));
   }
 
-  // Filter by Tab (all / expense / income)
   if (state.currentFilter !== 'all') {
     filtered = filtered.filter((r) => r.type === state.currentFilter);
   }
 
-  // Filter by Search Keyword (note or category)
   if (state.searchQuery) {
     const q = state.searchQuery.toLowerCase().trim();
-    filtered = filtered.filter(
-      (r) =>
-        (r.category && r.category.toLowerCase().includes(q)) ||
-        (r.note && r.note.toLowerCase().includes(q)),
-    );
+    filtered = filtered.filter((r) => {
+      const catEn = (r.category || '').toLowerCase();
+      const catLocal = getCategoryDisplayLabel(r.category).toLowerCase();
+      const noteStr = (r.note || '').toLowerCase();
+      return catEn.includes(q) || catLocal.includes(q) || noteStr.includes(q);
+    });
   }
 
-  // Update search UI indicator & clear button
   if (elements.searchResultCount) {
     if (state.searchQuery) {
-      elements.searchResultCount.textContent = `${filtered.length} found`;
+      elements.searchResultCount.textContent = `${filtered.length}`;
       elements.searchResultCount.classList.remove('hidden');
       elements.clearSearchBtn?.classList.remove('hidden');
     } else {
@@ -804,11 +1212,11 @@ function renderTable() {
 
   if (filtered.length === 0) {
     elements.recordsTbody.innerHTML = '';
-    elements.emptyState.classList.remove('hidden');
+    elements.emptyState?.classList.remove('hidden');
     return;
   }
 
-  elements.emptyState.classList.add('hidden');
+  elements.emptyState?.classList.add('hidden');
   const sym = state.currency;
 
   elements.recordsTbody.innerHTML = filtered
@@ -818,16 +1226,18 @@ function renderTable() {
       const amountClass = isIncome ? 'amount-income' : 'amount-expense';
       const isDraft = record.isDraft || String(record.id).startsWith('draft-');
       const draftBadge = isDraft
-        ? `<span class="tag-draft" title="Saved locally. Pending upload to cloud.">⚡ Pending</span>`
+        ? `<span class="tag-draft" title="Pending sync">⚡</span>`
         : '';
+      const catIcon = getCategoryIcon(record.category);
+      const catLabel = getCategoryDisplayLabel(record.category);
 
       return `
         <tr data-id="${record.id}" class="${isDraft ? 'row-draft' : ''}">
           <td class="col-date">${escapeHtml(record.date)}${draftBadge}</td>
           <td class="col-category">
             <span class="category-tag">
-              <span class="category-dot" style="background: ${isIncome ? '#059669' : '#0D9488'}"></span>
-              ${escapeHtml(record.category)}
+              <span>${catIcon}</span>
+              ${escapeHtml(catLabel)}
             </span>
           </td>
           <td class="col-note" title="${escapeHtml(record.note || '')}">
@@ -837,7 +1247,7 @@ function renderTable() {
             ${sign}${formatNumber(record.amount)}
           </td>
           <td class="col-actions text-center">
-            <button class="btn-del" onclick="handleDelete('${record.id}')" title="Delete entry">
+            <button class="btn-del" onclick="handleDelete('${record.id}')" title="Delete">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -862,13 +1272,18 @@ async function handleRecordSubmit(e) {
   const note = elements.inputNote.value.trim() || undefined;
 
   if (!amount || amount <= 0) {
-    showToast('Please enter an amount greater than 0', true);
-    elements.inputAmount.focus();
+    showToast(
+      state.lang === 'zh' ? '请输入大于 0 的金额' : 'Please enter an amount greater than 0',
+      true,
+    );
     return;
   }
 
   if (!date) {
-    showToast('Please specify a valid transaction date', true);
+    showToast(
+      state.lang === 'zh' ? '请选择有效日期' : 'Please select a valid date',
+      true,
+    );
     return;
   }
 
@@ -880,7 +1295,6 @@ async function handleRecordSubmit(e) {
     ...(note ? { note } : {}),
   };
 
-  // P3: Save immediately to local queue if device is offline
   if (!navigator.onLine) {
     saveOfflineRecord(payload);
     return;
@@ -893,9 +1307,8 @@ async function handleRecordSubmit(e) {
     const userId = state.user?.id;
     let created = false;
 
-    // 1. Direct Supabase Insert (Zero server dependency)
     if (supabaseClient && userId) {
-      const { data, error } = await supabaseClient
+      const { error } = await supabaseClient
         .from('records')
         .insert({
           user_id: userId,
@@ -914,7 +1327,6 @@ async function handleRecordSubmit(e) {
       created = true;
     }
 
-    // 2. Fallback to local server endpoint
     if (!created) {
       const res = await fetch('/api/records', {
         method: 'POST',
@@ -932,15 +1344,16 @@ async function handleRecordSubmit(e) {
     }
 
     showToast(
-      `Recorded ${state.currency} ${formatNumber(amount)} ${state.currentType}`,
+      state.lang === 'zh'
+        ? `✅ 已记账 ${state.currency} ${formatNumber(amount)}`
+        : `✅ Recorded ${state.currency} ${formatNumber(amount)}`,
     );
     elements.inputAmount.value = '';
     elements.inputNote.value = '';
+    closeCreateModal();
 
     await Promise.all([loadRecords(), loadSummary()]);
   } catch (err) {
-    console.error('Network or server error during record creation:', err);
-    // Graceful fallback to offline draft on connection error or network drop
     if (
       !navigator.onLine ||
       err.name === 'TypeError' ||
@@ -963,7 +1376,11 @@ async function handleRecordSubmit(e) {
  */
 window.handleDelete = async function (id) {
   const isDraft = String(id).startsWith('draft-');
-  if (!confirm(`Are you sure you want to delete transaction #${id}?`)) {
+  const confirmMsg =
+    state.lang === 'zh'
+      ? '确定要删除这条账单记录吗？'
+      : 'Are you sure you want to delete this transaction?';
+  if (!confirm(confirmMsg)) {
     return;
   }
 
@@ -975,7 +1392,7 @@ window.handleDelete = async function (id) {
     state.records = state.records.filter((r) => String(r.id) !== String(id));
     renderTable();
     calculateLocalSummaryMetrics();
-    showToast('Draft transaction removed');
+    showToast(state.lang === 'zh' ? '已删除离线记录' : 'Draft removed');
     return;
   }
 
@@ -983,7 +1400,6 @@ window.handleDelete = async function (id) {
     const userId = state.user?.id;
     let deleted = false;
 
-    // 1. Direct Supabase Delete
     if (supabaseClient && userId) {
       const { error } = await supabaseClient
         .from('records')
@@ -995,7 +1411,6 @@ window.handleDelete = async function (id) {
       deleted = true;
     }
 
-    // 2. Fallback to local server endpoint
     if (!deleted) {
       const res = await fetch(`/api/records/${id}`, {
         method: 'DELETE',
@@ -1005,10 +1420,9 @@ window.handleDelete = async function (id) {
       if (!res.ok) throw new Error('Failed to delete transaction');
     }
 
-    showToast(`Transaction #${id} deleted`);
+    showToast(state.lang === 'zh' ? '已删除账单' : 'Transaction deleted');
     await Promise.all([loadRecords(), loadSummary()]);
   } catch (err) {
-    console.error('Error deleting record:', err);
     showToast(err.message, true);
   }
 };
@@ -1027,19 +1441,19 @@ function escapeHtml(str) {
 }
 
 /**
- * Chart.js Instance & Color Harmony Palette (Cyan-White Theme)
+ * Chart.js Instance & Color Harmony Palette
  */
 let categoryChartInstance = null;
 
 const CHART_PALETTE = [
-  '#0D9488', // Teal Cyan (Brand Main)
-  '#059669', // Emerald Green
-  '#F59E0B', // Amber Gold
-  '#E11D48', // Rose Pink
-  '#6366F1', // Indigo Blue
-  '#0284C7', // Sky Blue
-  '#8B5CF6', // Purple Accent
-  '#64748B', // Neutral Slate
+  '#0D9488',
+  '#059669',
+  '#F59E0B',
+  '#E11D48',
+  '#6366F1',
+  '#0284C7',
+  '#8B5CF6',
+  '#64748B',
 ];
 
 /**
@@ -1049,31 +1463,28 @@ function renderCategoryChart(breakdown) {
   const chartCanvas = document.getElementById('categoryChart');
   if (!chartCanvas) return;
 
-  const categories = Object.keys(breakdown || {});
+  const rawCategories = Object.keys(breakdown || {});
+  const localizedLabels = rawCategories.map((c) => getCategoryDisplayLabel(c));
   const amounts = Object.values(breakdown || {}).map(Number);
   const totalExpense = amounts.reduce((sum, val) => sum + val, 0);
 
-  // If no expenses exist, display empty state placeholder
-  if (categories.length === 0 || totalExpense <= 0) {
+  if (rawCategories.length === 0 || totalExpense <= 0) {
     if (categoryChartInstance) {
       categoryChartInstance.destroy();
       categoryChartInstance = null;
     }
-    if (elements.chartEmptyOverlay)
-      elements.chartEmptyOverlay.classList.remove('hidden');
-    if (elements.chartCategoryCount)
-      elements.chartCategoryCount.textContent = '0 Categories';
+    elements.chartEmptyOverlay?.classList.remove('hidden');
+    if (elements.chartCategoryCount) {
+      elements.chartCategoryCount.textContent = `0 ${t('categories_unit')}`;
+    }
     return;
   }
 
-  // Active chart rendering
-  if (elements.chartEmptyOverlay)
-    elements.chartEmptyOverlay.classList.add('hidden');
+  elements.chartEmptyOverlay?.classList.add('hidden');
   if (elements.chartCategoryCount) {
-    elements.chartCategoryCount.textContent = `${categories.length} Categories`;
+    elements.chartCategoryCount.textContent = `${rawCategories.length} ${t('categories_unit')}`;
   }
 
-  // Destroy previous chart instance to prevent memory leaks and ghost canvas renders
   if (categoryChartInstance) {
     categoryChartInstance.destroy();
   }
@@ -1083,11 +1494,11 @@ function renderCategoryChart(breakdown) {
   categoryChartInstance = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: categories,
+      labels: localizedLabels,
       datasets: [
         {
           data: amounts,
-          backgroundColor: CHART_PALETTE.slice(0, categories.length),
+          backgroundColor: CHART_PALETTE.slice(0, rawCategories.length),
           borderWidth: 2,
           borderColor: isDark ? '#111827' : '#FFFFFF',
           hoverOffset: 4,
@@ -1097,14 +1508,14 @@ function renderCategoryChart(breakdown) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '70%',
+      cutout: '68%',
       plugins: {
         legend: {
           display: true,
           position: 'bottom',
           labels: {
-            boxWidth: 8,
-            boxHeight: 8,
+            boxWidth: 9,
+            boxHeight: 9,
             usePointStyle: true,
             pointStyle: 'circle',
             font: {
@@ -1113,13 +1524,13 @@ function renderCategoryChart(breakdown) {
               weight: '600',
             },
             color: isDark ? '#F8FAFC' : '#334155',
-            padding: 8,
+            padding: 10,
           },
         },
         tooltip: {
           backgroundColor: isDark ? '#1F2937' : '#0F172A',
-          padding: 8,
-          cornerRadius: 6,
+          padding: 9,
+          cornerRadius: 8,
           callbacks: {
             label: function (context) {
               const val = Number(context.raw) || 0;
@@ -1140,37 +1551,25 @@ function renderCategoryChart(breakdown) {
 function exportToCSV() {
   let recordsToExport = state.records;
 
-  // Filter according to active period selection
   if (state.currentMonth !== 'all') {
-    recordsToExport = recordsToExport.filter((r) =>
-      r.date.startsWith(state.currentMonth),
+    recordsToExport = recordsToExport.filter(
+      (r) => r.date && r.date.startsWith(state.currentMonth),
     );
   }
 
-  // Filter according to active type tab
   if (state.currentFilter !== 'all') {
-    recordsToExport = recordsToExport.filter(
-      (r) => r.type === state.currentFilter,
-    );
+    recordsToExport = recordsToExport.filter((r) => r.type === state.currentFilter);
   }
 
   if (recordsToExport.length === 0) {
-    showToast('No records available to export', true);
+    showToast(
+      state.lang === 'zh' ? '暂无可导出的账单记录' : 'No records available to export',
+      true,
+    );
     return;
   }
 
-  // CSV Standard Header Row
-  const headers = [
-    'ID',
-    'Date',
-    'Type',
-    'Category',
-    'Amount',
-    'Currency',
-    'Note',
-  ];
-
-  // Format data rows with quotation escaping
+  const headers = ['ID', 'Date', 'Type', 'Category', 'Amount', 'Currency', 'Note'];
   const rows = recordsToExport.map((r) => [
     r.id,
     `"${r.date}"`,
@@ -1181,12 +1580,9 @@ function exportToCSV() {
     `"${(r.note || '').replace(/"/g, '""')}"`,
   ]);
 
-  // Prepend UTF-8 BOM (\uFEFF) to guarantee Excel opens Chinese and Unicode cleanly without garbled characters
   const csvContent =
-    '\uFEFF' +
-    [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
+    '\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
 
-  // Generate downloadable Blob and trigger programmatic click
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const downloadLink = document.createElement('a');
@@ -1202,16 +1598,17 @@ function exportToCSV() {
   document.body.removeChild(downloadLink);
   URL.revokeObjectURL(url);
 
-  showToast(`Exported ${recordsToExport.length} transactions to CSV`);
+  showToast(
+    state.lang === 'zh'
+      ? `已导出 ${recordsToExport.length} 笔账单至 CSV`
+      : `Exported ${recordsToExport.length} transactions to CSV`,
+  );
 }
 
 // ============================================================================
 // Data Retention & Archiving Modal Controller
 // ============================================================================
 
-/**
- * Calculates cutoff date string in YYYY-MM-DD format based on retention threshold.
- */
 function getRetentionCutoffDate(years) {
   const date = new Date();
   date.setFullYear(date.getFullYear() - years);
@@ -1219,24 +1616,28 @@ function getRetentionCutoffDate(years) {
 }
 
 function evaluateRetentionEligible() {
+  if (!elements.retentionYearsSelect) return;
   const years = parseInt(elements.retentionYearsSelect.value) || 3;
   const cutoffDate = getRetentionCutoffDate(years);
-  elements.retentionCutoffDate.textContent = cutoffDate;
+  if (elements.retentionCutoffDate) elements.retentionCutoffDate.textContent = cutoffDate;
 
   const matchingRecords = state.records.filter((r) => r.date < cutoffDate);
-  elements.retentionMatchCount.textContent = matchingRecords.length;
+  if (elements.retentionMatchCount)
+    elements.retentionMatchCount.textContent = matchingRecords.length;
 
-  elements.downloadArchiveBtn.disabled = matchingRecords.length === 0;
-  elements.purgeOldRecordsBtn.disabled = matchingRecords.length === 0;
+  if (elements.downloadArchiveBtn)
+    elements.downloadArchiveBtn.disabled = matchingRecords.length === 0;
+  if (elements.purgeOldRecordsBtn)
+    elements.purgeOldRecordsBtn.disabled = matchingRecords.length === 0;
 }
 
 function openRetentionModal() {
   evaluateRetentionEligible();
-  elements.retentionModal.classList.remove('hidden');
+  elements.retentionModal?.classList.remove('hidden');
 }
 
 function closeRetentionModal() {
-  elements.retentionModal.classList.add('hidden');
+  elements.retentionModal?.classList.add('hidden');
 }
 
 function downLoadArchiveCSV() {
@@ -1249,15 +1650,7 @@ function downLoadArchiveCSV() {
     return;
   }
 
-  const headers = [
-    'ID',
-    'Date',
-    'Type',
-    'Category',
-    'Amount',
-    'Currency',
-    'Note',
-  ];
+  const headers = ['ID', 'Date', 'Type', 'Category', 'Amount', 'Currency', 'Note'];
   const rows = matchingRecords.map((r) => [
     r.id,
     `"${r.date}"`,
@@ -1269,8 +1662,7 @@ function downLoadArchiveCSV() {
   ]);
 
   const csvContent =
-    '\uFEFF' +
-    [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
+    '\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const downloadLink = document.createElement('a');
@@ -1284,16 +1676,16 @@ function downLoadArchiveCSV() {
   document.body.removeChild(downloadLink);
   URL.revokeObjectURL(url);
 
-  showToast(
-    `Downloaded ${matchingRecords.length} archived transactions to CSV`,
-  );
+  showToast(`Downloaded ${matchingRecords.length} archived transactions`);
 }
 
 async function purgeOldRecords() {
   const years = parseInt(elements.retentionYearsSelect.value) || 3;
   if (
     !confirm(
-      `Are you sure you want to permanently delete all records older than ${years} years? This action cannot be undone.`,
+      state.lang === 'zh'
+        ? `确定要永久清理早于 ${years} 年前的所有历史记录吗？此操作不可撤销。`
+        : `Permanently delete all records older than ${years} years?`,
     )
   ) {
     return;
@@ -1323,33 +1715,14 @@ async function purgeOldRecords() {
     closeRetentionModal();
     await Promise.all([loadRecords(), loadSummary()]);
   } catch (err) {
-    console.error('Error purging old records:', err);
     showToast(err.message, true);
   }
 }
 
 // ============================================================================
-// 🎯 YOUR TURN: Step 3 - Google OAuth Authentication Handlers
-// ============================================================================
-// Implement the following 3 functions below:
-//
-// 1. async function signInWithGoogle()
-//    - Triggers Google OAuth sign-in via Supabase:
-//      if (!supabase) return showToast('Supabase client not initialized', true);
-//      await supabase.auth.signInWithOAuth({
-//        provider: 'google',
-//        options: {
-//          redirectTo: window.location.origin,
-//        },
-//      });
-//
-// ============================================================================
 // Google OAuth & Supabase Authentication Handlers
 // ============================================================================
 
-/**
- * Determine if Dark Theme is actively rendered
- */
 function isDarkModeActive() {
   const attr = document.documentElement.getAttribute('data-theme');
   if (attr === 'dark') return true;
@@ -1357,9 +1730,6 @@ function isDarkModeActive() {
   return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
-/**
- * Generate a pristine vector SVG initials avatar as a fallback
- */
 function getInitialsAvatar(name) {
   const initial = (name || 'U').trim().charAt(0).toUpperCase();
   return `data:image/svg+xml,${encodeURIComponent(`
@@ -1370,9 +1740,6 @@ function getInitialsAvatar(name) {
   `)}`;
 }
 
-/**
- * Get the current user display name with custom override support
- */
 function getUserDisplayName(user) {
   if (!user) return 'User';
   const customName = localStorage.getItem('ledger_custom_name_' + user.id);
@@ -1381,9 +1748,6 @@ function getUserDisplayName(user) {
   return meta.full_name || meta.name || user.email?.split('@')[0] || 'User';
 }
 
-/**
- * Resolve user avatar with custom avatar fallback to Google metadata or SVG initials
- */
 function getUserAvatar(user) {
   if (!user) return getInitialsAvatar('U');
   const custom = localStorage.getItem('ledger_custom_avatar_' + user.id);
@@ -1395,9 +1759,6 @@ function getUserAvatar(user) {
   return getInitialsAvatar(name);
 }
 
-/**
- * Safely assign avatar source with fallback on image error
- */
 function setAvatarWithFallback(imgEl, user) {
   if (!imgEl) return;
   const url = getUserAvatar(user);
@@ -1408,13 +1769,11 @@ function setAvatarWithFallback(imgEl, user) {
   imgEl.src = url;
 }
 
-/**
- * Calculate user cumulative usage duration in days
- */
 function formatUsageDuration(firstLoginIso) {
-  if (!firstLoginIso) return '1 Day';
+  if (!firstLoginIso) return state.lang === 'zh' ? '1 天' : '1 Day';
   const diffMs = Math.max(0, Date.now() - new Date(firstLoginIso).getTime());
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+  if (state.lang === 'zh') return `${days} 天`;
   return `${days} ${days === 1 ? 'Day' : 'Days'}`;
 }
 
@@ -1440,13 +1799,18 @@ function saveUsername() {
   if (!state.user) return;
   const newName = (elements.usernameInput?.value || '').trim();
   if (!newName) {
-    return showToast('Username cannot be empty', true);
+    return showToast(
+      state.lang === 'zh' ? '用户名不能为空' : 'Username cannot be empty',
+      true,
+    );
   }
   localStorage.setItem('ledger_custom_name_' + state.user.id, newName);
   updateAuthUI(state.user);
   updateAccountModalData();
   cancelUsernameEdit();
-  showToast(`Username updated to "${newName}"`);
+  showToast(
+    state.lang === 'zh' ? `用户名已更新为 "${newName}"` : `Username updated to "${newName}"`,
+  );
 }
 
 /**
@@ -1476,7 +1840,7 @@ function setAppTheme(themeVal) {
 }
 
 /**
- * Profile Dropdown Toggle and Close Handlers (Reddit-Style)
+ * Profile Dropdown Toggle and Close Handlers
  */
 function toggleProfileDropdown(e) {
   e?.stopPropagation();
@@ -1495,30 +1859,15 @@ function closeProfileDropdown() {
 }
 
 /**
- * Account Information Modal Handlers
+ * Update Inline Account Profile Card inside Settings Page
  */
-function openAccountModal() {
-  closeProfileDropdown();
-  updateAccountModalData();
-  elements.accountModal?.classList.remove('hidden');
-}
-
-function closeAccountModal() {
-  cancelUsernameEdit();
-  elements.accountModal?.classList.add('hidden');
-}
-
 function updateAccountModalData() {
   if (!state.user) return;
   setAvatarWithFallback(elements.accountModalAvatar, state.user);
   const displayName = getUserDisplayName(state.user);
 
-  if (elements.accountModalName)
-    elements.accountModalName.textContent = displayName;
-  if (elements.accountModalEmail)
-    elements.accountModalEmail.textContent = state.user.email;
-
-  cancelUsernameEdit();
+  if (elements.accountModalName) elements.accountModalName.textContent = displayName;
+  if (elements.accountModalEmail) elements.accountModalEmail.textContent = state.user.email;
 
   const firstLoginKey = 'ledger_first_login_' + state.user.id;
   let firstLogin = localStorage.getItem(firstLoginKey);
@@ -1528,19 +1877,20 @@ function updateAccountModalData() {
   }
 
   if (elements.accountMemberSince) {
-    elements.accountMemberSince.textContent = new Date(
-      firstLogin,
-    ).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    elements.accountMemberSince.textContent = new Date(firstLogin).toLocaleDateString(
+      state.lang === 'zh' ? 'zh-CN' : 'en-US',
+      {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      },
+    );
   }
   if (elements.accountUsageDuration) {
     elements.accountUsageDuration.textContent = formatUsageDuration(firstLogin);
   }
   if (elements.accountTransactionCount) {
-    elements.accountTransactionCount.textContent = `${state.records.length} Records`;
+    elements.accountTransactionCount.textContent = `${state.records.length}`;
   }
 }
 
@@ -1563,7 +1913,7 @@ function handleAvatarFileSelected(e) {
     localStorage.setItem('ledger_custom_avatar_' + state.user.id, dataUrl);
     updateAuthUI(state.user);
     updateAccountModalData();
-    showToast('Custom avatar updated successfully');
+    showToast(state.lang === 'zh' ? '头像已更新' : 'Custom avatar updated');
   };
   reader.readAsDataURL(file);
 }
@@ -1573,7 +1923,7 @@ function resetToGoogleAvatar() {
   localStorage.removeItem('ledger_custom_avatar_' + state.user.id);
   updateAuthUI(state.user);
   updateAccountModalData();
-  showToast('Reset to original Google profile photo');
+  showToast('Reset to Google profile photo');
 }
 
 /**
@@ -1595,7 +1945,7 @@ async function initSupabaseClient() {
       }
     }
   } catch (err) {
-    // Mobile standalone APK or local server offline: successfully uses default BaaS config
+    // Standalone mobile APK uses default BaaS config
   }
 
   try {
@@ -1639,8 +1989,7 @@ window.__handleNativeOAuthCallback = async function (payloadStr) {
  * Initiate Google OAuth Sign-in Flow
  */
 async function signInWithGoogle() {
-  if (!supabaseClient)
-    return showToast('Supabase client not initialized', true);
+  if (!supabaseClient) return showToast('Supabase client not initialized', true);
   const redirectTarget = window.Capacitor
     ? 'com.leesc88.ledger://oauth'
     : window.location.origin;
@@ -1656,13 +2005,19 @@ async function signInWithGoogle() {
  * Sign out current authenticated user session
  */
 async function signOutUser() {
+  const confirmMsg =
+    state.lang === 'zh'
+      ? '确定要退出当前登录的 Google 账号吗？'
+      : 'Are you sure you want to sign out of your account?';
+  if (!confirm(confirmMsg)) return;
+
   if (supabaseClient) {
     await supabaseClient.auth.signOut().catch(() => {});
   }
   state.user = null;
+  switchAppPage('ledger');
   updateAuthUI(null);
-  showToast('Signed out successfully');
-  await Promise.all([loadRecords(), loadSummary()]);
+  showToast(state.lang === 'zh' ? '已安全退出登录' : 'Signed out successfully');
 }
 
 /**
@@ -1676,22 +2031,23 @@ function updateAuthUI(user) {
     const displayName = getUserDisplayName(user);
 
     if (elements.userName) elements.userName.textContent = displayName;
-    if (elements.dropdownUserName)
-      elements.dropdownUserName.textContent = `u/${displayName.replace(/\s+/g, '_')}`;
+    if (elements.dropdownUserName) {
+      elements.dropdownUserName.textContent = displayName;
+    }
 
     setAvatarWithFallback(elements.userAvatar, user);
     setAvatarWithFallback(elements.dropdownAvatar, user);
 
-    // Track first login date for usage duration
     const firstLoginKey = 'ledger_first_login_' + user.id;
     if (!localStorage.getItem(firstLoginKey)) {
       localStorage.setItem(firstLoginKey, new Date().toISOString());
     }
+    updateAccountModalData();
   } else {
     elements.loginLandingView?.classList.remove('hidden');
     elements.appLayout?.classList.add('hidden');
     closeProfileDropdown();
-    closeAccountModal();
+    closeCreateModal();
   }
   updateSyncStatusUI();
 }
@@ -1715,39 +2071,46 @@ async function registerServiceWorker() {
         });
       });
     } catch (err) {
-      console.warn('Service worker registration skipped:', err);
+      // Service worker optional
     }
   }
 }
 
 let pendingUpdateVersion = null;
-let pendingApkDownloadUrl = 'https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk';
+let pendingApkDownloadUrl =
+  'https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk';
 
 function showUpdateAvailablePrompt(versionLabel, apkUrl) {
   pendingUpdateVersion = versionLabel;
   if (apkUrl) pendingApkDownloadUrl = apkUrl;
 
   if (elements.updateBannerText) {
-    elements.updateBannerText.textContent = `🎉 New update available (v${versionLabel})! Tap Update Now to apply.`;
+    elements.updateBannerText.textContent =
+      state.lang === 'zh'
+        ? `🎉 发现新版本 (v${versionLabel})！点击立即更新。`
+        : `🎉 New update available (v${versionLabel})! Tap Update Now.`;
   }
   elements.updateNotificationBanner?.classList.remove('hidden');
   if (elements.updateStatusText) {
-    elements.updateStatusText.textContent = `New version v${versionLabel} is ready to install!`;
+    elements.updateStatusText.textContent = `v${versionLabel} ready!`;
   }
   if (elements.checkUpdateBtnText) {
-    elements.checkUpdateBtnText.textContent = `Update to v${versionLabel}`;
+    elements.checkUpdateBtnText.textContent = `Update v${versionLabel}`;
   }
 }
 
 async function applyAppUpdate() {
-  // If running inside Capacitor Android APK and a remote GitHub update exists, trigger APK download
-  if (window.Capacitor && pendingUpdateVersion && pendingUpdateVersion !== APP_VERSION) {
-    showToast(`🚀 Downloading latest APK (v${pendingUpdateVersion})...`);
+  if (
+    window.Capacitor &&
+    pendingUpdateVersion &&
+    pendingUpdateVersion !== APP_VERSION
+  ) {
+    showToast(`🚀 Downloading APK v${pendingUpdateVersion}...`);
     window.open(pendingApkDownloadUrl, '_system');
     return;
   }
 
-  showToast('🚀 Applying latest update and refreshing...');
+  showToast('🚀 Applying latest update...');
   try {
     if (swRegistration && swRegistration.waiting) {
       swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
@@ -1757,7 +2120,7 @@ async function applyAppUpdate() {
       await Promise.all(keys.map((k) => caches.delete(k)));
     }
   } catch (e) {
-    console.warn('Cache cleanup warning:', e);
+    // Ignore cache cleanup error
   }
   setTimeout(() => {
     window.location.reload();
@@ -1771,8 +2134,11 @@ async function checkForAppUpdates(isManual = false) {
 
   if (isManual) {
     if (elements.checkUpdateBtn) elements.checkUpdateBtn.disabled = true;
-    if (elements.checkUpdateIcon) elements.checkUpdateIcon.classList.add('sync-spinner-icon');
-    if (elements.checkUpdateBtnText) elements.checkUpdateBtnText.textContent = 'Checking...';
+    if (elements.checkUpdateIcon)
+      elements.checkUpdateIcon.classList.add('sync-spinner-icon');
+    if (elements.checkUpdateBtnText)
+      elements.checkUpdateBtnText.textContent =
+        state.lang === 'zh' ? '检查中...' : 'Checking...';
   }
 
   try {
@@ -1794,7 +2160,9 @@ async function checkForAppUpdates(isManual = false) {
     }
 
     if (!remoteData) {
-      const localRes = await fetch(`/version.json?t=${Date.now()}`, { cache: 'no-store' });
+      const localRes = await fetch(`/version.json?t=${Date.now()}`, {
+        cache: 'no-store',
+      });
       if (localRes.ok) {
         remoteData = await localRes.json();
       }
@@ -1804,7 +2172,10 @@ async function checkForAppUpdates(isManual = false) {
       const remoteVersion = remoteData.version || APP_VERSION;
       const apkUrl = remoteData.apkUrl || pendingApkDownloadUrl;
 
-      if (remoteVersion !== APP_VERSION || (swRegistration && swRegistration.waiting)) {
+      if (
+        remoteVersion !== APP_VERSION ||
+        (swRegistration && swRegistration.waiting)
+      ) {
         showUpdateAvailablePrompt(remoteVersion, apkUrl);
         if (isManual) {
           await applyAppUpdate();
@@ -1815,20 +2186,24 @@ async function checkForAppUpdates(isManual = false) {
 
     if (isManual) {
       if (elements.updateStatusText) {
-        elements.updateStatusText.textContent = `✅ Up to date (v${APP_VERSION}) — Checked just now`;
+        elements.updateStatusText.textContent = `✅ ${t('up_to_date')} (v${APP_VERSION})`;
       }
-      showToast(`✅ App is up to date (v${APP_VERSION})!`);
+      showToast(`✅ ${t('up_to_date')} (v${APP_VERSION})`);
     }
   } catch (err) {
     if (isManual) {
-      showToast('Could not reach update server. Using cached version.', true);
+      showToast('Could not reach update server.', true);
     }
   } finally {
     if (isManual) {
       if (elements.checkUpdateBtn) elements.checkUpdateBtn.disabled = false;
-      if (elements.checkUpdateIcon) elements.checkUpdateIcon.classList.remove('sync-spinner-icon');
-      if (elements.checkUpdateBtnText && (!pendingUpdateVersion || pendingUpdateVersion === APP_VERSION)) {
-        elements.checkUpdateBtnText.textContent = 'Check & Update';
+      if (elements.checkUpdateIcon)
+        elements.checkUpdateIcon.classList.remove('sync-spinner-icon');
+      if (
+        elements.checkUpdateBtnText &&
+        (!pendingUpdateVersion || pendingUpdateVersion === APP_VERSION)
+      ) {
+        elements.checkUpdateBtnText.textContent = t('btn_check_update');
       }
     }
   }
@@ -1838,36 +2213,55 @@ async function checkForAppUpdates(isManual = false) {
  * Application Bootstrapper
  */
 async function init() {
-  // 1. Transaction form submission
-  elements.recordForm?.addEventListener('submit', handleRecordSubmit);
-
-  // 2. Currency setup
-  elements.currencySelector.value = state.currency;
-  updateCurrencySymbols();
-
-  elements.currencySelector.addEventListener('change', (e) => {
-    state.currency = e.target.value;
-    localStorage.setItem('ledger_currency', state.currency);
-    updateCurrencySymbols();
-    renderTable();
+  // 1. Multi-Page Navigation Listeners
+  elements.bottomNavItems.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      switchAppPage(btn.dataset.navTarget);
+    });
   });
 
-  // 3. Default date to today
-  const today = new Date().toISOString().split('T')[0];
-  elements.inputDate.value = today;
+  // 2. Create Modal Triggers & Calculator Keypad
+  elements.openCreateModalBtn?.addEventListener('click', openCreateModal);
+  elements.desktopCreateBtn?.addEventListener('click', openCreateModal);
+  elements.emptyCreateBtn?.addEventListener('click', openCreateModal);
+  elements.closeCreateModalBtn?.addEventListener('click', closeCreateModal);
+  elements.createEntryModal?.addEventListener('click', (e) => {
+    if (e.target === elements.createEntryModal) closeCreateModal();
+  });
 
-  // 4. Category options & initial entry type
+  elements.calcKeys.forEach((keyBtn) => {
+    keyBtn.addEventListener('click', () => {
+      handleCalculatorKey(keyBtn.dataset.calc);
+    });
+  });
+
+  // 3. Transaction form submission
+  elements.recordForm?.addEventListener('submit', handleRecordSubmit);
+
+  // 4. Currency setup
+  if (elements.currencySelector) {
+    elements.currencySelector.value = state.currency;
+    elements.currencySelector.addEventListener('change', (e) => {
+      state.currency = e.target.value;
+      localStorage.setItem('ledger_currency', state.currency);
+      updateCurrencySymbols();
+      renderTable();
+      renderBudgetTracker();
+    });
+  }
+  updateCurrencySymbols();
+
+  // 5. Default date to today
+  const today = new Date().toISOString().split('T')[0];
+  if (elements.inputDate) elements.inputDate.value = today;
+
+  // 6. Category options & initial entry type
   setEntryType('expense');
 
-  // 5. Toggle buttons (Expense / Income)
-  elements.btnTypeExpense.addEventListener('click', () =>
-    setEntryType('expense'),
-  );
-  elements.btnTypeIncome.addEventListener('click', () =>
-    setEntryType('income'),
-  );
+  elements.btnTypeExpense?.addEventListener('click', () => setEntryType('expense'));
+  elements.btnTypeIncome?.addEventListener('click', () => setEntryType('income'));
 
-  // 6. Filter tabs
+  // 7. Filter tabs
   elements.filterTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       elements.filterTabs.forEach((t) => t.classList.remove('active'));
@@ -1877,14 +2271,14 @@ async function init() {
     });
   });
 
-  // 7. Month selector
-  elements.monthFilter.addEventListener('change', (e) => {
+  // 8. Month selector
+  elements.monthFilter?.addEventListener('change', (e) => {
     state.currentMonth = e.target.value;
     loadSummary();
     renderTable();
   });
 
-  // 8. Search Input and Clear Button
+  // 9. Search Input and Clear Button
   elements.searchInput?.addEventListener('input', (e) => {
     state.searchQuery = e.target.value.trim();
     renderTable();
@@ -1897,29 +2291,24 @@ async function init() {
     elements.searchInput?.focus();
   });
 
-  // 9. Refresh button
-  elements.refreshBtn.addEventListener('click', () => {
+  // 10. Refresh button
+  elements.refreshBtn?.addEventListener('click', () => {
     loadSummary();
     loadRecords();
-    showToast('Ledger data synced');
+    showToast(state.lang === 'zh' ? '数据已刷新' : 'Ledger data synced');
   });
 
-  // 9. Export CSV button
+  // 11. Export CSV & Retention Modal
   elements.exportCsvBtn?.addEventListener('click', exportToCSV);
-
-  // 10. Retention modal event listeners
   elements.closeModalBtn?.addEventListener('click', closeRetentionModal);
-  elements.retentionYearsSelect?.addEventListener(
-    'change',
-    evaluateRetentionEligible,
-  );
+  elements.retentionYearsSelect?.addEventListener('change', evaluateRetentionEligible);
   elements.downloadArchiveBtn?.addEventListener('click', downLoadArchiveCSV);
   elements.purgeOldRecordsBtn?.addEventListener('click', purgeOldRecords);
   elements.retentionModal?.addEventListener('click', (e) => {
     if (e.target === elements.retentionModal) closeRetentionModal();
   });
 
-  // 11. Reddit-Style Profile Dropdown & Modal Event Listeners
+  // 12. Profile Dropdown & Inline Settings Profile Event Listeners
   elements.landingGoogleLoginBtn?.addEventListener('click', signInWithGoogle);
   elements.userProfilePill?.addEventListener('click', toggleProfileDropdown);
   document.addEventListener('click', (e) => {
@@ -1932,7 +2321,14 @@ async function init() {
     }
   });
 
-  elements.menuViewProfileBtn?.addEventListener('click', openAccountModal);
+  elements.menuViewProfileBtn?.addEventListener('click', () => {
+    closeProfileDropdown();
+    switchAppPage('settings');
+  });
+  elements.menuSettingsBtn?.addEventListener('click', () => {
+    closeProfileDropdown();
+    switchAppPage('settings');
+  });
   elements.menuEditAvatarBtn?.addEventListener('click', () => {
     closeProfileDropdown();
     elements.avatarFileInput?.click();
@@ -1943,10 +2339,7 @@ async function init() {
   elements.uploadAvatarTextBtn?.addEventListener('click', () =>
     elements.avatarFileInput?.click(),
   );
-  elements.avatarFileInput?.addEventListener(
-    'change',
-    handleAvatarFileSelected,
-  );
+  elements.avatarFileInput?.addEventListener('change', handleAvatarFileSelected);
   elements.resetAvatarBtn?.addEventListener('click', resetToGoogleAvatar);
 
   // Username Editing Event Listeners
@@ -1958,16 +2351,7 @@ async function init() {
     if (e.key === 'Escape') cancelUsernameEdit();
   });
 
-  elements.closeAccountModalBtn?.addEventListener('click', closeAccountModal);
-  elements.closeAccountModalFooterBtn?.addEventListener(
-    'click',
-    closeAccountModal,
-  );
-  elements.accountModal?.addEventListener('click', (e) => {
-    if (e.target === elements.accountModal) closeAccountModal();
-  });
-
-  // P2: Budget Tracker Event Listeners
+  // Budget Tracker Event Listeners
   elements.quickEditBudgetBtn?.addEventListener('click', openBudgetModal);
   elements.closeBudgetModalBtn?.addEventListener('click', closeBudgetModal);
   elements.cancelBudgetBtn?.addEventListener('click', closeBudgetModal);
@@ -1988,25 +2372,25 @@ async function init() {
     if (e.key === 'Escape') closeBudgetModal();
   });
 
-  // Quick Amount Chips in Entry Form
+  // Quick Amount Chips in Create Calculator
   elements.quickAmtChips.forEach((chip) => {
     chip.addEventListener('click', () => {
       if (!elements.inputAmount) return;
       const action = chip.dataset.quickAmt;
       if (action === 'clear') {
         elements.inputAmount.value = '';
-        elements.inputAmount.focus();
         return;
       }
       const increment = parseFloat(action) || 0;
       const current = parseFloat(elements.inputAmount.value) || 0;
-      elements.inputAmount.value = (current + increment).toFixed(2);
+      elements.inputAmount.value = String(
+        Number((current + increment).toFixed(2)),
+      );
     });
   });
 
-  // Settings Modal: App Update & Data Retention Shortcut
+  // Settings: App Update & Data Retention Shortcut
   elements.openRetentionFromSettingsBtn?.addEventListener('click', () => {
-    closeBudgetModal();
     openRetentionModal();
   });
 
@@ -2022,10 +2406,7 @@ async function init() {
     elements.updateNotificationBanner?.classList.add('hidden');
   });
 
-  elements.menuSettingsBtn?.addEventListener('click', () => {
-    closeProfileDropdown();
-    openBudgetModal();
-  });
+  // Tucked-away Logout Button inside Settings
   elements.menuLogoutBtn?.addEventListener('click', signOutUser);
 
   // Theme switcher segmented controls
@@ -2035,38 +2416,44 @@ async function init() {
     });
   });
 
-  // Apply initial theme from localStorage
+  // Language switcher segmented controls (EN / 中文)
+  elements.langSegmentBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setAppLanguage(btn.dataset.langVal);
+    });
+  });
+
+  // Apply initial theme & language from localStorage
   const savedTheme = localStorage.getItem('ledger_theme') || 'system';
   setAppTheme(savedTheme);
+  setAppLanguage(state.lang);
 
-  // 12. Initial data fetch (Loads records for offline or active database)
+  // Initial data fetch
   loadSummary();
   loadRecords();
 
-  // P3: Network & Cloud Sync Listeners
+  // Network & Cloud Sync Listeners
   window.addEventListener('online', () => {
     state.isOnline = true;
     updateSyncStatusUI();
-    showToast('🌐 Network reconnected! Syncing drafts...');
     syncOfflineDrafts();
   });
 
   window.addEventListener('offline', () => {
     state.isOnline = false;
     updateSyncStatusUI();
-    showToast('⚡ Device is offline. Transactions will be saved locally.', true);
   });
 
   elements.syncStatusPill?.addEventListener('click', () => {
     if (!navigator.onLine) {
-      showToast('Device is offline. Will automatically sync once reconnected.', true);
+      showToast(t('sync_offline'), true);
       return;
     }
     const queue = getOfflineQueue();
     if (queue.length > 0) {
       syncOfflineDrafts();
     } else {
-      showToast('All transactions are up to date with cloud.');
+      showToast(t('sync_synced'));
     }
   });
 
@@ -2075,11 +2462,10 @@ async function init() {
     syncOfflineDrafts();
   }
 
-  // Register Service Worker & Check for Updates
   await registerServiceWorker();
   checkForAppUpdates(false);
 
-  // 13. Dynamically load Supabase configuration and listen for auth state
+  // Initialize Supabase Auth & Session Listener
   try {
     await initSupabaseClient();
 
@@ -2088,9 +2474,6 @@ async function init() {
         state.user = session?.user || null;
         updateAuthUI(state.user);
         if (event === 'SIGNED_IN' && state.user) {
-          showToast(
-            `Welcome, ${state.user.user_metadata?.full_name || state.user.email}!`,
-          );
           await Promise.all([loadRecords(), loadSummary()]);
         }
       });
@@ -2107,7 +2490,6 @@ async function init() {
       updateAuthUI(null);
     }
   } catch (authErr) {
-    console.warn('Supabase Auth init skipped:', authErr);
     updateAuthUI(null);
   }
 }

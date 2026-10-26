@@ -2,19 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>LEDGER &mdash; Financial Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>LEDGER &mdash; Minimalist Personal Finance</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0D9488">
+  <meta name="theme-color" content="#0F766E">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <!-- Chart.js Modern Data Visualization Engine -->
+  <!-- Chart.js Data Visualization Engine -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Supabase Official Client SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -35,246 +35,121 @@
 </head>
 <body>
   <!-- =====================================================================
-       SPLIT-SCREEN LOGIN & LANDING VIEW (Initial Welcome Gate)
+       SINGLE-SCREEN MINIMALIST LOGIN VIEW (100dvh, Zero Scroll)
        ===================================================================== -->
   <div id="loginLandingView" class="login-landing-container">
-    <!-- Left Hero & Branding Pane -->
-    <div class="landing-hero-pane">
-      <div class="landing-hero-glow"></div>
-      <div class="landing-hero-glow-secondary"></div>
-      <div class="landing-hero-content">
-        <div class="brand brand-large">
-          <div class="brand-glyph glyph-lg">
-            <span class="glyph-core"></span>
-          </div>
-          <span class="brand-title title-lg">LEDGER</span>
+    <div class="login-ambient-glow"></div>
+
+    <div class="login-single-card">
+      <!-- Brand Identity -->
+      <div class="login-brand-header">
+        <div class="brand-glyph glyph-lg">
+          <span class="glyph-core"></span>
         </div>
-
-        <div class="landing-tagline-group">
-          <span class="badge-pill-cyan">Personal Financial Intelligence</span>
-          <h1 class="landing-headline">Precision Ledger for Modern Life</h1>
-          <p class="landing-subhead">
-            Local-first performance paired with cloud sync. Manage multiple currencies, track category breakdowns, and take complete control over your cash flow.
-          </p>
-        </div>
-
-        <!-- Pillar Value Highlights -->
-        <div class="landing-pillars">
-          <div class="pillar-card">
-            <div class="pillar-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                <line x1="12" y1="18" x2="12.01" y2="18"></line>
-              </svg>
-            </div>
-            <div>
-              <h4 class="pillar-title">Offline & Mobile-Ready</h4>
-              <p class="pillar-desc">Lightweight SQLite database lives on your local device for instant latency.</p>
-            </div>
-          </div>
-
-          <div class="pillar-card">
-            <div class="pillar-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
-              </svg>
-            </div>
-            <div>
-              <h4 class="pillar-title">Cloud Synchronization</h4>
-              <p class="pillar-desc">Dual PostgreSQL engine with Supabase and Google OAuth protection.</p>
-            </div>
-          </div>
-
-          <div class="pillar-card">
-            <div class="pillar-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="20" x2="18" y2="10"></line>
-                <line x1="12" y1="20" x2="12" y2="4"></line>
-                <line x1="6" y1="20" x2="6" y2="14"></line>
-              </svg>
-            </div>
-            <div>
-              <h4 class="pillar-title">Visual Analytics & Pruning</h4>
-              <p class="pillar-desc">Interactive donut category charts, CSV export, and safe multi-year retention.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="landing-hero-footer">
-          <span>&copy; 2026 LEDGER &bull; Local-First Personal Finance</span>
-        </div>
+        <span class="brand-title title-lg">LEDGER</span>
+        <span class="badge-pill-cyan" data-i18n="login_badge">Personal Finance Pro</span>
       </div>
-    </div>
 
-    <!-- Right Authentication Pane -->
-    <div class="landing-auth-pane">
-      <div class="auth-card">
-        <div class="auth-card-header">
-          <div class="auth-brand-badge">
-            <div class="brand-glyph">
-              <span class="glyph-core"></span>
-            </div>
-          </div>
-          <h2 class="auth-title">Welcome to LEDGER</h2>
-          <p class="auth-subtitle">Sign in with your Google account to access your personal ledger and synchronized records.</p>
-        </div>
+      <!-- Concise Headline -->
+      <div class="login-copy-block">
+        <h1 class="login-headline" data-i18n="login_headline">Minimalist Bookkeeping, Cloud Synchronized.</h1>
+        <p class="login-subhead" data-i18n="login_subhead">
+          Instant offline entry paired with real-time Supabase Cloud sync and visual budget analytics.
+        </p>
+      </div>
 
-        <div class="auth-actions">
-          <button id="landingGoogleLoginBtn" class="btn-google-large">
-            <svg class="google-icon-lg" width="20" height="20" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-            <span>Continue with Google</span>
-          </button>
-        </div>
+      <!-- Compact Feature Chips (Fits in 1 screen) -->
+      <div class="login-feature-chips">
+        <span class="feature-chip" data-i18n="login_feat_1">⚡ Offline-First</span>
+        <span class="feature-chip" data-i18n="login_feat_2">☁️ Cloud Sync</span>
+        <span class="feature-chip" data-i18n="login_feat_3">📊 Budget Alerts</span>
+      </div>
 
-        <div class="auth-security-notice">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      <!-- Primary Google OAuth Action -->
+      <div class="auth-actions">
+        <button id="landingGoogleLoginBtn" class="btn-google-large">
+          <svg class="google-icon-lg" width="20" height="20" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
           </svg>
-          <span>End-to-End User Isolation &bull; OAuth 2.0 Protected</span>
-        </div>
+          <span data-i18n="login_google_btn">Continue with Google</span>
+        </button>
+      </div>
+
+      <div class="auth-security-notice">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <span data-i18n="login_security_note">End-to-End User Isolation &bull; Google OAuth 2.0</span>
       </div>
     </div>
   </div>
 
   <!-- =====================================================================
-       MAIN APPLICATION WORKSTATION (Shown when authenticated)
+       MAIN APPLICATION SHELL (Multi-Page Minimalist Architecture)
        ===================================================================== -->
   <div id="appLayout" class="app-layout hidden">
-    <!-- Top Navigation Header -->
+    <!-- Sleek Single-Row Top Header -->
     <header class="app-header">
-      <div class="brand">
-        <div class="brand-glyph">
-          <span class="glyph-core"></span>
-        </div>
-        <span class="brand-title">LEDGER</span>
-      </div>
-
-      <div class="header-controls">
-        <!-- Currency Selector -->
-        <div class="control-unit">
-          <label for="currencySelector" class="control-label">Currency</label>
-          <select id="currencySelector" class="header-select">
-            <option value="RM" selected>RM (MYR)</option>
-            <option value="¥">¥ (CNY/JPY)</option>
-            <option value="$">$ (USD/SGD)</option>
-            <option value="€">€ (EUR)</option>
-            <option value="£">£ (GBP)</option>
-          </select>
+      <div class="header-left">
+        <div class="brand">
+          <div class="brand-glyph">
+            <span class="glyph-core"></span>
+          </div>
+          <span class="brand-title">LEDGER</span>
         </div>
 
-        <!-- Month Filter -->
-        <div class="control-unit">
-          <label for="monthFilter" class="control-label">Period</label>
-          <select id="monthFilter" class="header-select">
-            <option value="all">All Records</option>
-            <!-- Injected dynamically -->
-          </select>
-        </div>
-
-        <!-- Refresh Button -->
-        <button id="refreshBtn" class="btn-icon-header" title="Refresh Data">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-          </svg>
-        </button>
-
-        <!-- P3: Network & Cloud Sync Status Pill -->
-        <button id="syncStatusPill" class="sync-status-pill sync-pill-online" title="Cloud sync status: Connected">
+        <!-- Network & Cloud Sync Status Pill -->
+        <button id="syncStatusPill" class="sync-status-pill sync-pill-online" title="Cloud sync status">
           <span class="sync-status-dot"></span>
           <span id="syncStatusText" class="sync-status-text">Synced</span>
           <svg id="syncSpinnerIcon" class="sync-spinner-icon hidden" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
           </svg>
         </button>
+      </div>
 
-        <!-- Vertical Divider -->
-        <div class="header-divider"></div>
+      <div class="header-controls">
+        <!-- Period / Month Filter -->
+        <div class="control-unit">
+          <select id="monthFilter" class="header-select" aria-label="Period">
+            <option value="all" data-i18n="all_records">All Records</option>
+          </select>
+        </div>
 
-        <!-- Auth Module (Reddit-Style Profile Dropdown Trigger) -->
+        <!-- Refresh Button -->
+        <button id="refreshBtn" class="btn-icon-header" title="Refresh Data">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        </button>
+
+        <!-- Avatar Trigger (Quick Jump to Settings / Profile) -->
         <div id="authContainer" class="auth-cluster">
-          <!-- Logged In State: User Capsule / Pill -->
-          <button id="userProfilePill" class="user-profile-pill" aria-haspopup="true" aria-expanded="false" title="User Menu">
+          <button id="userProfilePill" class="user-profile-pill" aria-haspopup="true" aria-expanded="false" title="Profile & Settings">
             <img id="userAvatar" class="user-avatar" src="" alt="Avatar" referrerpolicy="no-referrer" />
             <span id="userName" class="user-name">User</span>
-            <svg class="pill-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
           </button>
 
-          <!-- Reddit-Inspired Profile Dropdown Menu -->
+          <!-- Minimal Quick Profile Popover (No Log Out here to prevent accidental taps!) -->
           <div id="profileDropdown" class="profile-dropdown hidden" role="menu">
-            <!-- 1. View Profile Header -->
             <button id="menuViewProfileBtn" class="dropdown-header-btn" role="menuitem">
               <img id="dropdownAvatar" class="dropdown-avatar" src="" alt="Avatar" referrerpolicy="no-referrer" />
               <div class="dropdown-user-info">
-                <span class="dropdown-view-label">View Profile</span>
+                <span class="dropdown-view-label" data-i18n="view_profile">Account Profile</span>
                 <span id="dropdownUserName" class="dropdown-user-sub">u/user</span>
               </div>
             </button>
-
             <div class="dropdown-divider"></div>
-
-            <!-- 2. Edit Avatar -->
-            <button id="menuEditAvatarBtn" class="dropdown-item" role="menuitem">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                <circle cx="12" cy="13" r="4"></circle>
-              </svg>
-              <span>Edit Avatar</span>
-            </button>
-
-            <div class="dropdown-divider"></div>
-
-            <!-- 3. Settings -->
             <button id="menuSettingsBtn" class="dropdown-item" role="menuitem">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
-              <span>Settings</span>
-            </button>
-
-            <div class="dropdown-divider"></div>
-
-            <!-- 4. Appearance / Theme Switcher -->
-            <div class="dropdown-theme-section">
-              <div class="dropdown-theme-header">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="5"></circle>
-                  <line x1="12" y1="1" x2="12" y2="3"></line>
-                  <line x1="12" y1="21" x2="12" y2="23"></line>
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                  <line x1="1" y1="12" x2="3" y2="12"></line>
-                  <line x1="21" y1="12" x2="23" y2="12"></line>
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                </svg>
-                <span>Appearance</span>
-              </div>
-              <div class="theme-segmented-switch">
-                <button type="button" class="theme-segment-btn" data-theme-val="light">Light</button>
-                <button type="button" class="theme-segment-btn" data-theme-val="dark">Dark</button>
-                <button type="button" class="theme-segment-btn active" data-theme-val="system">System</button>
-              </div>
-            </div>
-
-            <div class="dropdown-divider"></div>
-
-            <!-- 5. Log Out -->
-            <button id="menuLogoutBtn" class="dropdown-item dropdown-item-danger" role="menuitem">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
-              <span>Log Out</span>
+              <span data-i18n="nav_settings">Settings</span>
             </button>
           </div>
         </div>
@@ -285,298 +160,482 @@
     <div id="updateNotificationBanner" class="update-banner hidden" role="status" aria-live="polite">
       <div class="update-banner-content">
         <span class="update-badge-dot"></span>
-        <span id="updateBannerText" class="update-banner-text">New version available! Tap to update for the latest improvements.</span>
+        <span id="updateBannerText" class="update-banner-text">New version available! Tap to update.</span>
       </div>
       <div class="update-banner-actions">
-        <button id="updateBannerApplyBtn" class="btn-update-now">Update Now</button>
-        <button id="updateBannerDismissBtn" class="btn-update-dismiss" aria-label="Dismiss update notice">✕</button>
+        <button id="updateBannerApplyBtn" class="btn-update-now" data-i18n="update_now">Update Now</button>
+        <button id="updateBannerDismissBtn" class="btn-update-dismiss" aria-label="Dismiss">✕</button>
       </div>
     </div>
 
     <!-- ===================================================================
-         P2: Top Monthly Budget Tracker Banner
+         MULTI-PAGE VIEWPORT CONTAINER (Each tab fits cleanly on screen)
          =================================================================== -->
-    <section id="budgetTrackerBanner" class="budget-tracker-banner">
-      <div class="budget-tracker-inner">
-        <!-- Left: Details & Quick Edit -->
-        <div class="budget-meta-left">
-          <div class="budget-icon-capsule">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-            </svg>
+    <main class="pages-viewport">
+
+      <!-- =================================================================
+           PAGE 1: LEDGER HOME (Compact Summary Strip + Transaction List)
+           ================================================================= -->
+      <section id="pageLedger" class="app-page active" data-page="ledger">
+        <!-- Compact 3-Column KPI Strip -->
+        <div class="compact-kpi-strip">
+          <div class="kpi-mini-card kpi-mini-balance">
+            <span class="kpi-mini-label" data-i18n="net_balance">Net Balance</span>
+            <div class="kpi-mini-val">
+              <span class="currency-sym">RM</span>
+              <span id="netBalanceValue">0.00</span>
+            </div>
           </div>
-          <div class="budget-info-block">
-            <div class="budget-title-line">
-              <span class="budget-label">Monthly Budget</span>
-              <span id="budgetPeriodLabel" class="budget-period-badge">All Records</span>
-              <button id="quickEditBudgetBtn" class="btn-budget-edit" title="Set Budget Limit">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          <div class="kpi-mini-card kpi-mini-income">
+            <span class="kpi-mini-label" data-i18n="income">Income</span>
+            <div class="kpi-mini-val text-income">
+              <span class="currency-sym">+ RM</span>
+              <span id="totalIncomeValue">0.00</span>
+            </div>
+          </div>
+          <div class="kpi-mini-card kpi-mini-expense">
+            <span class="kpi-mini-label" data-i18n="expense">Expense</span>
+            <div class="kpi-mini-val text-expense">
+              <span class="currency-sym">&minus; RM</span>
+              <span id="totalExpenseValue">0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Ledger Panel -->
+        <div class="column-panel column-ledger">
+          <div class="panel-heading ledger-heading">
+            <div class="ledger-title-group">
+              <h2 class="section-title" data-i18n="ledger_title">Transactions</h2>
+              <span id="balanceTrendBadge" class="status-pill status-neutral">Balanced</span>
+            </div>
+
+            <div class="ledger-header-actions">
+              <!-- Filter Tabs -->
+              <div class="ledger-filter-tabs">
+                <button class="tab-btn active" data-filter="all" data-i18n="filter_all">All</button>
+                <button class="tab-btn" data-filter="expense" data-i18n="expense">Expense</button>
+                <button class="tab-btn" data-filter="income" data-i18n="income">Income</button>
+              </div>
+
+              <!--Desktop + Create Trigger -->
+              <button type="button" id="desktopCreateBtn" class="btn-create-inline">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
-                <span>Edit Limit</span>
+                <span data-i18n="nav_create">Create</span>
               </button>
             </div>
-            <div class="budget-numbers-line">
-              <span class="budget-spent-txt">Spent: <strong id="budgetSpentVal">RM 0.00</strong></span>
-              <span class="budget-slash">/</span>
-              <span class="budget-cap-txt">Limit: <strong id="budgetLimitVal">RM 3,000.00</strong></span>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="ledger-search-bar">
+            <div class="search-input-wrapper">
+              <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="text"
+                id="searchInput"
+                class="search-input"
+                data-i18n-placeholder="search_placeholder"
+                placeholder="Search category or note..."
+                autocomplete="off"
+              />
+              <button id="clearSearchBtn" class="search-clear-btn hidden" title="Clear">✕</button>
+            </div>
+            <span id="searchResultCount" class="search-result-count hidden">0</span>
+          </div>
+
+          <!-- Scrollable Records List Container -->
+          <div class="table-container" tabindex="0" role="region" aria-label="Transactions journal">
+            <table class="ledger-table" id="recordsTable">
+              <thead>
+                <tr>
+                  <th class="th-date" data-i18n="col_date">Date</th>
+                  <th class="th-category" data-i18n="col_category">Category</th>
+                  <th class="th-note" data-i18n="col_note">Note</th>
+                  <th class="th-amount text-right" data-i18n="col_amount">Amount</th>
+                  <th class="th-action text-center" data-i18n="col_action">Action</th>
+                </tr>
+              </thead>
+              <tbody id="recordsTbody">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state hidden">
+              <div class="empty-circle">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                </svg>
+              </div>
+              <p class="empty-text" data-i18n="empty_records">No records found for this period</p>
+              <button type="button" id="emptyCreateBtn" class="btn-empty-create" data-i18n="create_first_record">+ Record First Transaction</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =================================================================
+           PAGE 2: ANALYTICS & MONTHLY BUDGET (Single-Screen Visual Insights)
+           ================================================================= -->
+      <section id="pageAnalytics" class="app-page" data-page="analytics">
+        <!-- Monthly Budget Tracker Card -->
+        <div id="budgetTrackerBanner" class="budget-tracker-banner">
+          <div class="budget-tracker-inner">
+            <div class="budget-meta-left">
+              <div class="budget-icon-capsule">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+              </div>
+              <div class="budget-info-block">
+                <div class="budget-title-line">
+                  <span class="budget-label" data-i18n="monthly_budget">Monthly Budget</span>
+                  <span id="budgetPeriodLabel" class="budget-period-badge">All Records</span>
+                  <button id="quickEditBudgetBtn" class="btn-budget-edit" title="Set Budget Limit">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    <span data-i18n="edit_limit">Edit Limit</span>
+                  </button>
+                </div>
+                <div class="budget-numbers-line">
+                  <span class="budget-spent-txt"><span data-i18n="spent_label">Spent</span>: <strong id="budgetSpentVal">RM 0.00</strong></span>
+                  <span class="budget-slash">/</span>
+                  <span class="budget-cap-txt"><span data-i18n="limit_label">Limit</span>: <strong id="budgetLimitVal">RM 3,000.00</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="budget-progress-block">
+              <div class="budget-bar-track">
+                <div id="budgetProgressBar" class="budget-bar-fill progress-normal" style="width: 0%"></div>
+              </div>
+              <div class="budget-status-row">
+                <div class="budget-pct-badge">
+                  <span id="budgetPctVal" class="budget-pct-text">0%</span>
+                  <span class="budget-pct-sub" data-i18n="budget_used_suffix">of budget used</span>
+                </div>
+                <div class="budget-rem-badge">
+                  <span id="budgetRemainingLabel" class="budget-rem-text">Remaining: RM 3,000.00</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Right: Dynamic Visual Progress Bar & Alert Stats -->
-        <div class="budget-progress-block">
-          <div class="budget-bar-track">
-            <div id="budgetProgressBar" class="budget-bar-fill progress-normal" style="width: 0%"></div>
-          </div>
-          <div class="budget-status-row">
-            <div class="budget-pct-badge">
-              <span id="budgetPctVal" class="budget-pct-text">0%</span>
-              <span class="budget-pct-sub">of budget spent</span>
-            </div>
-            <div class="budget-rem-badge">
-              <span id="budgetRemainingLabel" class="budget-rem-text">Remaining: RM 3,000.00</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 3-Column Structured Workstation -->
-    <main class="workstation-grid">
-      
-      <!-- ===================================================================
-           COLUMN 1 (LEFT): Financial Overview (Stacked Metrics)
-           =================================================================== -->
-      <aside class="column-panel column-overview">
-        <div class="panel-heading">
-          <h2 class="section-title">Overview</h2>
-          <span id="balanceTrendBadge" class="status-pill status-neutral">Balanced</span>
-        </div>
-
-        <div class="overview-stack">
-          <!-- Net Balance Card -->
-          <div class="metric-box box-balance">
-            <span class="box-label">Net Liquidity</span>
-            <div class="box-value-row">
-              <span class="val-currency currency-sym">RM</span>
-              <span id="netBalanceValue" class="val-number">0.00</span>
-            </div>
-            <span class="box-subtext">Total Cashflow Balance</span>
-          </div>
-
-          <!-- Total Inflow (Income) -->
-          <div class="metric-box box-income">
-            <div class="box-label-row">
-              <span class="box-label">Total Inflow</span>
-              <span class="type-pill pill-income">+ Income</span>
-            </div>
-            <div class="box-value-row text-income">
-              <span class="val-currency currency-sym">+ RM</span>
-              <span id="totalIncomeValue" class="val-number">0.00</span>
-            </div>
-            <span class="box-subtext">Deposits & Revenues</span>
-          </div>
-
-          <!-- Total Outflow (Expense) -->
-          <div class="metric-box box-expense">
-            <div class="box-label-row">
-              <span class="box-label">Total Outflow</span>
-              <span class="type-pill pill-expense">&minus; Expense</span>
-            </div>
-            <div class="box-value-row text-expense">
-              <span class="val-currency currency-sym">&minus; RM</span>
-              <span id="totalExpenseValue" class="val-number">0.00</span>
-            </div>
-            <span class="box-subtext">Realized Disbursements</span>
-          </div>
-        </div>
-
-        <!-- Expense Category Distribution (Donut Chart) -->
-        <div class="chart-container-card">
+        <!-- Category Breakdown Donut Chart Card -->
+        <div class="column-panel analytics-chart-panel">
           <div class="chart-header">
-            <span class="box-label">Expense Distribution</span>
+            <div>
+              <h2 class="section-title" data-i18n="expense_distribution">Expense Distribution</h2>
+              <p class="section-desc" data-i18n="chart_subtitle">Breakdown by category for selected period</p>
+            </div>
             <span id="chartCategoryCount" class="chart-badge">0 Categories</span>
           </div>
           <div class="chart-wrapper">
             <canvas id="categoryChart"></canvas>
             <div id="chartEmptyOverlay" class="chart-empty">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="8" x2="12" y2="12"></line>
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
               </svg>
-              <span>No expense records</span>
+              <span data-i18n="no_expense_records">No expense records for this period</span>
             </div>
           </div>
         </div>
-      </aside>
-
-      <!-- ===================================================================
-           COLUMN 2 (CENTER): Fast Entry Terminal (Post Transaction Form)
-           =================================================================== -->
-      <section class="column-panel column-entry">
-        <div class="panel-heading">
-          <div>
-            <h2 class="section-title">Record Entry</h2>
-            <p class="section-desc">Create financial movement</p>
-          </div>
-        </div>
-
-        <form id="recordForm" class="entry-form" novalidate>
-          <!-- Type Segmented Switch -->
-          <div class="segmented-control">
-            <button type="button" class="segment-btn active" data-type="expense" id="btnTypeExpense">Expense</button>
-            <button type="button" class="segment-btn" data-type="income" id="btnTypeIncome">Income</button>
-          </div>
-
-          <!-- Amount Input -->
-          <div class="form-item">
-            <label for="inputAmount" class="field-label">Amount</label>
-            <div class="amount-field-wrapper">
-              <span class="amount-currency-label currency-sym">RM</span>
-              <input 
-                type="number" 
-                id="inputAmount" 
-                step="0.01" 
-                min="0.01" 
-                placeholder="0.00" 
-                class="amount-input" 
-                inputmode="decimal"
-                required
-              >
-            </div>
-            <div class="quick-amount-pills">
-              <button type="button" class="quick-amt-chip" data-quick-amt="10">+10</button>
-              <button type="button" class="quick-amt-chip" data-quick-amt="20">+20</button>
-              <button type="button" class="quick-amt-chip" data-quick-amt="50">+50</button>
-              <button type="button" class="quick-amt-chip" data-quick-amt="100">+100</button>
-              <button type="button" class="quick-amt-chip quick-amt-clear" data-quick-amt="clear">Reset</button>
-            </div>
-          </div>
-
-          <!-- Category Selection -->
-          <div class="form-item">
-            <label for="selectCategory" class="field-label">Category</label>
-            <select id="selectCategory" class="field-select" required>
-              <!-- Injected by app.js -->
-            </select>
-          </div>
-
-          <!-- Date Input -->
-          <div class="form-item">
-            <label for="inputDate" class="field-label">Date</label>
-            <input 
-              type="date" 
-              id="inputDate" 
-              class="field-input" 
-              required
-            >
-          </div>
-
-          <!-- Note / Description -->
-          <div class="form-item">
-            <label for="inputNote" class="field-label">Note <span class="muted-tag">(Optional)</span></label>
-            <input 
-              type="text" 
-              id="inputNote" 
-              maxlength="255" 
-              placeholder="e.g. Lunch with team" 
-              class="field-input"
-            >
-          </div>
-
-          <!-- Submit Button -->
-          <button type="submit" id="submitBtn" class="btn-submit">
-            <span>Commit Transaction</span>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-          </button>
-        </form>
       </section>
 
-      <!-- ===================================================================
-           COLUMN 3 (RIGHT): Audit Ledger Stream
-           =================================================================== -->
-      <section class="column-panel column-ledger">
-        <div class="panel-heading ledger-heading">
-          <div>
-            <h2 class="section-title">Audit Ledger</h2>
-            <p class="section-desc">Transactions journal</p>
-          </div>
+      <!-- =================================================================
+           PAGE 3: SETTINGS & ACCOUNT (Language, Theme, Currency, Update, Log Out)
+           ================================================================= -->
+      <section id="pageSettings" class="app-page" data-page="settings">
+        <div class="settings-page-grid">
+          <!-- 1. User Account Card -->
+          <div class="column-panel settings-card">
+            <div class="settings-profile-row">
+              <div class="profile-avatar-wrapper">
+                <img id="accountModalAvatar" class="account-modal-avatar" src="" alt="User Avatar" referrerpolicy="no-referrer" />
+                <button id="accountAvatarUploadBtn" class="avatar-edit-badge" title="Change Avatar">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                  </svg>
+                </button>
+              </div>
+              <input type="file" id="avatarFileInput" accept="image/png, image/jpeg, image/webp" class="hidden" style="display:none !important;" />
 
-          <div class="ledger-header-actions">
-            <!-- Filter Tabs -->
-            <div class="ledger-filter-tabs">
-              <button class="tab-btn active" data-filter="all">All</button>
-              <button class="tab-btn" data-filter="expense">Expense</button>
-              <button class="tab-btn" data-filter="income">Income</button>
+              <div class="settings-profile-meta">
+                <div class="username-display-group">
+                  <div id="usernameViewRow" class="username-view-row">
+                    <h4 id="accountModalName" class="account-profile-name">User Name</h4>
+                    <button id="editUsernameBtn" class="btn-icon-edit-name" title="Edit Username">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  <div id="usernameEditRow" class="username-edit-row hidden">
+                    <input type="text" id="usernameInput" class="input-edit-username" placeholder="Username" maxlength="24" />
+                    <button id="saveUsernameBtn" class="btn-save-username" data-i18n="save">Save</button>
+                    <button id="cancelUsernameBtn" class="btn-cancel-username" data-i18n="cancel">Cancel</button>
+                  </div>
+                </div>
+                <span id="accountModalEmail" class="account-profile-email">user@gmail.com</span>
+                <div class="avatar-action-links">
+                  <button id="uploadAvatarTextBtn" class="text-link-cyan" data-i18n="change_avatar">Change Photo</button>
+                  <span class="text-divider">&bull;</span>
+                  <button id="resetAvatarBtn" class="text-link-muted" data-i18n="reset_avatar">Reset Default</button>
+                </div>
+              </div>
             </div>
 
-            <!-- Export CSV Action Button -->
-            <button id="exportCsvBtn" class="btn-export-csv" title="Export Ledger as CSV">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <span>Export CSV</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Ledger Search Bar -->
-        <div class="ledger-search-bar">
-          <div class="search-input-wrapper">
-            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input
-              type="text"
-              id="searchInput"
-              class="search-input"
-              placeholder="Search category or note..."
-              autocomplete="off"
-            />
-            <button id="clearSearchBtn" class="search-clear-btn hidden" title="Clear search">✕</button>
-          </div>
-          <span id="searchResultCount" class="search-result-count hidden">0 found</span>
-        </div>
-
-        <div class="table-container" tabindex="0" role="region" aria-label="Transactions journal">
-          <table class="ledger-table" id="recordsTable">
-            <thead>
-              <tr>
-                <th class="th-date">Date</th>
-                <th class="th-category">Category</th>
-                <th class="th-note">Note</th>
-                <th class="th-amount text-right">Amount</th>
-                <th class="th-action text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody id="recordsTbody">
-              <!-- Dynamically populated rows -->
-            </tbody>
-          </table>
-
-          <!-- Empty State -->
-          <div id="emptyState" class="empty-state hidden">
-            <div class="empty-circle">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-              </svg>
+            <div class="account-info-grid account-info-grid-3">
+              <div class="info-cell">
+                <span class="cell-label" data-i18n="member_since">Member Since</span>
+                <span id="accountMemberSince" class="cell-val">&mdash;</span>
+              </div>
+              <div class="info-cell">
+                <span class="cell-label" data-i18n="usage_duration">Active Days</span>
+                <span id="accountUsageDuration" class="cell-val stat-highlight-sm">1 Day</span>
+              </div>
+              <div class="info-cell">
+                <span class="cell-label" data-i18n="total_records">Records</span>
+                <span id="accountTransactionCount" class="cell-val">0</span>
+              </div>
             </div>
-            <p class="empty-text">No records found for this period</p>
+          </div>
+
+          <!-- 2. Preferences & System Card (Language, Theme, Currency, Updates, Backup, Log Out) -->
+          <div class="column-panel settings-card">
+            <h3 class="settings-group-heading" data-i18n="preferences_heading">Preferences &amp; System</h3>
+
+            <!-- Language Switcher (English / 中文) -->
+            <div class="settings-row-item">
+              <div class="settings-row-label">
+                <span class="row-title" data-i18n="language_label">Language / 语言</span>
+                <span class="row-sub" data-i18n="language_desc">Interface display language</span>
+              </div>
+              <div class="theme-segmented-switch lang-segmented-switch">
+                <button type="button" class="theme-segment-btn lang-segment-btn active" data-lang-val="en">English</button>
+                <button type="button" class="theme-segment-btn lang-segment-btn" data-lang-val="zh">中文</button>
+              </div>
+            </div>
+
+            <!-- Appearance Theme Switcher (Light / Dark / System) -->
+            <div class="settings-row-item">
+              <div class="settings-row-label">
+                <span class="row-title" data-i18n="appearance_label">Appearance</span>
+                <span class="row-sub" data-i18n="appearance_desc">High-contrast color theme</span>
+              </div>
+              <div class="theme-segmented-switch">
+                <button type="button" class="theme-segment-btn" data-theme-val="light" data-i18n="theme_light">Light</button>
+                <button type="button" class="theme-segment-btn" data-theme-val="dark" data-i18n="theme_dark">Dark</button>
+                <button type="button" class="theme-segment-btn active" data-theme-val="system" data-i18n="theme_system">System</button>
+              </div>
+            </div>
+
+            <!-- Currency Selector -->
+            <div class="settings-row-item">
+              <div class="settings-row-label">
+                <span class="row-title" data-i18n="currency_label">Currency Symbol</span>
+                <span class="row-sub" data-i18n="currency_desc">Primary display currency</span>
+              </div>
+              <select id="currencySelector" class="header-select">
+                <option value="RM" selected>RM (MYR)</option>
+                <option value="¥">¥ (CNY/JPY)</option>
+                <option value="$">$ (USD/SGD)</option>
+                <option value="€">€ (EUR)</option>
+                <option value="£">£ (GBP)</option>
+              </select>
+            </div>
+
+            <!-- Data Export & Retention Row -->
+            <div class="settings-row-item">
+              <div class="settings-row-label">
+                <span class="row-title" data-i18n="data_management_label">Data Backup &amp; Cleanup</span>
+                <span class="row-sub" data-i18n="data_management_desc">Export CSV or prune old records</span>
+              </div>
+              <div class="settings-inline-btns">
+                <button type="button" id="exportCsvBtn" class="btn-settings-outline" data-i18n="export_csv">Export CSV</button>
+                <button type="button" id="openRetentionFromSettingsBtn" class="btn-settings-outline" data-i18n="manage_archive">Archive</button>
+              </div>
+            </div>
+
+            <!-- App Version & One-Click Update Module -->
+            <div class="settings-update-card">
+              <div class="settings-update-info">
+                <div class="settings-update-header">
+                  <span class="settings-update-title" data-i18n="app_version_label">Application Version</span>
+                  <span id="appVersionBadge" class="version-badge">v1.3.0</span>
+                </div>
+                <p id="updateStatusText" class="settings-update-desc" data-i18n="up_to_date_desc">You are running the latest version</p>
+              </div>
+              <button type="button" id="checkUpdateBtn" class="btn-check-update">
+                <svg id="checkUpdateIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+                <span id="checkUpdateBtnText" data-i18n="check_update_btn">Check &amp; Update</span>
+              </button>
+            </div>
+
+            <!-- Tucked-Away Log Out Section (Hidden from main screen to prevent accidental taps) -->
+            <div class="settings-logout-zone">
+              <button id="menuLogoutBtn" type="button" class="btn-settings-logout">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span data-i18n="logout_btn">Sign Out of Account</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
     </main>
+
+    <!-- ===================================================================
+         BOTTOM NAVIGATION BAR (Minimalist 3-Tab + Prominent Create Button)
+         =================================================================== -->
+    <nav class="bottom-nav-bar" aria-label="Primary Navigation">
+      <button type="button" class="bottom-nav-item active" data-nav-target="ledger">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+        <span data-i18n="nav_ledger">Ledger</span>
+      </button>
+
+      <!-- Center Prominent + Create Button -->
+      <button type="button" id="openCreateModalBtn" class="bottom-nav-create-fab" aria-label="Create Transaction">
+        <div class="fab-circle">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </div>
+        <span data-i18n="nav_create">Create</span>
+      </button>
+
+      <button type="button" class="bottom-nav-item" data-nav-target="analytics">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+          <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+        </svg>
+        <span data-i18n="nav_analytics">Analytics</span>
+      </button>
+
+      <button type="button" class="bottom-nav-item" data-nav-target="settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span data-i18n="nav_settings">Settings</span>
+      </button>
+    </nav>
+
+    <!-- ===================================================================
+         DEDICATED CREATE TRANSACTION SHEET / MODAL (Categories + Calculator)
+         =================================================================== -->
+    <div id="createEntryModal" class="modal-overlay create-sheet-overlay hidden">
+      <div class="modal-dialog create-sheet-dialog">
+        <div class="create-sheet-header">
+          <h3 class="modal-title" data-i18n="create_modal_title">New Transaction</h3>
+          <button type="button" id="closeCreateModalBtn" class="btn-close-modal" aria-label="Close">&times;</button>
+        </div>
+
+        <form id="recordForm" class="create-sheet-form" novalidate>
+          <!-- Expense / Income Segmented Switch -->
+          <div class="segmented-control create-type-switch">
+            <button type="button" class="segment-btn active" data-type="expense" id="btnTypeExpense" data-i18n="expense">Expense</button>
+            <button type="button" class="segment-btn" data-type="income" id="btnTypeIncome" data-i18n="income">Income</button>
+          </div>
+
+          <!-- Calculator Display Screen -->
+          <div class="calc-display-box">
+            <div class="calc-amount-row">
+              <span class="amount-currency-label currency-sym">RM</span>
+              <input
+                type="number"
+                id="inputAmount"
+                step="0.01"
+                min="0.01"
+                placeholder="0.00"
+                class="amount-input"
+                inputmode="none"
+                required
+              />
+            </div>
+            <div class="calc-meta-row">
+              <input type="date" id="inputDate" class="calc-date-input" required />
+              <input
+                type="text"
+                id="inputNote"
+                maxlength="255"
+                data-i18n-placeholder="note_placeholder"
+                placeholder="Add a note..."
+                class="calc-note-input"
+              />
+            </div>
+          </div>
+
+          <!-- Visual Category Grid (Plus synced hidden select) -->
+          <div class="category-picker-section">
+            <span class="field-label" data-i18n="col_category">Category</span>
+            <select id="selectCategory" class="field-select hidden" required></select>
+            <div id="categoryGridContainer" class="category-chip-grid">
+              <!-- Populated dynamically by app.js -->
+            </div>
+          </div>
+
+          <!-- Built-In Calculator Keypad -->
+          <div class="calc-keypad-grid">
+            <button type="button" class="calc-key" data-calc-key="7">7</button>
+            <button type="button" class="calc-key" data-calc-key="8">8</button>
+            <button type="button" class="calc-key" data-calc-key="9">9</button>
+            <button type="button" class="calc-key calc-key-quick" data-quick-amt="10">+10</button>
+
+            <button type="button" class="calc-key" data-calc-key="4">4</button>
+            <button type="button" class="calc-key" data-calc-key="5">5</button>
+            <button type="button" class="calc-key" data-calc-key="6">6</button>
+            <button type="button" class="calc-key calc-key-quick" data-quick-amt="50">+50</button>
+
+            <button type="button" class="calc-key" data-calc-key="1">1</button>
+            <button type="button" class="calc-key" data-calc-key="2">2</button>
+            <button type="button" class="calc-key" data-calc-key="3">3</button>
+            <button type="button" class="calc-key calc-key-quick" data-quick-amt="100">+100</button>
+
+            <button type="button" class="calc-key" data-calc-key=".">.</button>
+            <button type="button" class="calc-key" data-calc-key="0">0</button>
+            <button type="button" class="calc-key calc-key-fn" data-calc-key="backspace" aria-label="Backspace">⌫</button>
+            <button type="button" class="calc-key calc-key-fn" data-quick-amt="clear">C</button>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="submitBtn" class="btn-submit create-submit-btn">
+            <span data-i18n="commit_btn">Save Transaction</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </div>
 
     <!-- Floating Feedback Toast -->
     <div id="toastNotification" class="toast hidden">
@@ -584,9 +643,62 @@
       <span id="toastMessage" class="toast-msg">Operation completed</span>
     </div>
 
+    <!-- Monthly Budget Limit Edit Modal -->
+    <div id="budgetModal" class="modal-overlay hidden">
+      <div class="modal-dialog modal-dialog-sm">
+        <div class="modal-header">
+          <div class="modal-title-row">
+            <div class="modal-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="modal-title" data-i18n="monthly_budget">Monthly Budget</h3>
+              <p class="modal-subtitle"><span id="budgetModalMonthText">All Months</span></p>
+            </div>
+          </div>
+          <button id="closeBudgetModalBtn" class="btn-close-modal" aria-label="Close modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="budget-form-group">
+            <label for="budgetInputAmount" class="field-label"><span data-i18n="monthly_budget">Monthly Budget</span> (<span class="currency-sym">RM</span>)</label>
+            <div class="budget-input-wrapper">
+              <span class="currency-sym budget-input-prefix">RM</span>
+              <input
+                type="number"
+                id="budgetInputAmount"
+                class="budget-amount-input"
+                placeholder="3000"
+                inputmode="decimal"
+                step="50"
+                min="1"
+              />
+            </div>
+          </div>
+
+          <div class="budget-preset-section">
+            <span class="preset-label" data-i18n="quick_presets">Quick Presets:</span>
+            <div class="budget-preset-pills">
+              <button type="button" class="preset-pill" data-amount="1000">1,000</button>
+              <button type="button" class="preset-pill" data-amount="2000">2,000</button>
+              <button type="button" class="preset-pill" data-amount="3000">3,000</button>
+              <button type="button" class="preset-pill" data-amount="5000">5,000</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="cancelBudgetBtn" class="btn-modal-secondary" data-i18n="cancel">Cancel</button>
+          <button id="saveBudgetBtn" class="btn-modal-primary" data-i18n="save">Save</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Data Retention & Archiving Modal -->
     <div id="retentionModal" class="modal-overlay hidden">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-dialog-sm">
         <div class="modal-header">
           <div class="modal-title-row">
             <div class="modal-icon">
@@ -597,8 +709,8 @@
               </svg>
             </div>
             <div>
-              <h3 class="modal-title">Data Retention & Archiving</h3>
-              <p class="modal-subtitle">Manage capacity and prune historical records</p>
+              <h3 class="modal-title" data-i18n="archive_modal_title">Data Retention &amp; Backup</h3>
+              <p class="modal-subtitle" data-i18n="archive_modal_sub">Archive and prune old records</p>
             </div>
           </div>
           <button id="closeModalBtn" class="btn-close-modal" aria-label="Close modal">&times;</button>
@@ -606,208 +718,31 @@
 
         <div class="modal-body">
           <div class="retention-form-row">
-            <label for="retentionYearsSelect" class="field-label">Retention Threshold</label>
+            <label for="retentionYearsSelect" class="field-label" data-i18n="retention_threshold">Retention Threshold</label>
             <select id="retentionYearsSelect" class="header-select select-fullwidth">
-              <option value="1">Older than 1 Year (> 365 Days)</option>
-              <option value="2">Older than 2 Years (> 730 Days)</option>
-              <option value="3" selected>Older than 3 Years (> 1095 Days)</option>
-              <option value="5">Older than 5 Years (> 1825 Days)</option>
+              <option value="1">&gt; 1 Year (365 Days)</option>
+              <option value="2">&gt; 2 Years (730 Days)</option>
+              <option value="3" selected>&gt; 3 Years (1095 Days)</option>
+              <option value="5">&gt; 5 Years (1825 Days)</option>
             </select>
           </div>
 
           <div class="retention-status-card">
-            <span class="status-card-label">Eligible Historical Records</span>
+            <span class="status-card-label" data-i18n="eligible_records">Eligible Historical Records</span>
             <div class="status-card-stat">
               <span id="retentionMatchCount" class="stat-highlight">0</span>
-              <span class="stat-desc">transactions before <strong id="retentionCutoffDate">&mdash;</strong></span>
+              <span class="stat-desc"><span data-i18n="before_date">before</span> <strong id="retentionCutoffDate">&mdash;</strong></span>
             </div>
-            <p class="status-card-tip">Safety Rule: Always download an archive CSV before purging to keep your personal records safe.</p>
           </div>
         </div>
 
         <div class="modal-footer">
           <button id="downloadArchiveBtn" class="btn-modal-secondary">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            <span>1. Download Archive CSV</span>
+            <span data-i18n="download_archive_btn">1. Backup CSV</span>
           </button>
           <button id="purgeOldRecordsBtn" class="btn-modal-danger">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-            <span>2. Purge Old Records</span>
+            <span data-i18n="purge_btn">2. Purge Old</span>
           </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Account Information & Profile Modal -->
-    <div id="accountModal" class="modal-overlay hidden">
-      <div class="modal-dialog">
-        <div class="modal-header">
-          <div class="modal-title-row">
-            <div class="modal-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
-            <div>
-              <h3 class="modal-title">Account Information</h3>
-              <p class="modal-subtitle">Profile details and software usage statistics</p>
-            </div>
-          </div>
-          <button id="closeAccountModalBtn" class="btn-close-modal" aria-label="Close modal">&times;</button>
-        </div>
-
-        <div class="modal-body">
-          <!-- Profile Card & Avatar Preview -->
-          <div class="profile-card-center">
-            <div class="profile-avatar-wrapper">
-              <img id="accountModalAvatar" class="account-modal-avatar" src="" alt="User Avatar" referrerpolicy="no-referrer" />
-              <button id="accountAvatarUploadBtn" class="avatar-edit-badge" title="Change Avatar">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                  <circle cx="12" cy="13" r="4"></circle>
-                </svg>
-              </button>
-            </div>
-            <input type="file" id="avatarFileInput" accept="image/png, image/jpeg, image/webp" class="hidden" style="display:none !important;" />
-
-            <!-- Editable Username Section -->
-            <div class="username-display-group">
-              <div id="usernameViewRow" class="username-view-row">
-                <h4 id="accountModalName" class="account-profile-name">User Name</h4>
-                <button id="editUsernameBtn" class="btn-icon-edit-name" title="Edit Username">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                </button>
-              </div>
-              <div id="usernameEditRow" class="username-edit-row hidden">
-                <input type="text" id="usernameInput" class="input-edit-username" placeholder="Enter username" maxlength="24" />
-                <button id="saveUsernameBtn" class="btn-save-username">Save</button>
-                <button id="cancelUsernameBtn" class="btn-cancel-username">Cancel</button>
-              </div>
-            </div>
-            <span id="accountModalEmail" class="account-profile-email">user@gmail.com</span>
-
-            <div class="avatar-action-links">
-              <button id="uploadAvatarTextBtn" class="text-link-cyan">Change Avatar</button>
-              <span class="text-divider">&bull;</span>
-              <button id="resetAvatarBtn" class="text-link-muted">Reset to Google Photo</button>
-            </div>
-          </div>
-
-          <!-- Account Details Card (3 Columns: Member Since, Usage Duration, Total Transactions) -->
-          <div class="account-info-grid account-info-grid-3">
-            <div class="info-cell">
-              <span class="cell-label">Member Since</span>
-              <span id="accountMemberSince" class="cell-val">Oct 23, 2026</span>
-            </div>
-
-            <div class="info-cell">
-              <span class="cell-label">Usage Duration</span>
-              <span id="accountUsageDuration" class="cell-val stat-highlight-sm">1 Day</span>
-            </div>
-
-            <div class="info-cell">
-              <span class="cell-label">Total Transactions</span>
-              <span id="accountTransactionCount" class="cell-val">0 Records</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button id="closeAccountModalFooterBtn" class="btn-modal-secondary">
-            <span>Done</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- P2 & P3: Settings, Monthly Budget & App Update Modal -->
-    <div id="budgetModal" class="modal-overlay hidden">
-      <div class="modal-dialog modal-dialog-sm">
-        <div class="modal-header">
-          <div class="modal-title-row">
-            <div class="modal-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
-            </div>
-            <div>
-              <h3 class="modal-title">Settings &amp; Budget</h3>
-              <p class="modal-subtitle">Target for <span id="budgetModalMonthText">All Months</span> &amp; App Updates</p>
-            </div>
-          </div>
-          <button id="closeBudgetModalBtn" class="btn-close-modal" aria-label="Close modal">&times;</button>
-        </div>
-
-        <div class="modal-body">
-          <div class="budget-form-group">
-            <label for="budgetInputAmount" class="field-label">Monthly Budget Limit (<span class="currency-sym">RM</span>)</label>
-            <div class="budget-input-wrapper">
-              <span class="currency-sym budget-input-prefix">RM</span>
-              <input
-                type="number"
-                id="budgetInputAmount"
-                class="budget-amount-input"
-                placeholder="e.g. 3000"
-                inputmode="decimal"
-                step="50"
-                min="1"
-              />
-            </div>
-          </div>
-
-          <div class="budget-preset-section">
-            <span class="preset-label">Quick Presets:</span>
-            <div class="budget-preset-pills">
-              <button type="button" class="preset-pill" data-amount="1000">1,000</button>
-              <button type="button" class="preset-pill" data-amount="2000">2,000</button>
-              <button type="button" class="preset-pill" data-amount="3000">3,000</button>
-              <button type="button" class="preset-pill" data-amount="5000">5,000</button>
-            </div>
-          </div>
-
-          <div class="settings-divider"></div>
-
-          <!-- App Version & One-Click Update Module -->
-          <div class="settings-update-card">
-            <div class="settings-update-info">
-              <div class="settings-update-header">
-                <span class="settings-update-title">Application Version</span>
-                <span id="appVersionBadge" class="version-badge">v1.2.0</span>
-              </div>
-              <p id="updateStatusText" class="settings-update-desc">You are running the latest version</p>
-            </div>
-            <button type="button" id="checkUpdateBtn" class="btn-check-update">
-              <svg id="checkUpdateIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-              </svg>
-              <span id="checkUpdateBtnText">Check &amp; Update</span>
-            </button>
-          </div>
-
-          <!-- Data Retention & Archiving Shortcut -->
-          <div class="settings-archive-row">
-            <span class="settings-archive-label">Historical Data &amp; CSV Backup</span>
-            <button type="button" id="openRetentionFromSettingsBtn" class="btn-settings-outline">
-              Manage Archive
-            </button>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button id="cancelBudgetBtn" class="btn-modal-secondary">Close</button>
-          <button id="saveBudgetBtn" class="btn-modal-primary">Save Budget</button>
         </div>
       </div>
     </div>
