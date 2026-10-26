@@ -39,9 +39,9 @@ Built on a **Local-First + Direct BaaS (Supabase PostgreSQL)** architecture, LED
   - **Responsive Card Ledger**: Automatically transforms wide desktop tables into touch-friendly stacked cards on mobile viewports (`@container` queries).
   - **Quick Amount Chips**: One-tap `+10`, `+20`, `+50`, `+100`, and `Reset` buttons for rapid single-handed entry.
   - **44px+ Touch Targets**: Compliant with mobile accessibility guidelines.
-- **☁️ Multi-Tenant Cloud Sync & Flexible Identity**:
+- **☁️ Multi-Tenant Cloud Sync & Secure Authentication**:
   - **Native Google OAuth 2.0**: Zero-port system deep linking (`com.leesc88.ledger://oauth`) for seamless single-tap authentication directly back into the Android app.
-  - **Quick Cloud Sync ID**: Enter any custom Sync ID (e.g. `souchen` or `family-ledger`) for instant cloud synchronization across multiple phones and desktops without needing a browser redirect.
+  - **Complete User Data Isolation**: Protected by Supabase PostgreSQL Row-Level Security (RLS) ensuring strict personal privacy for all users.
 - **⚡ Offline-First Draft Queue**:
   - Record expenses anywhere—even on a plane or in a subway. Offline entries update dashboard metrics immediately and auto-sync upon reconnection.
 - **📊 Dynamic Monthly Budget & Category Analytics**:
@@ -120,9 +120,9 @@ Open `http://localhost:3000` in your browser.
 2. **原生级移动端交互体验**
    - **自适应卡片账单**：在手机屏幕上自动将传统表格转换为清爽的双栏卡片布局，拒绝横向滚动条。
    - **快捷金额胶囊**：内置 `+10`、`+20`、`+50`、`+100` 与 `Reset` 快捷按钮，单手即可快速完成记账。
-3. **多端数据同步（原生 Google 登录 & 免跳转 Sync ID）**
-   - **原生 Google OAuth 2.0**：支持专属系统深度链接协议（`com.leesc88.ledger://oauth`），手机端授权后直接秒唤醒 App 完成登录，彻底摆脱本地 3000 端口与外部服务器依赖。
-   - **免跳转 Sync ID 登录**：在登录页直接输入任意同步 ID（如 `souchen`），免开浏览器一键进入，多台手机与电脑输入相同 ID 即可实时同步同一本账。
+3. **多端数据安全同步（原生 Google OAuth 2.0 登录）**
+   - **原生 Deep Link 秒速认证**：对接专属系统协议（`com.leesc88.ledger://oauth`），手机端点击授权后由操作系统自动唤醒 App，零本地端口、零外部服务器依赖。
+   - **银行级用户数据隔离**：基于 Supabase PostgreSQL 行级安全策略（Row-Level Security, RLS），每一位用户的账单数据完全独立且严格隔离。
 4. **月度预算监控与分类图表**
    - 实时计算当月总收入、总支出、净结余与预算使用率，超过 80% 自动变黄预警，超过 100% 变红提醒，并配有直观的分类占比环形图。
 5. **一键检查与更新（One-Click Update）**

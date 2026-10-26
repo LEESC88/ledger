@@ -6,7 +6,7 @@
  */
 
 // Current Client Release Version
-const APP_VERSION = '1.2.2';
+const APP_VERSION = '1.2.3';
 
 // Default Public Supabase BaaS Cloud Configuration (Enables standalone Mobile APK without Node server)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -61,8 +61,6 @@ const elements = {
   loginLandingView: document.getElementById('loginLandingView'),
   appLayout: document.getElementById('appLayout'),
   landingGoogleLoginBtn: document.getElementById('landingGoogleLoginBtn'),
-  landingSyncIdInput: document.getElementById('landingSyncIdInput'),
-  landingSyncIdBtn: document.getElementById('landingSyncIdBtn'),
 
   // Header Controls
   currencySelector: document.getElementById('currencySelector'),
@@ -1608,36 +1606,7 @@ async function initSupabaseClient() {
 }
 
 /**
- * Create a lightweight user session object for direct Cloud Sync ID login
- */
-function createSyncIdUserObject(syncId) {
-  return {
-    id: syncId,
-    email: `${syncId}@ledger.cloud`,
-    isSyncIdUser: true,
-    user_metadata: {
-      full_name: syncId,
-    },
-  };
-}
-
-/**
- * Direct Sign-In with Custom Cloud Sync ID (No OAuth Redirect Required)
- */
-async function signInWithSyncId() {
-  const raw = (elements.landingSyncIdInput?.value || '').trim();
-  if (!raw) {
-    return showToast('Please enter a Sync User ID (e.g. souchen)', true);
-  }
-  localStorage.setItem('ledger_sync_id_user', raw);
-  state.user = createSyncIdUserObject(raw);
-  updateAuthUI(state.user);
-  showToast(`✅ Cloud Sync active for ID: ${raw}`);
-  await Promise.all([loadRecords(), loadSummary()]);
-}
-
-/**
- * Native Android OAuth Loopback & Deep-Link Callback Receiver
+ * Native Android OAuth Deep-Link Callback Receiver (com.leesc88.ledger://oauth)
  */
 window.__handleNativeOAuthCallback = async function (payloadStr) {
   if (!payloadStr || !supabaseClient) return;
@@ -1648,7 +1617,6 @@ window.__handleNativeOAuthCallback = async function (payloadStr) {
     const refresh_token = params.get('refresh_token');
 
     if (access_token && refresh_token) {
-      localStorage.removeItem('ledger_sync_id_user');
       const { data, error } = await supabaseClient.auth.setSession({
         access_token,
         refresh_token,
@@ -1688,7 +1656,6 @@ async function signInWithGoogle() {
  * Sign out current authenticated user session
  */
 async function signOutUser() {
-  localStorage.removeItem('ledger_sync_id_user');
   if (supabaseClient) {
     await supabaseClient.auth.signOut().catch(() => {});
   }
@@ -1954,13 +1921,6 @@ async function init() {
 
   // 11. Reddit-Style Profile Dropdown & Modal Event Listeners
   elements.landingGoogleLoginBtn?.addEventListener('click', signInWithGoogle);
-  elements.landingSyncIdBtn?.addEventListener('click', signInWithSyncId);
-  elements.landingSyncIdInput?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      signInWithSyncId();
-    }
-  });
   elements.userProfilePill?.addEventListener('click', toggleProfileDropdown);
   document.addEventListener('click', (e) => {
     if (
@@ -2122,23 +2082,16 @@ async function init() {
   // 13. Dynamically load Supabase configuration and listen for auth state
   try {
     await initSupabaseClient();
-    const savedSyncId = localStorage.getItem('ledger_sync_id_user');
 
     if (supabaseClient) {
       supabaseClient.auth.onAuthStateChange(async (event, session) => {
-        if (session?.user) {
-          localStorage.removeItem('ledger_sync_id_user');
-          state.user = session.user;
-          updateAuthUI(state.user);
-          if (event === 'SIGNED_IN') {
-            showToast(
-              `Welcome, ${state.user.user_metadata?.full_name || state.user.email}!`,
-            );
-            await Promise.all([loadRecords(), loadSummary()]);
-          }
-        } else if (!localStorage.getItem('ledger_sync_id_user')) {
-          state.user = null;
-          updateAuthUI(null);
+        state.user = session?.user || null;
+        updateAuthUI(state.user);
+        if (event === 'SIGNED_IN' && state.user) {
+          showToast(
+            `Welcome, ${state.user.user_metadata?.full_name || state.user.email}!`,
+          );
+          await Promise.all([loadRecords(), loadSummary()]);
         }
       });
 
@@ -2147,30 +2100,15 @@ async function init() {
         state.user = data.session.user;
         updateAuthUI(state.user);
         await Promise.all([loadRecords(), loadSummary()]);
-      } else if (savedSyncId) {
-        state.user = createSyncIdUserObject(savedSyncId);
-        updateAuthUI(state.user);
-        await Promise.all([loadRecords(), loadSummary()]);
       } else {
         updateAuthUI(null);
       }
-    } else if (savedSyncId) {
-      state.user = createSyncIdUserObject(savedSyncId);
-      updateAuthUI(state.user);
-      await Promise.all([loadRecords(), loadSummary()]);
     } else {
       updateAuthUI(null);
     }
   } catch (authErr) {
     console.warn('Supabase Auth init skipped:', authErr);
-    const savedSyncId = localStorage.getItem('ledger_sync_id_user');
-    if (savedSyncId) {
-      state.user = createSyncIdUserObject(savedSyncId);
-      updateAuthUI(state.user);
-      await Promise.all([loadRecords(), loadSummary()]);
-    } else {
-      updateAuthUI(null);
-    }
+    updateAuthUI(null);
   }
 }
 

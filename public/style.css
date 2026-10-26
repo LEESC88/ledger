@@ -794,59 +794,6 @@ body {
   flex-shrink: 0;
 }
 
-.auth-or-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 18px 0 14px;
-  color: var(--text-muted);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.auth-or-divider::before,
-.auth-or-divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--border-card);
-}
-
-.auth-sync-id-box {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.auth-sync-id-input {
-  min-height: 44px;
-  font-size: 0.92rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.btn-sync-id-login {
-  width: 100%;
-  min-height: 44px;
-  background: var(--brand-cyan);
-  color: #FFFFFF;
-  border: none;
-  border-radius: var(--radius-md);
-  font-family: var(--font-sans);
-  font-size: 0.92rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all var(--transition-quick);
-  box-shadow: 0 3px 12px var(--brand-cyan-glow);
-}
-
-.btn-sync-id-login:hover {
-  background: var(--brand-cyan-hover);
-  transform: translateY(-1px);
-}
-
 .auth-security-notice {
   display: flex;
   align-items: center;
