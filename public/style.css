@@ -1072,29 +1072,35 @@ body {
 }
 
 .create-sheet-dialog {
-  max-width: 420px;
-  padding: 16px;
+  max-width: 440px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .create-sheet-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+}
+
+.create-sheet-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .create-sheet-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 
 .segmented-control {
   display: flex;
   background: var(--bg-input);
-  padding: 3px;
+  padding: 4px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-card);
 }
@@ -1104,39 +1110,47 @@ body {
   background: transparent;
   border: none;
   font-family: var(--font-sans);
-  font-size: 0.8rem;
+  font-size: 0.84rem;
   font-weight: 700;
-  padding: 7px 0;
+  padding: 8px 0;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
   cursor: pointer;
+  transition: all var(--transition-quick);
 }
 
 .segment-btn.active[data-type="expense"] {
   background: var(--expense-rose);
   color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.25);
 }
 
 .segment-btn.active[data-type="income"] {
   background: var(--income-green);
   color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
 }
 
-/* Calculator Display Box */
-.calc-display-box {
+.create-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.clean-amount-box {
   background: var(--bg-input);
   border: 1.5px solid var(--border-input);
   border-radius: var(--radius-md);
-  padding: 10px 12px;
+  padding: 12px 14px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 8px;
+  transition: border-color var(--transition-quick), box-shadow var(--transition-quick);
 }
 
-.calc-amount-row {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
+.clean-amount-box:focus-within {
+  border-color: var(--brand-cyan);
+  box-shadow: 0 0 0 3px var(--brand-cyan-subtle);
 }
 
 .amount-currency-label {
@@ -1154,30 +1168,32 @@ body {
   outline: none;
   color: var(--text-primary);
   font-family: var(--font-mono);
-  font-size: 1.65rem;
+  font-size: 1.55rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
-.calc-meta-row {
+.create-meta-grid {
   display: grid;
-  grid-template-columns: 128px 1fr;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--border-card);
+  grid-template-columns: 140px 1fr;
+  gap: 10px;
 }
 
-.calc-date-input,
-.calc-note-input {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-xs);
-  padding: 6px 8px;
+.clean-form-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
   font-family: var(--font-sans);
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   color: var(--text-primary);
   outline: none;
   width: 100%;
+  transition: border-color var(--transition-quick);
+}
+
+.clean-form-input:focus {
+  border-color: var(--brand-cyan);
 }
 
 /* Visual Category Chip Grid */
@@ -1198,88 +1214,61 @@ body {
 .category-chip-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  gap: 8px;
 }
 
-.cat-grid-btn {
+.cat-grid-btn,
+.cat-chip-btn {
   background: var(--bg-input);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-sm);
-  padding: 7px 4px;
+  padding: 9px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
   cursor: pointer;
   transition: all var(--transition-quick);
-  min-height: 48px;
+  min-height: 54px;
 }
 
-.cat-grid-icon {
-  font-size: 1rem;
+.cat-grid-btn:hover,
+.cat-chip-btn:hover {
+  border-color: var(--border-input);
+}
+
+.cat-grid-icon,
+.cat-chip-icon {
+  font-size: 1.1rem;
   line-height: 1;
 }
 
-.cat-grid-label {
+.cat-grid-label,
+.cat-chip-label {
   font-family: var(--font-sans);
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: var(--text-secondary);
   text-align: center;
-  line-height: 1.15;
+  line-height: 1.2;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.cat-grid-btn.active {
+.cat-grid-btn.active,
+.cat-chip-btn.active {
   background: var(--brand-cyan-subtle);
   border-color: var(--brand-cyan);
+  box-shadow: 0 0 0 1px var(--brand-cyan);
 }
 
-.cat-grid-btn.active .cat-grid-label {
+.cat-grid-btn.active .cat-grid-label,
+.cat-chip-btn.active .cat-chip-label {
   color: var(--brand-cyan);
   font-weight: 700;
-}
-
-/* Built-In 4x4 Calculator Keypad */
-.calc-keypad-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-}
-
-.calc-key {
-  min-height: 42px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: background var(--transition-quick), transform 80ms ease;
-}
-
-.calc-key:active {
-  transform: scale(0.96);
-  background: var(--brand-cyan-subtle);
-}
-
-.calc-key-quick {
-  font-size: 0.8rem;
-  color: var(--brand-cyan);
-  background: var(--brand-cyan-subtle);
-  border-color: rgba(45, 212, 191, 0.3);
-}
-
-.calc-key-fn {
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
-  color: var(--expense-rose);
 }
 
 .btn-submit {

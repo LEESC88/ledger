@@ -6,7 +6,7 @@
  */
 
 // Current Client Release Version
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.3.1';
 
 // Default Public Supabase BaaS Cloud Configuration (Enables standalone Mobile APK without Node server)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -58,6 +58,15 @@ const CATEGORY_META = {
 // Full Bilingual Dictionary (English & Simplified Chinese)
 const I18N = {
   en: {
+    login_badge: 'Personal Finance Pro',
+    login_headline: 'Minimalist Bookkeeping, Cloud Synchronized.',
+    login_subhead:
+      'Instant offline entry paired with real-time Supabase Cloud sync and visual budget analytics.',
+    login_feat_1: '⚡ Offline-First',
+    login_feat_2: '☁️ Cloud Sync',
+    login_feat_3: '📊 Budget Alerts',
+    login_google_btn: 'Continue with Google',
+    login_security_note: 'End-to-End User Isolation • Google OAuth 2.0',
     login_subtitle: 'Minimalist Personal Finance & Cloud Ledger',
     feat_instant: 'Instant Record',
     feat_analytics: 'Smart Analytics',
@@ -68,21 +77,31 @@ const I18N = {
     sync_offline: 'Offline',
     sync_syncing: 'Syncing',
     all_months: 'All Months',
+    all_records: 'All Records',
     view_profile: 'Account Profile',
-    change_avatar: 'Change Avatar',
+    change_avatar: 'Change Photo',
+    reset_avatar: 'Reset Default',
     appearance: 'Appearance',
+    appearance_label: 'Appearance',
+    appearance_desc: 'High-contrast color theme',
     theme_light: 'Light',
     theme_dark: 'Dark',
     theme_auto: 'Auto',
+    theme_system: 'System',
     preferences: 'Preferences',
+    preferences_heading: 'Preferences & System',
+    net_balance: 'Net Balance',
     kpi_balance: 'Net Balance',
+    income: 'Income',
     kpi_income: 'Income',
+    expense: 'Expense',
     kpi_expense: 'Expense',
     status_balanced: 'Balanced',
     status_surplus: 'Surplus',
     status_deficit: 'Deficit',
+    ledger_title: 'Transactions',
     audit_ledger: 'Transactions',
-    search_placeholder: 'Search notes or categories...',
+    search_placeholder: 'Search category or note...',
     filter_all: 'All',
     filter_expense: 'Expense',
     filter_income: 'Income',
@@ -91,44 +110,71 @@ const I18N = {
     col_category: 'Category',
     col_note: 'Note',
     col_amount: 'Amount',
+    col_action: 'Action',
+    empty_records: 'No records found for this period',
     empty_ledger: 'No transactions recorded yet.',
+    create_first_record: '+ Record First Transaction',
     tap_create_first: '+ Tap to record your first entry',
     monthly_budget: 'Monthly Budget',
-    all_records: 'All Records',
+    edit_limit: 'Edit Limit',
     btn_set_budget: 'Set Limit',
+    spent_label: 'Spent',
     spent: 'Spent:',
+    limit_label: 'Limit',
     limit: 'Limit:',
+    budget_used_suffix: 'of budget used',
     remaining: 'Remaining',
     exceeded_by: 'Exceeded by',
+    expense_distribution: 'Expense Distribution',
     expense_structure: 'Expense Breakdown',
+    chart_subtitle: 'Breakdown by category for selected period',
     categories_unit: 'Categories',
+    no_expense_records: 'No expense records for this period',
     no_expenses_period: 'No expenses in this period',
     member_since: 'Member Since',
+    usage_duration: 'Active Days',
     active_days: 'Active Days',
-    total_records: 'Transactions',
+    total_records: 'Records',
     language_label: 'Language / 语言',
-    language_desc: 'Switch interface display language',
-    appearance_desc: 'High-contrast Light & Dark theme',
-    currency_label: 'Default Currency',
-    currency_desc: 'Display symbol for all amounts',
+    language_desc: 'Interface display language',
+    currency_label: 'Currency Symbol',
+    currency_desc: 'Primary display currency',
+    data_management_label: 'Data Backup & Cleanup',
+    data_management_desc: 'Export CSV or prune old records',
     data_export_label: 'Data Backup & Archive',
     data_export_desc: 'Export CSV or clean up old records',
+    export_csv: 'Export CSV',
     btn_export_csv: 'Export CSV',
+    manage_archive: 'Archive',
     btn_archive: 'Archive',
     app_version_label: 'Application Version',
+    up_to_date_desc: 'You are running the latest version',
     up_to_date: 'Up to date',
+    check_update_btn: 'Check & Update',
     btn_check_update: 'Check Update',
+    update_now: 'Update Now',
+    logout_btn: 'Sign Out of Account',
     btn_sign_out: 'Sign Out of Account',
+    create_modal_title: 'New Transaction',
+    create_modal_sub: 'Record an expense or income entry',
     new_entry_title: 'New Transaction',
-    note_placeholder: 'Add a note (optional)...',
+    note_placeholder: 'Optional note...',
     select_category: 'Category',
+    commit_btn: 'Save Transaction',
     btn_save_entry: 'Save Transaction',
     set_budget_title: 'Monthly Budget Limit',
     target_period: 'Target Period:',
     budget_Ceiling_label: 'Budget Limit Amount',
+    quick_presets: 'Quick Presets:',
     quick_select: 'Quick Presets',
+    save: 'Save',
+    cancel: 'Cancel',
     btn_cancel: 'Cancel',
     btn_save_budget: 'Save Limit',
+    archive_modal_title: 'Data Retention & Backup',
+    archive_modal_sub: 'Archive and prune old records',
+    retention_threshold: 'Retention Threshold',
+    eligible_records: 'Eligible Historical Records',
     retention_title: 'Data Retention & Archive',
     retention_desc: 'Export and clean up historical records older than your selected threshold.',
     archive_older_than: 'Archive records older than:',
@@ -137,8 +183,10 @@ const I18N = {
     years_3: '3 Years (Recommended)',
     years_5: '5 Years',
     records_found: 'Matching records:',
-    before_date: 'Before',
+    before_date: 'before',
+    download_archive_btn: '1. Backup CSV',
     btn_download_csv: '1. Download CSV',
+    purge_btn: '2. Purge Old',
     btn_purge_records: '2. Delete Old Records',
     nav_ledger: 'Ledger',
     nav_create: 'Create',
@@ -146,6 +194,14 @@ const I18N = {
     nav_settings: 'Settings',
   },
   zh: {
+    login_badge: '极简个人财务管理',
+    login_headline: '极简随手记账，云端实时同步',
+    login_subhead: '支持离线秒记、Supabase 云端自动同步与月度预算图表分析。',
+    login_feat_1: '⚡ 离线秒记',
+    login_feat_2: '☁️ 云端同步',
+    login_feat_3: '📊 预算分析',
+    login_google_btn: '使用 Google 账号登录',
+    login_security_note: '基于 Google OAuth 2.0 的独立加密云端存储',
     login_subtitle: '极简个人财务与云端记账本',
     feat_instant: '极速记账',
     feat_analytics: '智能图表',
@@ -156,19 +212,29 @@ const I18N = {
     sync_offline: '离线模式',
     sync_syncing: '同步中',
     all_months: '所有月份',
+    all_records: '全部周期',
     view_profile: '个人资料',
     change_avatar: '更换头像',
+    reset_avatar: '恢复默认',
     appearance: '外观模式',
+    appearance_label: '外观主题',
+    appearance_desc: '高对比度浅色与深色模式',
     theme_light: '浅色',
     theme_dark: '深色',
     theme_auto: '跟随系统',
+    theme_system: '跟随系统',
     preferences: '偏好设置',
+    preferences_heading: '偏好与系统设置',
+    net_balance: '净结余',
     kpi_balance: '净结余',
+    income: '收入',
     kpi_income: '总收入',
+    expense: '支出',
     kpi_expense: '总支出',
     status_balanced: '收支平衡',
     status_surplus: '结余盈余',
     status_deficit: '支出超支',
+    ledger_title: '账单明细',
     audit_ledger: '账单明细',
     search_placeholder: '搜索备注或分类...',
     filter_all: '全部',
@@ -179,44 +245,71 @@ const I18N = {
     col_category: '分类',
     col_note: '备注',
     col_amount: '金额',
+    col_action: '操作',
+    empty_records: '当前周期暂无账单记录',
     empty_ledger: '暂无记账记录',
+    create_first_record: '+ 记下第一笔账单',
     tap_create_first: '+ 点击记下第一笔账单',
     monthly_budget: '每月预算监控',
-    all_records: '全部周期',
+    edit_limit: '设置预算',
     btn_set_budget: '设置预算',
+    spent_label: '已用',
     spent: '已用:',
+    limit_label: '预算',
     limit: '预算:',
+    budget_used_suffix: '预算已使用',
     remaining: '剩余可用',
     exceeded_by: '已超支',
+    expense_distribution: '支出分类占比',
     expense_structure: '支出分类占比',
+    chart_subtitle: '当前所选周期的各项支出占比分析',
     categories_unit: '个分类',
+    no_expense_records: '当前周期暂无支出记录',
     no_expenses_period: '当前周期暂无支出数据',
     member_since: '加入时间',
+    usage_duration: '记账天数',
     active_days: '记账天数',
     total_records: '累计笔数',
     language_label: '语言设置 / Language',
     language_desc: '切换应用界面显示语言',
-    appearance_desc: '高对比度浅色与深色模式',
     currency_label: '默认货币符号',
     currency_desc: '应用于所有账单金额显示',
+    data_management_label: '数据备份与归档',
+    data_management_desc: '导出 CSV 报表或清理旧账单',
     data_export_label: '数据备份与归档',
     data_export_desc: '导出 CSV 报表或清理旧账单',
+    export_csv: '导出 CSV',
     btn_export_csv: '导出 CSV',
+    manage_archive: '归档清理',
     btn_archive: '归档清理',
     app_version_label: '应用版本信息',
+    up_to_date_desc: '当前已是最新版本',
     up_to_date: '已是最新版本',
+    check_update_btn: '检查更新',
     btn_check_update: '检查更新',
-    btn_sign_out: '退出当前账号 (Log Out)',
+    update_now: '立即更新',
+    logout_btn: '退出当前账号',
+    btn_sign_out: '退出当前账号',
+    create_modal_title: '新增记账',
+    create_modal_sub: '快速记录一笔支出或收入',
     new_entry_title: '记一笔账',
     note_placeholder: '添加备注说明（选填）...',
     select_category: '选择分类',
+    commit_btn: '保存账单',
     btn_save_entry: '保存账单',
     set_budget_title: '设置每月预算上限',
     target_period: '目标月份:',
     budget_Ceiling_label: '月度预算金额',
+    quick_presets: '快捷额度:',
     quick_select: '快捷额度',
+    save: '保存',
+    cancel: '取消',
     btn_cancel: '取消',
     btn_save_budget: '保存预算',
+    archive_modal_title: '历史数据归档与清理',
+    archive_modal_sub: '备份并清理早期历史账单',
+    retention_threshold: '清理时间范围',
+    eligible_records: '符合条件的历史账单',
     retention_title: '历史数据归档与清理',
     retention_desc: '将早于指定年限的历史账单导出备份为 CSV，并可选择从云端清理。',
     archive_older_than: '清理早于以下年限的记录:',
@@ -226,7 +319,9 @@ const I18N = {
     years_5: '5 年前',
     records_found: '符合条件笔数:',
     before_date: '早于',
+    download_archive_btn: '1. 导出备份 CSV',
     btn_download_csv: '1. 下载备份 CSV',
+    purge_btn: '2. 清理历史记录',
     btn_purge_records: '2. 清理历史记录',
     nav_ledger: '明细',
     nav_create: '记账',
@@ -269,11 +364,10 @@ const elements = {
   desktopCreateBtn: document.getElementById('desktopCreateBtn'),
   emptyCreateBtn: document.getElementById('emptyCreateBtn'),
 
-  // Create Entry Modal & Calculator
+  // Create Entry Modal
   createEntryModal: document.getElementById('createEntryModal'),
   closeCreateModalBtn: document.getElementById('closeCreateModalBtn'),
   categoryGridContainer: document.getElementById('categoryGridContainer'),
-  calcKeys: document.querySelectorAll('.calc-key[data-calc]'),
 
   // Header Controls
   currencySelector: document.getElementById('currencySelector'),
@@ -335,7 +429,6 @@ const elements = {
   saveBudgetBtn: document.getElementById('saveBudgetBtn'),
   budgetInputAmount: document.getElementById('budgetInputAmount'),
   budgetPresetBtns: document.querySelectorAll('.preset-pill'),
-  quickAmtChips: document.querySelectorAll('[data-quick-amt]'),
 
   // App Version & One-Click Update Elements
   updateNotificationBanner: document.getElementById('updateNotificationBanner'),
@@ -358,7 +451,7 @@ const elements = {
   dropdownAvatar: document.getElementById('dropdownAvatar'),
   dropdownUserName: document.getElementById('dropdownUserName'),
   menuEditAvatarBtn: document.getElementById('menuEditAvatarBtn'),
-  themeSegmentBtns: document.querySelectorAll('.theme-segment-btn'),
+  themeSegmentBtns: document.querySelectorAll('.theme-segment-btn:not(.lang-segment-btn)'),
   langSegmentBtns: document.querySelectorAll('.lang-segment-btn'),
   menuSettingsBtn: document.getElementById('menuSettingsBtn'),
   menuLogoutBtn: document.getElementById('menuLogoutBtn'),
@@ -387,7 +480,7 @@ const elements = {
  */
 function t(key) {
   const dict = I18N[state.lang] || I18N.en;
-  return dict[key] || I18N.en[key] || key;
+  return dict[key] || I18N.en[key] || '';
 }
 
 /**
@@ -416,16 +509,22 @@ function setAppLanguage(lang) {
     btn.classList.toggle('active', btn.dataset.langVal === validLang);
   });
 
-  // Translate all static [data-i18n] elements
+  // Translate all static [data-i18n] elements safely (never overwrite with raw key)
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.getAttribute('data-i18n');
-    if (key) el.textContent = t(key);
+    const translated = key ? t(key) : '';
+    if (translated) {
+      el.textContent = translated;
+    }
   });
 
-  // Translate all [data-i18n-placeholder] inputs
+  // Translate all [data-i18n-placeholder] inputs safely
   document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
     const key = el.getAttribute('data-i18n-placeholder');
-    if (key) el.setAttribute('placeholder', t(key));
+    const translated = key ? t(key) : '';
+    if (translated) {
+      el.setAttribute('placeholder', translated);
+    }
   });
 
   // Re-render dynamic components with new language
@@ -473,7 +572,7 @@ function switchAppPage(pageName) {
 }
 
 /**
- * Open & Close Create Transaction Sheet/Modal
+ * Open & Close Create Transaction Modal
  */
 function openCreateModal() {
   closeProfileDropdown();
@@ -482,6 +581,9 @@ function openCreateModal() {
   }
   renderCategoryGrid(state.currentType);
   elements.createEntryModal?.classList.remove('hidden');
+  setTimeout(() => {
+    elements.inputAmount?.focus();
+  }, 60);
 }
 
 function closeCreateModal() {
@@ -511,62 +613,26 @@ function renderCategoryGrid(type) {
       const icon = getCategoryIcon(cat);
       const label = getCategoryDisplayLabel(cat);
       return `
-        <button type="button" class="cat-chip-btn ${isSelected ? 'active' : ''}" data-cat-val="${escapeHtml(cat)}">
-          <span class="cat-chip-icon">${icon}</span>
-          <span class="cat-chip-label">${escapeHtml(label)}</span>
+        <button type="button" class="cat-grid-btn ${isSelected ? 'active' : ''}" data-cat-val="${escapeHtml(cat)}">
+          <span class="cat-grid-icon">${icon}</span>
+          <span class="cat-grid-label">${escapeHtml(label)}</span>
         </button>
       `;
     })
     .join('');
 
-  elements.categoryGridContainer.querySelectorAll('.cat-chip-btn').forEach((btn) => {
+  elements.categoryGridContainer.querySelectorAll('.cat-grid-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const chosen = btn.getAttribute('data-cat-val');
       if (chosen && elements.selectCategory) {
         elements.selectCategory.value = chosen;
       }
       elements.categoryGridContainer
-        .querySelectorAll('.cat-chip-btn')
+        .querySelectorAll('.cat-grid-btn')
         .forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
     });
   });
-}
-
-/**
- * Handle Calculator Numpad Input in Create Modal
- */
-function handleCalculatorKey(key) {
-  if (!elements.inputAmount) return;
-  let raw = String(elements.inputAmount.value || '');
-
-  if (key === 'backspace') {
-    elements.inputAmount.value = raw.slice(0, -1);
-    return;
-  }
-
-  if (key === '.') {
-    if (!raw.includes('.')) {
-      elements.inputAmount.value = raw ? `${raw}.` : '0.';
-    }
-    return;
-  }
-
-  // Digit 0-9
-  if (/^\d$/.test(key)) {
-    if (raw === '0') {
-      elements.inputAmount.value = key;
-      return;
-    }
-    const parts = raw.split('.');
-    if (parts.length === 2 && parts[1].length >= 2) {
-      return; // Max 2 decimal places
-    }
-    if (raw.replace('.', '').length >= 9) {
-      return; // Prevent overflow
-    }
-    elements.inputAmount.value = raw + key;
-  }
 }
 
 /**
@@ -2220,19 +2286,13 @@ async function init() {
     });
   });
 
-  // 2. Create Modal Triggers & Calculator Keypad
+  // 2. Create Modal Triggers
   elements.openCreateModalBtn?.addEventListener('click', openCreateModal);
   elements.desktopCreateBtn?.addEventListener('click', openCreateModal);
   elements.emptyCreateBtn?.addEventListener('click', openCreateModal);
   elements.closeCreateModalBtn?.addEventListener('click', closeCreateModal);
   elements.createEntryModal?.addEventListener('click', (e) => {
     if (e.target === elements.createEntryModal) closeCreateModal();
-  });
-
-  elements.calcKeys.forEach((keyBtn) => {
-    keyBtn.addEventListener('click', () => {
-      handleCalculatorKey(keyBtn.dataset.calc);
-    });
   });
 
   // 3. Transaction form submission
@@ -2370,23 +2430,6 @@ async function init() {
   elements.budgetInputAmount?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') handleSaveBudget();
     if (e.key === 'Escape') closeBudgetModal();
-  });
-
-  // Quick Amount Chips in Create Calculator
-  elements.quickAmtChips.forEach((chip) => {
-    chip.addEventListener('click', () => {
-      if (!elements.inputAmount) return;
-      const action = chip.dataset.quickAmt;
-      if (action === 'clear') {
-        elements.inputAmount.value = '';
-        return;
-      }
-      const increment = parseFloat(action) || 0;
-      const current = parseFloat(elements.inputAmount.value) || 0;
-      elements.inputAmount.value = String(
-        Number((current + increment).toFixed(2)),
-      );
-    });
   });
 
   // Settings: App Update & Data Retention Shortcut

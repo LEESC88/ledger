@@ -476,7 +476,7 @@
               <div class="settings-update-info">
                 <div class="settings-update-header">
                   <span class="settings-update-title" data-i18n="app_version_label">Application Version</span>
-                  <span id="appVersionBadge" class="version-badge">v1.3.0</span>
+                  <span id="appVersionBadge" class="version-badge">v1.3.1</span>
                 </div>
                 <p id="updateStatusText" class="settings-update-desc" data-i18n="up_to_date_desc">You are running the latest version</p>
               </div>
@@ -550,12 +550,15 @@
     </nav>
 
     <!-- ===================================================================
-         DEDICATED CREATE TRANSACTION SHEET / MODAL (Categories + Calculator)
+         DEDICATED CREATE TRANSACTION MODAL (Clean Minimalist Form)
          =================================================================== -->
     <div id="createEntryModal" class="modal-overlay create-sheet-overlay hidden">
       <div class="modal-dialog create-sheet-dialog">
         <div class="create-sheet-header">
-          <h3 class="modal-title" data-i18n="create_modal_title">New Transaction</h3>
+          <div class="create-sheet-title-wrap">
+            <h3 class="modal-title" data-i18n="create_modal_title">New Transaction</h3>
+            <p class="modal-subtitle" data-i18n="create_modal_sub">Record an expense or income entry</p>
+          </div>
           <button type="button" id="closeCreateModalBtn" class="btn-close-modal" aria-label="Close">&times;</button>
         </div>
 
@@ -566,9 +569,10 @@
             <button type="button" class="segment-btn" data-type="income" id="btnTypeIncome" data-i18n="income">Income</button>
           </div>
 
-          <!-- Calculator Display Screen -->
-          <div class="calc-display-box">
-            <div class="calc-amount-row">
+          <!-- Clean Amount Input Field -->
+          <div class="create-field-group">
+            <label for="inputAmount" class="field-label" data-i18n="col_amount">Amount</label>
+            <div class="clean-amount-box">
               <span class="amount-currency-label currency-sym">RM</span>
               <input
                 type="number"
@@ -577,53 +581,38 @@
                 min="0.01"
                 placeholder="0.00"
                 class="amount-input"
-                inputmode="none"
+                inputmode="decimal"
                 required
-              />
-            </div>
-            <div class="calc-meta-row">
-              <input type="date" id="inputDate" class="calc-date-input" required />
-              <input
-                type="text"
-                id="inputNote"
-                maxlength="255"
-                data-i18n-placeholder="note_placeholder"
-                placeholder="Add a note..."
-                class="calc-note-input"
               />
             </div>
           </div>
 
           <!-- Visual Category Grid (Plus synced hidden select) -->
           <div class="category-picker-section">
-            <span class="field-label" data-i18n="col_category">Category</span>
+            <label class="field-label" data-i18n="col_category">Category</label>
             <select id="selectCategory" class="field-select hidden" required></select>
             <div id="categoryGridContainer" class="category-chip-grid">
               <!-- Populated dynamically by app.js -->
             </div>
           </div>
 
-          <!-- Built-In Calculator Keypad -->
-          <div class="calc-keypad-grid">
-            <button type="button" class="calc-key" data-calc-key="7">7</button>
-            <button type="button" class="calc-key" data-calc-key="8">8</button>
-            <button type="button" class="calc-key" data-calc-key="9">9</button>
-            <button type="button" class="calc-key calc-key-quick" data-quick-amt="10">+10</button>
-
-            <button type="button" class="calc-key" data-calc-key="4">4</button>
-            <button type="button" class="calc-key" data-calc-key="5">5</button>
-            <button type="button" class="calc-key" data-calc-key="6">6</button>
-            <button type="button" class="calc-key calc-key-quick" data-quick-amt="50">+50</button>
-
-            <button type="button" class="calc-key" data-calc-key="1">1</button>
-            <button type="button" class="calc-key" data-calc-key="2">2</button>
-            <button type="button" class="calc-key" data-calc-key="3">3</button>
-            <button type="button" class="calc-key calc-key-quick" data-quick-amt="100">+100</button>
-
-            <button type="button" class="calc-key" data-calc-key=".">.</button>
-            <button type="button" class="calc-key" data-calc-key="0">0</button>
-            <button type="button" class="calc-key calc-key-fn" data-calc-key="backspace" aria-label="Backspace">⌫</button>
-            <button type="button" class="calc-key calc-key-fn" data-quick-amt="clear">C</button>
+          <!-- Date & Note Inputs -->
+          <div class="create-meta-grid">
+            <div class="create-field-group">
+              <label for="inputDate" class="field-label" data-i18n="col_date">Date</label>
+              <input type="date" id="inputDate" class="clean-form-input" required />
+            </div>
+            <div class="create-field-group">
+              <label for="inputNote" class="field-label" data-i18n="col_note">Note</label>
+              <input
+                type="text"
+                id="inputNote"
+                maxlength="255"
+                data-i18n-placeholder="note_placeholder"
+                placeholder="Optional note..."
+                class="clean-form-input"
+              />
+            </div>
           </div>
 
           <!-- Submit Button -->
