@@ -3,7 +3,8 @@
    3-Column Ergonomic Financial Layout
    ========================================================================== */
 
-:root {
+:root,
+[data-theme="light"] {
   color-scheme: light;
 
   /* Color Palette: High-Contrast Cyan & Clean White (青白高对比清晰主题) */
@@ -45,6 +46,73 @@
 
   --transition-quick: 140ms cubic-bezier(0.16, 1, 0.3, 1);
   --transition-smooth: 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   High-Contrast Dark Mode (深色模式：高亮度清晰字体与边界)
+   ========================================================================== */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-canvas: #0B1120;
+  --bg-surface: #151F32;
+  --bg-subtle: #1E293B;
+  --bg-hover: #263449;
+  --bg-input: #0F172A;
+
+  --border-card: #334155;
+  --border-input: #64748B;
+  --border-focus: #2DD4BF;
+
+  --text-primary: #F8FAFC;
+  --text-secondary: #E2E8F0;
+  --text-muted: #CBD5E1;
+
+  --brand-cyan: #2DD4BF;
+  --brand-cyan-hover: #14B8A6;
+  --brand-cyan-subtle: rgba(45, 212, 191, 0.16);
+  --brand-cyan-glow: rgba(45, 212, 191, 0.25);
+
+  --income-green: #34D399;
+  --income-subtle: rgba(52, 211, 153, 0.16);
+  --expense-rose: #FB7185;
+  --expense-subtle: rgba(251, 113, 133, 0.16);
+
+  --shadow-subtle: 0 2px 6px rgba(0, 0, 0, 0.35), 0 8px 20px -4px rgba(0, 0, 0, 0.4);
+  --shadow-float: 0 14px 36px -6px rgba(0, 0, 0, 0.65);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --bg-canvas: #0B1120;
+    --bg-surface: #151F32;
+    --bg-subtle: #1E293B;
+    --bg-hover: #263449;
+    --bg-input: #0F172A;
+
+    --border-card: #334155;
+    --border-input: #64748B;
+    --border-focus: #2DD4BF;
+
+    --text-primary: #F8FAFC;
+    --text-secondary: #E2E8F0;
+    --text-muted: #CBD5E1;
+
+    --brand-cyan: #2DD4BF;
+    --brand-cyan-hover: #14B8A6;
+    --brand-cyan-subtle: rgba(45, 212, 191, 0.16);
+    --brand-cyan-glow: rgba(45, 212, 191, 0.25);
+
+    --income-green: #34D399;
+    --income-subtle: rgba(52, 211, 153, 0.16);
+    --expense-rose: #FB7185;
+    --expense-subtle: rgba(251, 113, 133, 0.16);
+
+    --shadow-subtle: 0 2px 6px rgba(0, 0, 0, 0.35), 0 8px 20px -4px rgba(0, 0, 0, 0.4);
+    --shadow-float: 0 14px 36px -6px rgba(0, 0, 0, 0.65);
+  }
 }
 
 /* Base Reset */
@@ -726,6 +794,59 @@ body {
   flex-shrink: 0;
 }
 
+.auth-or-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 14px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.auth-or-divider::before,
+.auth-or-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-card);
+}
+
+.auth-sync-id-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-sync-id-input {
+  min-height: 44px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.btn-sync-id-login {
+  width: 100%;
+  min-height: 44px;
+  background: var(--brand-cyan);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-quick);
+  box-shadow: 0 3px 12px var(--brand-cyan-glow);
+}
+
+.btn-sync-id-login:hover {
+  background: var(--brand-cyan-hover);
+  transform: translateY(-1px);
+}
+
 .auth-security-notice {
   display: flex;
   align-items: center;
@@ -1085,16 +1206,16 @@ body {
 }
 
 .box-balance {
-  background: linear-gradient(180deg, #FFFFFF, var(--brand-cyan-subtle));
-  border-color: rgba(13, 148, 136, 0.25);
+  background: linear-gradient(180deg, var(--bg-surface), var(--brand-cyan-subtle));
+  border-color: rgba(45, 212, 191, 0.35);
 }
 
 .box-income {
-  background: #FFFFFF;
+  background: var(--bg-surface);
 }
 
 .box-expense {
-  background: #FFFFFF;
+  background: var(--bg-surface);
 }
 
 .box-label {
@@ -1615,7 +1736,7 @@ body {
   position: fixed;
   bottom: 24px;
   right: 28px;
-  background: #FFFFFF;
+  background: var(--bg-surface);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-full);
   padding: 8px 16px;
@@ -1697,7 +1818,7 @@ body {
   color: var(--text-muted);
   font-size: 0.75rem;
   font-weight: 500;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-surface);
   border-radius: var(--radius-sm);
   transition: opacity var(--transition-quick);
 }

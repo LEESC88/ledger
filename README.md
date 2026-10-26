@@ -33,8 +33,8 @@ Built on a **Local-First + Direct BaaS (Supabase PostgreSQL)** architecture, LED
 
 ### Key Features
 
-- **🎨 High-Contrast Light UI (WCAG AA/AAA Compliant)**:
-  - Engineered exclusively with a daylight-readable, high-contrast Light Mode palette (`#0F172A` primary typography on pure `#FFFFFF` cards) so numbers and labels remain razor-sharp on any mobile screen outdoors or indoors.
+- **🎨 High-Contrast Light & Dark Themes (WCAG AA/AAA Compliant)**:
+  - Supports **Light**, **Dark**, and **System** appearance modes with ultra-high-contrast typography (`#0F172A` on `#FFFFFF` in Light Mode; `#F8FAFC` / `#E2E8F0` on `#151F32` in Dark Mode) so numbers and labels remain razor-sharp in any lighting condition.
 - **📱 Mobile-First Ergonomics**:
   - **Responsive Card Ledger**: Automatically transforms wide desktop tables into touch-friendly stacked cards on mobile viewports (`@container` queries).
   - **Quick Amount Chips**: One-tap `+10`, `+20`, `+50`, `+100`, and `Reset` buttons for rapid single-handed entry.
@@ -114,8 +114,8 @@ Open `http://localhost:3000` in your browser.
 
 ### 核心亮点
 
-1. **极高对比度浅色界面（专为手机屏幕优化）**
-   - 锁定高对比度清晰浅色模式（移除易导致文字看不清的深色模式），采用深邃墨黑字体（`#0F172A`）搭配纯白卡片与加深边框（符合 WCAG AA/AAA 对比度标准），无论在室内还是户外强光下都清晰可见。
+1. **极高对比度深浅双色主题（Light / Dark / System）**
+   - 全面支持**浅色（Light）**、**深色（Dark）**与**跟随系统（System）**三种模式，并针对深色模式下的所有卡片背景与字体对比度进行了彻底重构（纯白主字 `#F8FAFC` + 亮银辅字 `#CBD5E1` 搭配深邃蓝黑卡片 `#151F32`），杜绝深色模式下文字看不清的问题。
 2. **原生级移动端交互体验**
    - **自适应卡片账单**：在手机屏幕上自动将传统表格转换为清爽的双栏卡片布局，拒绝横向滚动条。
    - **快捷金额胶囊**：内置 `+10`、`+20`、`+50`、`+100` 与 `Reset` 快捷按钮，单手即可快速完成记账。

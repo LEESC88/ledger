@@ -6,7 +6,7 @@
  */
 
 // Current Client Release Version
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.2.1';
 
 // Default Public Supabase BaaS Cloud Configuration (Enables standalone Mobile APK without Node server)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -61,6 +61,8 @@ const elements = {
   loginLandingView: document.getElementById('loginLandingView'),
   appLayout: document.getElementById('appLayout'),
   landingGoogleLoginBtn: document.getElementById('landingGoogleLoginBtn'),
+  landingSyncIdInput: document.getElementById('landingSyncIdInput'),
+  landingSyncIdBtn: document.getElementById('landingSyncIdBtn'),
 
   // Header Controls
   currencySelector: document.getElementById('currencySelector'),
@@ -1110,9 +1112,9 @@ function renderCategoryChart(breakdown) {
             font: {
               family: "'Plus Jakarta Sans', sans-serif",
               size: 11,
-              weight: '500',
+              weight: '600',
             },
-            color: isDark ? '#9CA3AF' : '#475569',
+            color: isDark ? '#F8FAFC' : '#334155',
             padding: 8,
           },
         },
@@ -1348,10 +1350,13 @@ async function purgeOldRecords() {
 // ============================================================================
 
 /**
- * Determine if Dark Theme is actively rendered (Locked to high-contrast light mode)
+ * Determine if Dark Theme is actively rendered
  */
 function isDarkModeActive() {
-  return false;
+  const attr = document.documentElement.getAttribute('data-theme');
+  if (attr === 'dark') return true;
+  if (attr === 'light') return false;
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
 /**
@@ -1447,15 +1452,26 @@ function saveUsername() {
 }
 
 /**
- * Set application visual theme (Locked to high-contrast light mode)
+ * Set application visual theme (Light / Dark / System with High Contrast)
  */
-function setAppTheme() {
-  localStorage.setItem('ledger_theme', 'light');
-  document.documentElement.setAttribute('data-theme', 'light');
+function setAppTheme(themeVal) {
+  const mode = ['light', 'dark', 'system'].includes(themeVal) ? themeVal : 'system';
+  localStorage.setItem('ledger_theme', mode);
+
+  elements.themeSegmentBtns.forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.themeVal === mode);
+  });
+
+  const prefersDark =
+    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const resolved = mode === 'system' ? (prefersDark ? 'dark' : 'light') : mode;
+
+  document.documentElement.setAttribute('data-theme', resolved);
   const meta = document.querySelector('meta[name="color-scheme"]');
   if (meta) {
-    meta.content = 'light';
+    meta.content = mode === 'system' ? 'light dark' : resolved;
   }
+
   if (categoryChartInstance && state.summary?.categoryBreakdown) {
     renderCategoryChart(state.summary.categoryBreakdown);
   }
@@ -1592,15 +1608,78 @@ async function initSupabaseClient() {
 }
 
 /**
+ * Create a lightweight user session object for direct Cloud Sync ID login
+ */
+function createSyncIdUserObject(syncId) {
+  return {
+    id: syncId,
+    email: `${syncId}@ledger.cloud`,
+    isSyncIdUser: true,
+    user_metadata: {
+      full_name: syncId,
+    },
+  };
+}
+
+/**
+ * Direct Sign-In with Custom Cloud Sync ID (No OAuth Redirect Required)
+ */
+async function signInWithSyncId() {
+  const raw = (elements.landingSyncIdInput?.value || '').trim();
+  if (!raw) {
+    return showToast('Please enter a Sync User ID (e.g. souchen)', true);
+  }
+  localStorage.setItem('ledger_sync_id_user', raw);
+  state.user = createSyncIdUserObject(raw);
+  updateAuthUI(state.user);
+  showToast(`✅ Cloud Sync active for ID: ${raw}`);
+  await Promise.all([loadRecords(), loadSummary()]);
+}
+
+/**
+ * Native Android OAuth Loopback & Deep-Link Callback Receiver
+ */
+window.__handleNativeOAuthCallback = async function (payloadStr) {
+  if (!payloadStr || !supabaseClient) return;
+  try {
+    const clean = String(payloadStr).replace(/^[#?]+/, '');
+    const params = new URLSearchParams(clean);
+    const access_token = params.get('access_token');
+    const refresh_token = params.get('refresh_token');
+
+    if (access_token && refresh_token) {
+      localStorage.removeItem('ledger_sync_id_user');
+      const { data, error } = await supabaseClient.auth.setSession({
+        access_token,
+        refresh_token,
+      });
+      if (!error && data?.session?.user) {
+        state.user = data.session.user;
+        updateAuthUI(state.user);
+        showToast(
+          `Welcome, ${state.user.user_metadata?.full_name || state.user.email}!`,
+        );
+        await Promise.all([loadRecords(), loadSummary()]);
+      }
+    }
+  } catch (err) {
+    console.error('Native OAuth callback error:', err);
+  }
+};
+
+/**
  * Initiate Google OAuth Sign-in Flow
  */
 async function signInWithGoogle() {
   if (!supabaseClient)
     return showToast('Supabase client not initialized', true);
+  const redirectTarget = window.Capacitor
+    ? 'http://localhost:3000'
+    : window.location.origin;
   await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin,
+      redirectTo: redirectTarget,
     },
   });
 }
@@ -1609,8 +1688,10 @@ async function signInWithGoogle() {
  * Sign out current authenticated user session
  */
 async function signOutUser() {
-  if (!supabaseClient) return;
-  await supabaseClient.auth.signOut();
+  localStorage.removeItem('ledger_sync_id_user');
+  if (supabaseClient) {
+    await supabaseClient.auth.signOut().catch(() => {});
+  }
   state.user = null;
   updateAuthUI(null);
   showToast('Signed out successfully');
@@ -1873,6 +1954,13 @@ async function init() {
 
   // 11. Reddit-Style Profile Dropdown & Modal Event Listeners
   elements.landingGoogleLoginBtn?.addEventListener('click', signInWithGoogle);
+  elements.landingSyncIdBtn?.addEventListener('click', signInWithSyncId);
+  elements.landingSyncIdInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      signInWithSyncId();
+    }
+  });
   elements.userProfilePill?.addEventListener('click', toggleProfileDropdown);
   document.addEventListener('click', (e) => {
     if (
@@ -2034,15 +2122,23 @@ async function init() {
   // 13. Dynamically load Supabase configuration and listen for auth state
   try {
     await initSupabaseClient();
+    const savedSyncId = localStorage.getItem('ledger_sync_id_user');
+
     if (supabaseClient) {
       supabaseClient.auth.onAuthStateChange(async (event, session) => {
-        state.user = session?.user || null;
-        updateAuthUI(state.user);
-        if (event === 'SIGNED_IN') {
-          showToast(
-            `Welcome, ${state.user.user_metadata?.full_name || state.user.email}!`,
-          );
-          await Promise.all([loadRecords(), loadSummary()]);
+        if (session?.user) {
+          localStorage.removeItem('ledger_sync_id_user');
+          state.user = session.user;
+          updateAuthUI(state.user);
+          if (event === 'SIGNED_IN') {
+            showToast(
+              `Welcome, ${state.user.user_metadata?.full_name || state.user.email}!`,
+            );
+            await Promise.all([loadRecords(), loadSummary()]);
+          }
+        } else if (!localStorage.getItem('ledger_sync_id_user')) {
+          state.user = null;
+          updateAuthUI(null);
         }
       });
 
@@ -2051,15 +2147,30 @@ async function init() {
         state.user = data.session.user;
         updateAuthUI(state.user);
         await Promise.all([loadRecords(), loadSummary()]);
+      } else if (savedSyncId) {
+        state.user = createSyncIdUserObject(savedSyncId);
+        updateAuthUI(state.user);
+        await Promise.all([loadRecords(), loadSummary()]);
       } else {
         updateAuthUI(null);
       }
+    } else if (savedSyncId) {
+      state.user = createSyncIdUserObject(savedSyncId);
+      updateAuthUI(state.user);
+      await Promise.all([loadRecords(), loadSummary()]);
     } else {
       updateAuthUI(null);
     }
   } catch (authErr) {
     console.warn('Supabase Auth init skipped:', authErr);
-    updateAuthUI(null);
+    const savedSyncId = localStorage.getItem('ledger_sync_id_user');
+    if (savedSyncId) {
+      state.user = createSyncIdUserObject(savedSyncId);
+      updateAuthUI(state.user);
+      await Promise.all([loadRecords(), loadSummary()]);
+    } else {
+      updateAuthUI(null);
+    }
   }
 }
 
