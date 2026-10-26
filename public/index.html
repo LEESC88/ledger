@@ -441,6 +441,25 @@
           </div>
         </div>
 
+        <!-- Ledger Search Bar -->
+        <div class="ledger-search-bar">
+          <div class="search-input-wrapper">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              id="searchInput"
+              class="search-input"
+              placeholder="Search category or note..."
+              autocomplete="off"
+            />
+            <button id="clearSearchBtn" class="search-clear-btn hidden" title="Clear search">✕</button>
+          </div>
+          <span id="searchResultCount" class="search-result-count hidden">0 found</span>
+        </div>
+
         <div class="table-container">
           <table class="ledger-table" id="recordsTable">
             <thead>

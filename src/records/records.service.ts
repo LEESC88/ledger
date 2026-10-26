@@ -19,25 +19,36 @@ export class RecordsService {
   /**
    * Persists a new transaction record into the database.
    */
-  async create(createRecordDto: CreateRecordDto): Promise<Record> {
-    const newRecord = this.recordRepository.create(createRecordDto);
+  async create(
+    createRecordDto: CreateRecordDto,
+    userId?: string,
+  ): Promise<Record> {
+    const newRecord = this.recordRepository.create({
+      ...createRecordDto,
+      userId,
+    });
     return await this.recordRepository.save(newRecord);
   }
 
   /**
    * Retrieves all transaction records from the database sorted by date descending.
    */
-  async findAll(): Promise<Record[]> {
+  async findAll(userId?: string): Promise<Record[]> {
     return await this.recordRepository.find({
+      where: userId ? { userId } : {},
       order: { date: 'DESC', createdAt: 'DESC' },
     });
   }
 
   /**
-   * Deletes a transaction record by its unique ID.
+   * Deletes a transaction record by its unique ID, verifying owner if userId provided.
    */
-  async remove(id: number): Promise<void> {
-    const result = await this.recordRepository.delete(id);
+  async remove(id: number, userId?: string): Promise<void> {
+    const whereCondition: any = { id };
+    if (userId) {
+      whereCondition.userId = userId;
+    }
+    const result = await this.recordRepository.delete(whereCondition);
     if (result.affected === 0) {
       throw new NotFoundException(`Record with ID ${id} not found`);
     }
@@ -45,12 +56,13 @@ export class RecordsService {
 
   /**
    * Calculates financial totals (Total Income, Total Expense, Net Balance)
-   * and aggregates category breakdowns, optionally filtered by month.
+   * and aggregates category breakdowns, optionally filtered by month and userId.
    *
    * @param month - Optional filter in YYYY-MM format
+   * @param userId - Optional user UUID for multi-tenant isolation
    */
-  async getSummary(month?: string) {
-    const allRecords = await this.findAll();
+  async getSummary(month?: string, userId?: string) {
+    const allRecords = await this.findAll(userId);
     const records = month
       ? allRecords.filter((r) => r.date.startsWith(month))
       : allRecords;
@@ -84,38 +96,47 @@ export class RecordsService {
    *
    * @param years - Retention period threshold in years
    */
-  async findOlderThan(years: number): Promise<Record[]> {
+  async findOlderThan(years: number, userId?: string): Promise<Record[]> {
     const cutoffDate = new Date();
     cutoffDate.setFullYear(cutoffDate.getFullYear() - years);
     const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
 
-    return await this.recordRepository
+    const qb = this.recordRepository
       .createQueryBuilder('record')
-      .where('record.date < :cutoffDate', {
-        cutoffDate: cutoffDateStr,
-      })
-      .orderBy('record.date', 'ASC')
-      .getMany();
+      .where('record.date < :cutoffDate', { cutoffDate: cutoffDateStr });
+
+    if (userId) {
+      qb.andWhere('record.userId = :userId', { userId });
+    }
+
+    return await qb.orderBy('record.date', 'ASC').getMany();
   }
 
   /**
    * Permanently deletes transaction records older than the specified retention threshold.
    *
    * @param years - Retention period threshold in years
+   * @param userId - Optional user UUID for multi-tenant isolation
    */
   async purgeOlderThan(
     years: number,
+    userId?: string,
   ): Promise<{ purgedCount: number; cutoffDate: string }> {
     const cutoffDate = new Date();
     cutoffDate.setFullYear(cutoffDate.getFullYear() - years);
     const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
 
-    const result = await this.recordRepository
+    const qb = this.recordRepository
       .createQueryBuilder()
       .delete()
       .from(Record)
-      .where('date < :cutoffDate', { cutoffDate: cutoffDateStr })
-      .execute();
+      .where('date < :cutoffDate', { cutoffDate: cutoffDateStr });
+
+    if (userId) {
+      qb.andWhere('user_id = :userId', { userId });
+    }
+
+    const result = await qb.execute();
     return { purgedCount: result.affected ?? 0, cutoffDate: cutoffDateStr };
   }
 }

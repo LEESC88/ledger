@@ -6,10 +6,18 @@ import {
   Body,
   Param,
   Query,
+  Headers,
   ParseIntPipe,
   DefaultValuePipe,
+  Header,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { RecordsService } from './records.service.js';
 import { CreateRecordDto } from './dto/create-record.dto.js';
 
@@ -29,8 +37,11 @@ export class RecordsController {
    */
   @Post()
   @ApiOperation({ summary: 'Create a new transaction record' })
-  async create(@Body() createRecordDto: CreateRecordDto) {
-    return await this.recordsService.create(createRecordDto);
+  async create(
+    @Body() createRecordDto: CreateRecordDto,
+    @Headers('x-user-id') userId?: string,
+  ) {
+    return await this.recordsService.create(createRecordDto, userId);
   }
 
   /**
@@ -39,8 +50,8 @@ export class RecordsController {
    */
   @Get()
   @ApiOperation({ summary: 'Retrieve all transaction records' })
-  async findAll() {
-    return await this.recordsService.findAll();
+  async findAll(@Headers('x-user-id') userId?: string) {
+    return await this.recordsService.findAll(userId);
   }
 
   /**
@@ -55,8 +66,11 @@ export class RecordsController {
     example: '2026-10',
     description: 'Filter by YYYY-MM (e.g. 2026-10)',
   })
-  async getSummary(@Query('month') month?: string) {
-    return await this.recordsService.getSummary(month);
+  async getSummary(
+    @Query('month') month?: string,
+    @Headers('x-user-id') userId?: string,
+  ) {
+    return await this.recordsService.getSummary(month, userId);
   }
 
   /**
@@ -86,8 +100,9 @@ export class RecordsController {
   })
   async getArchive(
     @Query('years', new DefaultValuePipe(3), ParseIntPipe) years: number,
+    @Headers('x-user-id') userId?: string,
   ) {
-    return await this.recordsService.findOlderThan(years);
+    return await this.recordsService.findOlderThan(years, userId);
   }
 
   /**
@@ -105,8 +120,9 @@ export class RecordsController {
   })
   async purge(
     @Query('years', new DefaultValuePipe(3), ParseIntPipe) years: number,
+    @Headers('x-user-id') userId?: string,
   ) {
-    return await this.recordsService.purgeOlderThan(years);
+    return await this.recordsService.purgeOlderThan(years, userId);
   }
 
   /**
@@ -116,7 +132,10 @@ export class RecordsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a transaction record by ID' })
   @ApiParam({ name: 'id', example: 1, description: 'Record ID to delete' })
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    return await this.recordsService.remove(id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Headers('x-user-id') userId?: string,
+  ) {
+    return await this.recordsService.remove(id, userId);
   }
 }

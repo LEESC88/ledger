@@ -1407,6 +1407,81 @@ body {
   border: 1px solid var(--border-input);
 }
 
+/* ==========================================================================
+   Ledger Search Bar Styling
+   ========================================================================== */
+.ledger-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 7px 28px 7px 32px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: all var(--transition-quick);
+}
+
+.search-input:focus {
+  border-color: var(--brand-cyan);
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15);
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: var(--radius-xs);
+  transition: color var(--transition-quick);
+}
+
+.search-clear-btn:hover {
+  color: var(--text-primary);
+}
+
+.search-result-count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--brand-cyan);
+  background: rgba(13, 148, 136, 0.08);
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  white-space: nowrap;
+}
+
 .tab-btn {
   background: transparent;
   border: none;

@@ -20,6 +20,12 @@ export class Record {
   id: number;
 
   /**
+   * User identifier (UUID string from Supabase Auth) for tenant isolation
+   */
+  @Column({ type: 'text', name: 'user_id', nullable: true })
+  userId?: string;
+
+  /**
    * Type of transaction: 'income' or 'expense'
    */
   @Column({ type: 'text' })

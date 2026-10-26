@@ -34,6 +34,7 @@ let state = {
   currentType: 'expense',
   currentFilter: 'all',
   currentMonth: 'all',
+  searchQuery: '',
   records: [],
   summary: null,
 };
@@ -82,6 +83,11 @@ const elements = {
   downloadArchiveBtn: document.getElementById('downloadArchiveBtn'),
   purgeOldRecordsBtn: document.getElementById('purgeOldRecordsBtn'),
 
+  // Search & Filter
+  searchInput: document.getElementById('searchInput'),
+  clearSearchBtn: document.getElementById('clearSearchBtn'),
+  searchResultCount: document.getElementById('searchResultCount'),
+
   // Reddit-Inspired Profile Dropdown Elements
   userProfilePill: document.getElementById('userProfilePill'),
   userAvatar: document.getElementById('userAvatar'),
@@ -98,7 +104,9 @@ const elements = {
   // Account Information Modal Elements
   accountModal: document.getElementById('accountModal'),
   closeAccountModalBtn: document.getElementById('closeAccountModalBtn'),
-  closeAccountModalFooterBtn: document.getElementById('closeAccountModalFooterBtn'),
+  closeAccountModalFooterBtn: document.getElementById(
+    'closeAccountModalFooterBtn',
+  ),
   accountModalAvatar: document.getElementById('accountModalAvatar'),
   accountAvatarUploadBtn: document.getElementById('accountAvatarUploadBtn'),
   avatarFileInput: document.getElementById('avatarFileInput'),
@@ -184,6 +192,17 @@ function setEntryType(type) {
 }
 
 /**
+ * Generates authentication and tenant isolation headers
+ */
+function getAuthHeaders(extraHeaders = {}) {
+  const headers = { ...extraHeaders };
+  if (state.user?.id) {
+    headers['x-user-id'] = state.user.id;
+  }
+  return headers;
+}
+
+/**
  * Fetch and Render Financial Summary
  */
 async function loadSummary() {
@@ -193,7 +212,7 @@ async function loadSummary() {
         ? '/api/records/summary'
         : `/api/records/summary?month=${state.currentMonth}`;
 
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch summary');
     const data = await res.json();
     state.summary = data;
@@ -228,7 +247,7 @@ async function loadSummary() {
  */
 async function loadRecords() {
   try {
-    const res = await fetch('/api/records');
+    const res = await fetch('/api/records', { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('Failed to fetch records');
     const data = await res.json();
     state.records = Array.isArray(data) ? data : [];
@@ -281,6 +300,28 @@ function renderTable() {
   // Filter by Tab (all / expense / income)
   if (state.currentFilter !== 'all') {
     filtered = filtered.filter((r) => r.type === state.currentFilter);
+  }
+
+  // Filter by Search Keyword (note or category)
+  if (state.searchQuery) {
+    const q = state.searchQuery.toLowerCase().trim();
+    filtered = filtered.filter(
+      (r) =>
+        (r.category && r.category.toLowerCase().includes(q)) ||
+        (r.note && r.note.toLowerCase().includes(q)),
+    );
+  }
+
+  // Update search UI indicator & clear button
+  if (elements.searchResultCount) {
+    if (state.searchQuery) {
+      elements.searchResultCount.textContent = `${filtered.length} found`;
+      elements.searchResultCount.classList.remove('hidden');
+      elements.clearSearchBtn?.classList.remove('hidden');
+    } else {
+      elements.searchResultCount.classList.add('hidden');
+      elements.clearSearchBtn?.classList.add('hidden');
+    }
   }
 
   if (filtered.length === 0) {
@@ -363,7 +404,7 @@ async function handleRecordSubmit(e) {
 
     const res = await fetch('/api/records', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload),
     });
 
@@ -402,6 +443,7 @@ window.handleDelete = async function (id) {
   try {
     const res = await fetch(`/api/records/${id}`, {
       method: 'DELETE',
+      headers: getAuthHeaders(),
     });
 
     if (!res.ok) throw new Error('Failed to delete transaction');
@@ -702,6 +744,7 @@ function purgeOldRecords() {
 
   fetch(`/api/records/purge?years=${years}`, {
     method: 'DELETE',
+    headers: getAuthHeaders(),
   })
     .then((res) => {
       if (!res.ok) throw new Error('Failed to purge old records');
@@ -1001,6 +1044,7 @@ async function signOutUser() {
   state.user = null;
   updateAuthUI(null);
   showToast('Signed out successfully');
+  await Promise.all([loadRecords(), loadSummary()]);
 }
 
 /**
@@ -1083,7 +1127,20 @@ async function init() {
     renderTable();
   });
 
-  // 8. Refresh button
+  // 8. Search Input and Clear Button
+  elements.searchInput?.addEventListener('input', (e) => {
+    state.searchQuery = e.target.value.trim();
+    renderTable();
+  });
+
+  elements.clearSearchBtn?.addEventListener('click', () => {
+    if (elements.searchInput) elements.searchInput.value = '';
+    state.searchQuery = '';
+    renderTable();
+    elements.searchInput?.focus();
+  });
+
+  // 9. Refresh button
   elements.refreshBtn.addEventListener('click', () => {
     loadSummary();
     loadRecords();
@@ -1178,13 +1235,14 @@ async function init() {
   try {
     await initSupabaseClient();
     if (supabaseClient) {
-      supabaseClient.auth.onAuthStateChange((event, session) => {
+      supabaseClient.auth.onAuthStateChange(async (event, session) => {
         state.user = session?.user || null;
         updateAuthUI(state.user);
         if (event === 'SIGNED_IN') {
           showToast(
             `Welcome, ${state.user.user_metadata?.full_name || state.user.email}!`,
           );
+          await Promise.all([loadRecords(), loadSummary()]);
         }
       });
 
@@ -1192,6 +1250,7 @@ async function init() {
       if (data?.session?.user) {
         state.user = data.session.user;
         updateAuthUI(state.user);
+        await Promise.all([loadRecords(), loadSummary()]);
       } else {
         updateAuthUI(null);
       }
