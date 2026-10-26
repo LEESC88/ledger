@@ -23,11 +23,11 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Setup Java 21
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17'
 
       - name: Read Version from public/version.json
         id: version
@@ -37,14 +37,12 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "NOTES=$NOTES" >> $GITHUB_OUTPUT
 
-      - name: Initialize Capacitor Android Project
+      - name: Install Capacitor & Sync Android Web Assets
         run: |
-          npm install --no-save @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
-          if [ ! -d "android" ]; then
-            npx cap add android
-          else
-            npx cap sync android
-          fi
+          node -e "const fs = require('fs'); fs.writeFileSync('package.json', JSON.stringify({ name: 'ledger-apk', version: '1.2.0', dependencies: { '@capacitor/core': '^6.0.0', '@capacitor/cli': '^6.0.0', '@capacitor/android': '^6.0.0' } }, null, 2));"
+          rm -f package-lock.json
+          npm install --no-audit --no-fund
+          npx cap sync android
 
       - name: Build Android APK via Gradle
         working-directory: ./android
