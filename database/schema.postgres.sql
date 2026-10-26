@@ -37,3 +37,16 @@ CREATE TABLE IF NOT EXISTS budgets (
 );
 
 CREATE INDEX IF NOT EXISTS idx_budgets_user_month ON budgets(user_id, month);
+
+-- ============================================================================
+-- Row Level Security (RLS) Policies for Direct Supabase BaaS Client Access
+-- ============================================================================
+ALTER TABLE records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "allow_all_records" ON records;
+CREATE POLICY "allow_all_records" ON records FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "allow_all_budgets" ON budgets;
+CREATE POLICY "allow_all_budgets" ON budgets FOR ALL USING (true) WITH CHECK (true);
+

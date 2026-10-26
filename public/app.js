@@ -5,6 +5,13 @@
  * ============================================================================
  */
 
+// Default Public Supabase BaaS Cloud Configuration (Enables standalone Mobile APK without Node server)
+const SUPABASE_DEFAULT_CONFIG = {
+  url: 'https://bcftzfohhiwgabvfdewe.supabase.co',
+  anonKey:
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjZnR6Zm9oaGl3Z2FidmZkZXdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3MTg3MTksImV4cCI6MjEwODI5NDcxOX0.hb-wsvMISSC_t9Aobjbud4lrECLQSLlmHo9x25A-2Fw',
+};
+
 // Preset Categories
 const CATEGORIES = {
   expense: [
@@ -304,19 +311,37 @@ async function syncOfflineDrafts() {
 
   let successCount = 0;
   const remainingQueue = [];
+  const userId = state.user?.id;
 
   for (const item of queue) {
     try {
-      const res = await fetch('/api/records', {
-        method: 'POST',
-        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(item.payload),
-      });
+      if (supabaseClient && userId) {
+        const { error } = await supabaseClient.from('records').insert({
+          user_id: userId,
+          type: item.payload.type,
+          amount: item.payload.amount,
+          category: item.payload.category,
+          date: item.payload.date,
+          note: item.payload.note || null,
+        });
 
-      if (!res.ok) {
-        remainingQueue.push(item);
+        if (error) {
+          remainingQueue.push(item);
+        } else {
+          successCount++;
+        }
       } else {
-        successCount++;
+        const res = await fetch('/api/records', {
+          method: 'POST',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(item.payload),
+        });
+
+        if (!res.ok) {
+          remainingQueue.push(item);
+        } else {
+          successCount++;
+        }
       }
     } catch (err) {
       console.warn('Sync failed for draft item:', err);
@@ -422,9 +447,29 @@ async function loadBudget(month) {
   } else {
     state.monthlyBudget = 3000;
   }
+  renderBudgetTracker();
 
-  // 2. Sync with cloud / database endpoint
+  // 2. Sync with cloud (Direct Supabase BaaS or fallback to local endpoint)
+  const userId = state.user?.id;
+  if (!userId) return;
+
   try {
+    if (supabaseClient) {
+      const { data, error } = await supabaseClient
+        .from('budgets')
+        .select('amount')
+        .eq('user_id', userId)
+        .eq('month', targetMonth)
+        .maybeSingle();
+
+      if (!error && data && data.amount !== null && !isNaN(Number(data.amount))) {
+        state.monthlyBudget = Number(data.amount);
+        localStorage.setItem(cacheKey, state.monthlyBudget);
+        renderBudgetTracker();
+        return;
+      }
+    }
+
     const res = await fetch(`/api/budgets?month=${encodeURIComponent(targetMonth)}`, {
       headers: getAuthHeaders(),
     });
@@ -433,13 +478,12 @@ async function loadBudget(month) {
       if (data && data.amount !== null && !isNaN(Number(data.amount))) {
         state.monthlyBudget = Number(data.amount);
         localStorage.setItem(cacheKey, state.monthlyBudget);
+        renderBudgetTracker();
       }
     }
   } catch (err) {
-    console.warn('Could not sync budget with server:', err);
+    console.warn('Could not sync budget with cloud:', err);
   }
-
-  renderBudgetTracker();
 }
 
 async function persistBudget(amount, month) {
@@ -450,11 +494,23 @@ async function persistBudget(amount, month) {
   state.monthlyBudget = Number(amount);
   localStorage.setItem(cacheKey, state.monthlyBudget);
   localStorage.setItem(getBudgetStorageKey('default'), state.monthlyBudget);
-
   renderBudgetTracker();
 
-  // Persist to backend database (Supabase / SQLite)
+  const userId = state.user?.id;
+  if (!userId) return;
+
+  // Persist directly to Supabase BaaS
   try {
+    if (supabaseClient) {
+      const { error } = await supabaseClient
+        .from('budgets')
+        .upsert(
+          { user_id: userId, month: targetMonth, amount: state.monthlyBudget },
+          { onConflict: 'user_id,month' },
+        );
+      if (!error) return;
+    }
+
     await fetch('/api/budgets', {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
@@ -613,13 +669,7 @@ async function loadRecords() {
     isDraft: true,
   }));
 
-  try {
-    const res = await fetch('/api/records', { headers: getAuthHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch records');
-    const data = await res.json();
-    const serverRecords = Array.isArray(data) ? data : [];
-
-    // Cache latest server records for offline use
+  const applyRecords = (serverRecords) => {
     try {
       localStorage.setItem(cacheKey, JSON.stringify(serverRecords));
     } catch (e) {
@@ -629,6 +679,32 @@ async function loadRecords() {
     state.records = [...draftRecords, ...serverRecords];
     updateMonthFilterDropdown(state.records);
     renderTable();
+    calculateLocalSummaryMetrics();
+  };
+
+  const userId = state.user?.id;
+
+  try {
+    // 1. Direct Supabase Query (Fastest, zero server dependency)
+    if (supabaseClient && userId) {
+      const { data, error } = await supabaseClient
+        .from('records')
+        .select('*')
+        .eq('user_id', userId)
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (!error && Array.isArray(data)) {
+        applyRecords(data);
+        return;
+      }
+    }
+
+    // 2. Fallback to local server endpoint
+    const res = await fetch('/api/records', { headers: getAuthHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch records');
+    const data = await res.json();
+    applyRecords(Array.isArray(data) ? data : []);
   } catch (err) {
     console.warn('Network offline or fetch failed, loading from local cache:', err);
     let cachedRecords = [];
@@ -798,18 +874,45 @@ async function handleRecordSubmit(e) {
     elements.submitBtn.disabled = true;
     elements.submitBtn.style.opacity = '0.7';
 
-    const res = await fetch('/api/records', {
-      method: 'POST',
-      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify(payload),
-    });
+    const userId = state.user?.id;
+    let created = false;
 
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      const msg = Array.isArray(errorData.message)
-        ? errorData.message.join(', ')
-        : errorData.message || 'Transaction failed';
-      throw new Error(msg);
+    // 1. Direct Supabase Insert (Zero server dependency)
+    if (supabaseClient && userId) {
+      const { data, error } = await supabaseClient
+        .from('records')
+        .insert({
+          user_id: userId,
+          type: payload.type,
+          amount: payload.amount,
+          category: payload.category,
+          date: payload.date,
+          note: payload.note || null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+      created = true;
+    }
+
+    // 2. Fallback to local server endpoint
+    if (!created) {
+      const res = await fetch('/api/records', {
+        method: 'POST',
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        const msg = Array.isArray(errorData.message)
+          ? errorData.message.join(', ')
+          : errorData.message || 'Transaction failed';
+        throw new Error(msg);
+      }
     }
 
     showToast(
@@ -826,7 +929,8 @@ async function handleRecordSubmit(e) {
       !navigator.onLine ||
       err.name === 'TypeError' ||
       err.message?.includes('fetch') ||
-      err.message?.includes('Failed to fetch')
+      err.message?.includes('Failed to fetch') ||
+      err.message?.includes('NetworkError')
     ) {
       saveOfflineRecord(payload);
     } else {
@@ -860,12 +964,30 @@ window.handleDelete = async function (id) {
   }
 
   try {
-    const res = await fetch(`/api/records/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    });
+    const userId = state.user?.id;
+    let deleted = false;
 
-    if (!res.ok) throw new Error('Failed to delete transaction');
+    // 1. Direct Supabase Delete
+    if (supabaseClient && userId) {
+      const { error } = await supabaseClient
+        .from('records')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', userId);
+
+      if (error) throw new Error(error.message);
+      deleted = true;
+    }
+
+    // 2. Fallback to local server endpoint
+    if (!deleted) {
+      const res = await fetch(`/api/records/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      if (!res.ok) throw new Error('Failed to delete transaction');
+    }
 
     showToast(`Transaction #${id} deleted`);
     await Promise.all([loadRecords(), loadSummary()]);
@@ -1151,31 +1273,43 @@ function downLoadArchiveCSV() {
   );
 }
 
-function purgeOldRecords() {
+async function purgeOldRecords() {
   const years = parseInt(elements.retentionYearsSelect.value) || 3;
   if (
     !confirm(
-      `Are you sure you want to permanetly delete all records older than ${years} years? This action cannot be undone.`,
+      `Are you sure you want to permanently delete all records older than ${years} years? This action cannot be undone.`,
     )
   ) {
     return;
   }
 
-  fetch(`/api/records/purge?years=${years}`, {
-    method: 'DELETE',
-    headers: getAuthHeaders(),
-  })
-    .then((res) => {
+  const cutoffDate = getRetentionCutoffDate(years);
+  const userId = state.user?.id;
+
+  try {
+    if (supabaseClient && userId) {
+      const { error } = await supabaseClient
+        .from('records')
+        .delete()
+        .eq('user_id', userId)
+        .lt('date', cutoffDate);
+
+      if (error) throw new Error(error.message);
+    } else {
+      const res = await fetch(`/api/records/purge?years=${years}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error('Failed to purge old records');
-      showToast(`Purged records older than ${years} years`);
-      closeRetentionModal();
-      loadSummary();
-      loadRecords();
-    })
-    .catch((err) => {
-      console.error('Error purging old records:', err);
-      showToast(err.message, true);
-    });
+    }
+
+    showToast(`Purged records older than ${years} years`);
+    closeRetentionModal();
+    await Promise.all([loadRecords(), loadSummary()]);
+  } catch (err) {
+    console.error('Error purging old records:', err);
+    showToast(err.message, true);
+  }
 }
 
 // ============================================================================
@@ -1425,18 +1559,28 @@ function resetToGoogleAvatar() {
  * Dynamically fetch public configuration and initialize Supabase client
  */
 async function initSupabaseClient() {
+  if (!window.supabase) return;
+
+  let url = SUPABASE_DEFAULT_CONFIG.url;
+  let anonKey = SUPABASE_DEFAULT_CONFIG.anonKey;
+
   try {
     const res = await fetch('/api/records/config');
-    if (!res.ok) return;
-    const config = await res.json();
-    if (config.supabaseUrl && config.supabaseAnonKey && window.supabase) {
-      supabaseClient = window.supabase.createClient(
-        config.supabaseUrl,
-        config.supabaseAnonKey,
-      );
+    if (res.ok) {
+      const config = await res.json();
+      if (config.supabaseUrl && config.supabaseAnonKey) {
+        url = config.supabaseUrl;
+        anonKey = config.supabaseAnonKey;
+      }
     }
   } catch (err) {
-    console.error('Failed to load client configuration:', err);
+    // Mobile standalone APK or local server offline: successfully uses default BaaS config
+  }
+
+  try {
+    supabaseClient = window.supabase.createClient(url, anonKey);
+  } catch (err) {
+    console.error('Failed to create Supabase client:', err);
   }
 }
 
