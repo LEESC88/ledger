@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>LEDGER &mdash; Financial Management</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -279,6 +279,18 @@
       </div>
     </header>
 
+    <!-- App Update Available Prompt Banner -->
+    <div id="updateNotificationBanner" class="update-banner hidden" role="status" aria-live="polite">
+      <div class="update-banner-content">
+        <span class="update-badge-dot"></span>
+        <span id="updateBannerText" class="update-banner-text">New version available! Tap to update for the latest improvements.</span>
+      </div>
+      <div class="update-banner-actions">
+        <button id="updateBannerApplyBtn" class="btn-update-now">Update Now</button>
+        <button id="updateBannerDismissBtn" class="btn-update-dismiss" aria-label="Dismiss update notice">✕</button>
+      </div>
+    </div>
+
     <!-- ===================================================================
          P2: Top Monthly Budget Tracker Banner
          =================================================================== -->
@@ -429,8 +441,16 @@
                 min="0.01" 
                 placeholder="0.00" 
                 class="amount-input" 
+                inputmode="decimal"
                 required
               >
+            </div>
+            <div class="quick-amount-pills">
+              <button type="button" class="quick-amt-chip" data-quick-amt="10">+10</button>
+              <button type="button" class="quick-amt-chip" data-quick-amt="20">+20</button>
+              <button type="button" class="quick-amt-chip" data-quick-amt="50">+50</button>
+              <button type="button" class="quick-amt-chip" data-quick-amt="100">+100</button>
+              <button type="button" class="quick-amt-chip quick-amt-clear" data-quick-amt="clear">Reset</button>
             </div>
           </div>
 
@@ -525,7 +545,7 @@
           <span id="searchResultCount" class="search-result-count hidden">0 found</span>
         </div>
 
-        <div class="table-container">
+        <div class="table-container" tabindex="0" role="region" aria-label="Transactions journal">
           <table class="ledger-table" id="recordsTable">
             <thead>
               <tr>
@@ -709,19 +729,20 @@
       </div>
     </div>
 
-    <!-- P2: Monthly Budget Settings Modal -->
+    <!-- P2 & P3: Settings, Monthly Budget & App Update Modal -->
     <div id="budgetModal" class="modal-overlay hidden">
       <div class="modal-dialog modal-dialog-sm">
         <div class="modal-header">
           <div class="modal-title-row">
             <div class="modal-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
             </div>
             <div>
-              <h3 class="modal-title">Monthly Budget Limit</h3>
-              <p class="modal-subtitle">Set spending target for <span id="budgetModalMonthText">All Months</span></p>
+              <h3 class="modal-title">Settings &amp; Budget</h3>
+              <p class="modal-subtitle">Target for <span id="budgetModalMonthText">All Months</span> &amp; App Updates</p>
             </div>
           </div>
           <button id="closeBudgetModalBtn" class="btn-close-modal" aria-label="Close modal">&times;</button>
@@ -729,7 +750,7 @@
 
         <div class="modal-body">
           <div class="budget-form-group">
-            <label for="budgetInputAmount" class="field-label">Budget Limit (<span class="currency-sym">RM</span>)</label>
+            <label for="budgetInputAmount" class="field-label">Monthly Budget Limit (<span class="currency-sym">RM</span>)</label>
             <div class="budget-input-wrapper">
               <span class="currency-sym budget-input-prefix">RM</span>
               <input
@@ -737,6 +758,7 @@
                 id="budgetInputAmount"
                 class="budget-amount-input"
                 placeholder="e.g. 3000"
+                inputmode="decimal"
                 step="50"
                 min="1"
               />
@@ -752,11 +774,38 @@
               <button type="button" class="preset-pill" data-amount="5000">5,000</button>
             </div>
           </div>
+
+          <div class="settings-divider"></div>
+
+          <!-- App Version & One-Click Update Module -->
+          <div class="settings-update-card">
+            <div class="settings-update-info">
+              <div class="settings-update-header">
+                <span class="settings-update-title">Application Version</span>
+                <span id="appVersionBadge" class="version-badge">v1.2.0</span>
+              </div>
+              <p id="updateStatusText" class="settings-update-desc">You are running the latest version</p>
+            </div>
+            <button type="button" id="checkUpdateBtn" class="btn-check-update">
+              <svg id="checkUpdateIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+              </svg>
+              <span id="checkUpdateBtnText">Check &amp; Update</span>
+            </button>
+          </div>
+
+          <!-- Data Retention & Archiving Shortcut -->
+          <div class="settings-archive-row">
+            <span class="settings-archive-label">Historical Data &amp; CSV Backup</span>
+            <button type="button" id="openRetentionFromSettingsBtn" class="btn-settings-outline">
+              Manage Archive
+            </button>
+          </div>
         </div>
 
         <div class="modal-footer">
-          <button id="cancelBudgetBtn" class="btn-modal-secondary">Cancel</button>
-          <button id="saveBudgetBtn" class="btn-modal-primary">Save Limit</button>
+          <button id="cancelBudgetBtn" class="btn-modal-secondary">Close</button>
+          <button id="saveBudgetBtn" class="btn-modal-primary">Save Budget</button>
         </div>
       </div>
     </div>

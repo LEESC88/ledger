@@ -5,6 +5,9 @@
  * ============================================================================
  */
 
+// Current Client Release Version
+const APP_VERSION = '1.2.0';
+
 // Default Public Supabase BaaS Cloud Configuration (Enables standalone Mobile APK without Node server)
 const SUPABASE_DEFAULT_CONFIG = {
   url: 'https://bcftzfohhiwgabvfdewe.supabase.co',
@@ -119,6 +122,19 @@ const elements = {
   saveBudgetBtn: document.getElementById('saveBudgetBtn'),
   budgetInputAmount: document.getElementById('budgetInputAmount'),
   budgetPresetBtns: document.querySelectorAll('.preset-pill'),
+  quickAmtChips: document.querySelectorAll('.quick-amt-chip'),
+
+  // App Version & One-Click Update Elements
+  updateNotificationBanner: document.getElementById('updateNotificationBanner'),
+  updateBannerText: document.getElementById('updateBannerText'),
+  updateBannerApplyBtn: document.getElementById('updateBannerApplyBtn'),
+  updateBannerDismissBtn: document.getElementById('updateBannerDismissBtn'),
+  appVersionBadge: document.getElementById('appVersionBadge'),
+  updateStatusText: document.getElementById('updateStatusText'),
+  checkUpdateBtn: document.getElementById('checkUpdateBtn'),
+  checkUpdateIcon: document.getElementById('checkUpdateIcon'),
+  checkUpdateBtnText: document.getElementById('checkUpdateBtnText'),
+  openRetentionFromSettingsBtn: document.getElementById('openRetentionFromSettingsBtn'),
 
   // Reddit-Inspired Profile Dropdown Elements
   userProfilePill: document.getElementById('userProfilePill'),
@@ -1642,6 +1658,110 @@ function updateAuthUI(user) {
 }
 
 /**
+ * Service Worker & One-Click App Update Engine
+ */
+let swRegistration = null;
+
+async function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    try {
+      swRegistration = await navigator.serviceWorker.register('/sw.js');
+      swRegistration.addEventListener('updatefound', () => {
+        const newWorker = swRegistration.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateAvailablePrompt(APP_VERSION);
+          }
+        });
+      });
+    } catch (err) {
+      console.warn('Service worker registration skipped:', err);
+    }
+  }
+}
+
+function showUpdateAvailablePrompt(versionLabel) {
+  if (elements.updateBannerText) {
+    elements.updateBannerText.textContent = `🎉 New update available (v${versionLabel})! Tap Update Now to apply.`;
+  }
+  elements.updateNotificationBanner?.classList.remove('hidden');
+  if (elements.updateStatusText) {
+    elements.updateStatusText.textContent = `New version v${versionLabel} is ready to install!`;
+  }
+  if (elements.checkUpdateBtnText) {
+    elements.checkUpdateBtnText.textContent = `Install v${versionLabel}`;
+  }
+}
+
+async function applyAppUpdate() {
+  showToast('🚀 Applying latest update and refreshing...');
+  try {
+    if (swRegistration && swRegistration.waiting) {
+      swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    }
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+  } catch (e) {
+    console.warn('Cache cleanup warning:', e);
+  }
+  setTimeout(() => {
+    window.location.reload();
+  }, 450);
+}
+
+async function checkForAppUpdates(isManual = false) {
+  if (elements.appVersionBadge) {
+    elements.appVersionBadge.textContent = `v${APP_VERSION}`;
+  }
+
+  if (isManual) {
+    if (elements.checkUpdateBtn) elements.checkUpdateBtn.disabled = true;
+    if (elements.checkUpdateIcon) elements.checkUpdateIcon.classList.add('sync-spinner-icon');
+    if (elements.checkUpdateBtnText) elements.checkUpdateBtnText.textContent = 'Checking...';
+  }
+
+  try {
+    if (swRegistration) {
+      await swRegistration.update().catch(() => {});
+    }
+
+    const res = await fetch(`/version.json?t=${Date.now()}`, { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      const remoteVersion = data?.version || APP_VERSION;
+
+      if (remoteVersion !== APP_VERSION || (swRegistration && swRegistration.waiting)) {
+        showUpdateAvailablePrompt(remoteVersion);
+        if (isManual) {
+          await applyAppUpdate();
+        }
+        return;
+      }
+    }
+
+    if (isManual) {
+      if (elements.updateStatusText) {
+        elements.updateStatusText.textContent = `✅ Up to date (v${APP_VERSION}) — Checked just now`;
+      }
+      showToast(`✅ App is up to date (v${APP_VERSION})!`);
+    }
+  } catch (err) {
+    if (isManual) {
+      showToast('Could not reach update server. Using cached version.', true);
+    }
+  } finally {
+    if (isManual) {
+      if (elements.checkUpdateBtn) elements.checkUpdateBtn.disabled = false;
+      if (elements.checkUpdateIcon) elements.checkUpdateIcon.classList.remove('sync-spinner-icon');
+      if (elements.checkUpdateBtnText) elements.checkUpdateBtnText.textContent = 'Check & Update';
+    }
+  }
+}
+
+/**
  * Application Bootstrapper
  */
 async function init() {
@@ -1795,6 +1915,40 @@ async function init() {
     if (e.key === 'Escape') closeBudgetModal();
   });
 
+  // Quick Amount Chips in Entry Form
+  elements.quickAmtChips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      if (!elements.inputAmount) return;
+      const action = chip.dataset.quickAmt;
+      if (action === 'clear') {
+        elements.inputAmount.value = '';
+        elements.inputAmount.focus();
+        return;
+      }
+      const increment = parseFloat(action) || 0;
+      const current = parseFloat(elements.inputAmount.value) || 0;
+      elements.inputAmount.value = (current + increment).toFixed(2);
+    });
+  });
+
+  // Settings Modal: App Update & Data Retention Shortcut
+  elements.openRetentionFromSettingsBtn?.addEventListener('click', () => {
+    closeBudgetModal();
+    openRetentionModal();
+  });
+
+  elements.checkUpdateBtn?.addEventListener('click', () => {
+    checkForAppUpdates(true);
+  });
+
+  elements.updateBannerApplyBtn?.addEventListener('click', () => {
+    applyAppUpdate();
+  });
+
+  elements.updateBannerDismissBtn?.addEventListener('click', () => {
+    elements.updateNotificationBanner?.classList.add('hidden');
+  });
+
   elements.menuSettingsBtn?.addEventListener('click', () => {
     closeProfileDropdown();
     openBudgetModal();
@@ -1847,6 +2001,10 @@ async function init() {
   if (navigator.onLine && getOfflineQueue().length > 0) {
     syncOfflineDrafts();
   }
+
+  // Register Service Worker & Check for Updates
+  await registerServiceWorker();
+  checkForAppUpdates(false);
 
   // 13. Dynamically load Supabase configuration and listen for auth state
   try {
