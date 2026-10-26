@@ -6,7 +6,7 @@
  */
 
 // Current Client Release Version
-const APP_VERSION = '1.3.2';
+const APP_VERSION = '1.3.3';
 
 // Default Public Supabase BaaS Cloud Configuration (Enables standalone Mobile APK without Node server)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -192,6 +192,12 @@ const I18N = {
     nav_create: 'Create',
     nav_analytics: 'Analytics',
     nav_settings: 'Settings',
+    inapp_update_title: 'App Update Available',
+    download_and_install: 'Download & Install',
+    downloading_package: 'Downloading update package...',
+    keep_app_open: 'Please keep app open',
+    installing_update: 'Download complete! Launching installer...',
+    download_error: 'Download failed',
   },
   zh: {
     login_badge: '极简个人财务管理',
@@ -327,6 +333,12 @@ const I18N = {
     nav_create: '记账',
     nav_analytics: '图表',
     nav_settings: '设置',
+    inapp_update_title: '发现新版本',
+    download_and_install: '立即下载并安装',
+    downloading_package: '正在下载安装包...',
+    keep_app_open: '请勿关闭应用',
+    installing_update: '下载完成！正在调起安装程序...',
+    download_error: '下载更新失败',
   },
 };
 
@@ -430,7 +442,7 @@ const elements = {
   budgetInputAmount: document.getElementById('budgetInputAmount'),
   budgetPresetBtns: document.querySelectorAll('.preset-pill'),
 
-  // App Version & One-Click Update Elements
+  // App Version & In-App Auto-Update Elements
   updateNotificationBanner: document.getElementById('updateNotificationBanner'),
   updateBannerText: document.getElementById('updateBannerText'),
   updateBannerApplyBtn: document.getElementById('updateBannerApplyBtn'),
@@ -441,6 +453,20 @@ const elements = {
   checkUpdateIcon: document.getElementById('checkUpdateIcon'),
   checkUpdateBtnText: document.getElementById('checkUpdateBtnText'),
   openRetentionFromSettingsBtn: document.getElementById('openRetentionFromSettingsBtn'),
+
+  // Dedicated In-App Update Modal
+  inAppUpdateModal: document.getElementById('inAppUpdateModal'),
+  closeInAppUpdateModalBtn: document.getElementById('closeInAppUpdateModalBtn'),
+  inAppUpdateVersionBadge: document.getElementById('inAppUpdateVersionBadge'),
+  inAppUpdateNotes: document.getElementById('inAppUpdateNotes'),
+  updateDownloadProgressArea: document.getElementById('updateDownloadProgressArea'),
+  updateProgressStatusText: document.getElementById('updateProgressStatusText'),
+  updateProgressPercent: document.getElementById('updateProgressPercent'),
+  updateProgressBarFill: document.getElementById('updateProgressBarFill'),
+  updateProgressBytes: document.getElementById('updateProgressBytes'),
+  cancelInAppUpdateBtn: document.getElementById('cancelInAppUpdateBtn'),
+  startInAppUpdateBtn: document.getElementById('startInAppUpdateBtn'),
+  startInAppUpdateBtnText: document.getElementById('startInAppUpdateBtnText'),
 
   // Profile Dropdown & Settings Elements
   userProfilePill: document.getElementById('userProfilePill'),
@@ -1789,6 +1815,60 @@ async function purgeOldRecords() {
 // Google OAuth & Supabase Authentication Handlers
 // ============================================================================
 
+/**
+ * Compress Avatar Image using HTML5 Canvas (128x128 JPEG, ~6-10 KB)
+ */
+function compressAvatarImage(file, maxSize = 128, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxSize) {
+            height = Math.round((height * maxSize) / width);
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = Math.round((width * maxSize) / height);
+            height = maxSize;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Sync User Profile & Preferences to Cloud Supabase Auth metadata
+ */
+async function syncUserProfileToCloud(updates) {
+  if (!supabaseClient || !state.user?.id) return;
+  try {
+    const { data, error } = await supabaseClient.auth.updateUser({
+      data: updates,
+    });
+    if (!error && data?.user) {
+      state.user = data.user;
+    }
+  } catch (err) {
+    console.warn('Could not sync user profile to cloud:', err);
+  }
+}
+
 function isDarkModeActive() {
   const attr = document.documentElement.getAttribute('data-theme');
   if (attr === 'dark') return true;
@@ -1811,7 +1891,7 @@ function getUserDisplayName(user) {
   const customName = localStorage.getItem('ledger_custom_name_' + user.id);
   if (customName && customName.trim()) return customName.trim();
   const meta = user.user_metadata || {};
-  return meta.full_name || meta.name || user.email?.split('@')[0] || 'User';
+  return meta.custom_name || meta.full_name || meta.name || user.email?.split('@')[0] || 'User';
 }
 
 function getUserAvatar(user) {
@@ -1819,6 +1899,7 @@ function getUserAvatar(user) {
   const custom = localStorage.getItem('ledger_custom_avatar_' + user.id);
   if (custom) return custom;
   const meta = user.user_metadata || {};
+  if (meta.custom_avatar) return meta.custom_avatar;
   const googlePic = meta.avatar_url || meta.picture;
   if (googlePic) return googlePic;
   const name = getUserDisplayName(user);
@@ -1874,8 +1955,9 @@ function saveUsername() {
   updateAuthUI(state.user);
   updateAccountModalData();
   cancelUsernameEdit();
+  syncUserProfileToCloud({ custom_name: newName });
   showToast(
-    state.lang === 'zh' ? `用户名已更新为 "${newName}"` : `Username updated to "${newName}"`,
+    state.lang === 'zh' ? `用户名已更新为 "${newName}" 并同步至云端` : `Username updated to "${newName}" & synced`,
   );
 }
 
@@ -1902,6 +1984,10 @@ function setAppTheme(themeVal) {
 
   if (categoryChartInstance && state.summary?.categoryBreakdown) {
     renderCategoryChart(state.summary.categoryBreakdown);
+  }
+
+  if (state.user) {
+    syncUserProfileToCloud({ theme: mode });
   }
 }
 
@@ -1936,10 +2022,12 @@ function updateAccountModalData() {
   if (elements.accountModalEmail) elements.accountModalEmail.textContent = state.user.email;
 
   const firstLoginKey = 'ledger_first_login_' + state.user.id;
-  let firstLogin = localStorage.getItem(firstLoginKey);
+  const meta = state.user.user_metadata || {};
+  let firstLogin = meta.first_login_at || localStorage.getItem(firstLoginKey);
   if (!firstLogin) {
     firstLogin = new Date().toISOString();
     localStorage.setItem(firstLoginKey, firstLogin);
+    syncUserProfileToCloud({ first_login_at: firstLogin });
   }
 
   if (elements.accountMemberSince) {
@@ -1963,25 +2051,24 @@ function updateAccountModalData() {
 /**
  * Custom Avatar Upload & Reset Handlers
  */
-function handleAvatarFileSelected(e) {
+async function handleAvatarFileSelected(e) {
   const file = e.target.files?.[0];
   if (!file || !state.user) return;
   if (!file.type.startsWith('image/')) {
     return showToast('Please select a valid image file', true);
   }
-  if (file.size > 2 * 1024 * 1024) {
-    return showToast('Image file too large (max 2MB)', true);
-  }
 
-  const reader = new FileReader();
-  reader.onload = (evt) => {
-    const dataUrl = evt.target.result;
-    localStorage.setItem('ledger_custom_avatar_' + state.user.id, dataUrl);
+  try {
+    showToast(state.lang === 'zh' ? '正在优化并同步头像...' : 'Optimizing and syncing avatar...');
+    const compressed = await compressAvatarImage(file, 128, 0.82);
+    localStorage.setItem('ledger_custom_avatar_' + state.user.id, compressed);
     updateAuthUI(state.user);
     updateAccountModalData();
-    showToast(state.lang === 'zh' ? '头像已更新' : 'Custom avatar updated');
-  };
-  reader.readAsDataURL(file);
+    syncUserProfileToCloud({ custom_avatar: compressed });
+    showToast(state.lang === 'zh' ? '头像已同步至云端' : 'Avatar synced to cloud');
+  } catch (err) {
+    showToast('Failed to process avatar image', true);
+  }
 }
 
 function resetToGoogleAvatar() {
@@ -1989,7 +2076,8 @@ function resetToGoogleAvatar() {
   localStorage.removeItem('ledger_custom_avatar_' + state.user.id);
   updateAuthUI(state.user);
   updateAccountModalData();
-  showToast('Reset to Google profile photo');
+  syncUserProfileToCloud({ custom_avatar: null });
+  showToast(state.lang === 'zh' ? '已恢复 Google 原始头像' : 'Reset to Google profile photo');
 }
 
 /**
@@ -2094,8 +2182,47 @@ function updateAuthUI(user) {
     elements.loginLandingView?.classList.add('hidden');
     elements.appLayout?.classList.remove('hidden');
 
-    const displayName = getUserDisplayName(user);
+    const meta = user.user_metadata || {};
 
+    // 1. Restore Custom Name from Cloud metadata
+    if (meta.custom_name && meta.custom_name.trim()) {
+      localStorage.setItem('ledger_custom_name_' + user.id, meta.custom_name.trim());
+    }
+
+    // 2. Restore Custom Avatar from Cloud metadata
+    if (meta.custom_avatar) {
+      localStorage.setItem('ledger_custom_avatar_' + user.id, meta.custom_avatar);
+    }
+
+    // 3. Restore or Anchor First Login Date (Active Days) in Cloud
+    const firstLoginKey = 'ledger_first_login_' + user.id;
+    let firstLogin = meta.first_login_at || localStorage.getItem(firstLoginKey);
+    if (!firstLogin) {
+      firstLogin = new Date().toISOString();
+      localStorage.setItem(firstLoginKey, firstLogin);
+      syncUserProfileToCloud({ first_login_at: firstLogin });
+    } else {
+      localStorage.setItem(firstLoginKey, firstLogin);
+      if (!meta.first_login_at) {
+        syncUserProfileToCloud({ first_login_at: firstLogin });
+      }
+    }
+
+    // 4. Restore Preferences from Cloud if present
+    if (meta.currency && meta.currency !== state.currency) {
+      state.currency = meta.currency;
+      localStorage.setItem('ledger_currency', state.currency);
+      if (elements.currencySelector) elements.currencySelector.value = state.currency;
+      updateCurrencySymbols();
+    }
+    if (meta.lang && meta.lang !== state.lang) {
+      setAppLanguage(meta.lang);
+    }
+    if (meta.theme && meta.theme !== (localStorage.getItem('ledger_theme') || 'system')) {
+      setAppTheme(meta.theme);
+    }
+
+    const displayName = getUserDisplayName(user);
     if (elements.userName) elements.userName.textContent = displayName;
     if (elements.dropdownUserName) {
       elements.dropdownUserName.textContent = displayName;
@@ -2103,23 +2230,19 @@ function updateAuthUI(user) {
 
     setAvatarWithFallback(elements.userAvatar, user);
     setAvatarWithFallback(elements.dropdownAvatar, user);
-
-    const firstLoginKey = 'ledger_first_login_' + user.id;
-    if (!localStorage.getItem(firstLoginKey)) {
-      localStorage.setItem(firstLoginKey, new Date().toISOString());
-    }
     updateAccountModalData();
   } else {
     elements.loginLandingView?.classList.remove('hidden');
     elements.appLayout?.classList.add('hidden');
     closeProfileDropdown();
     closeCreateModal();
+    closeInAppUpdateModal();
   }
   updateSyncStatusUI();
 }
 
 /**
- * Service Worker & One-Click App Update Engine
+ * Service Worker & In-App Auto-Update Engine
  */
 let swRegistration = null;
 
@@ -2146,9 +2269,35 @@ let pendingUpdateVersion = null;
 let pendingApkDownloadUrl =
   'https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk';
 
-function showUpdateAvailablePrompt(versionLabel, apkUrl) {
+function openInAppUpdateModal() {
+  elements.updateDownloadProgressArea?.classList.add('hidden');
+  if (elements.startInAppUpdateBtn) {
+    elements.startInAppUpdateBtn.disabled = false;
+  }
+  if (elements.cancelInAppUpdateBtn) {
+    elements.cancelInAppUpdateBtn.disabled = false;
+  }
+  elements.inAppUpdateModal?.classList.remove('hidden');
+}
+
+function closeInAppUpdateModal() {
+  elements.inAppUpdateModal?.classList.add('hidden');
+}
+
+function showUpdateAvailablePrompt(versionLabel, apkUrl, notes) {
   pendingUpdateVersion = versionLabel;
   if (apkUrl) pendingApkDownloadUrl = apkUrl;
+
+  if (elements.inAppUpdateVersionBadge) {
+    elements.inAppUpdateVersionBadge.textContent = `v${versionLabel}`;
+  }
+  if (elements.inAppUpdateNotes) {
+    elements.inAppUpdateNotes.textContent =
+      notes ||
+      (state.lang === 'zh'
+        ? `发现新版本 v${versionLabel}，支持应用内极速下载与自动安装。`
+        : `New version v${versionLabel} is ready with in-app fast download and auto-install.`);
+  }
 
   if (elements.updateBannerText) {
     elements.updateBannerText.textContent =
@@ -2163,34 +2312,79 @@ function showUpdateAvailablePrompt(versionLabel, apkUrl) {
   if (elements.checkUpdateBtnText) {
     elements.checkUpdateBtnText.textContent = `Update v${versionLabel}`;
   }
+
+  openInAppUpdateModal();
 }
 
+/**
+ * Native Android Download Progress Callbacks
+ */
+window.__onNativeDownloadProgress = function (percent, currentBytes, totalBytes) {
+  const pct = Math.min(Math.max(Number(percent) || 0, 0), 100);
+  if (elements.updateProgressBarFill) {
+    elements.updateProgressBarFill.style.width = pct + '%';
+  }
+  if (elements.updateProgressPercent) {
+    elements.updateProgressPercent.textContent = pct + '%';
+  }
+  if (elements.updateProgressBytes) {
+    const curMb = (Number(currentBytes || 0) / (1024 * 1024)).toFixed(1);
+    const totMb = totalBytes > 0 ? (Number(totalBytes) / (1024 * 1024)).toFixed(1) : '?';
+    elements.updateProgressBytes.textContent = `${curMb} MB / ${totMb} MB`;
+  }
+  if (pct >= 100 && elements.updateProgressStatusText) {
+    elements.updateProgressStatusText.textContent = t('installing_update');
+  }
+};
+
+window.__onNativeDownloadError = function (errorMsg) {
+  showToast(`${t('download_error')}: ${errorMsg}`, true);
+  if (elements.updateProgressStatusText) {
+    elements.updateProgressStatusText.textContent = `${t('download_error')}: ${errorMsg}`;
+  }
+  if (elements.startInAppUpdateBtn) elements.startInAppUpdateBtn.disabled = false;
+  if (elements.cancelInAppUpdateBtn) elements.cancelInAppUpdateBtn.disabled = false;
+};
+
+/**
+ * Execute in-app auto-update
+ */
 async function applyAppUpdate() {
-  if (
-    window.Capacitor &&
-    pendingUpdateVersion &&
-    pendingUpdateVersion !== APP_VERSION
-  ) {
-    showToast(`🚀 Downloading APK v${pendingUpdateVersion}...`);
-    window.open(pendingApkDownloadUrl, '_system');
+  // If running inside Android container with NativeUpdater interface
+  if (window.NativeUpdater && typeof window.NativeUpdater.downloadAndInstall === 'function') {
+    elements.updateDownloadProgressArea?.classList.remove('hidden');
+    if (elements.startInAppUpdateBtn) {
+      elements.startInAppUpdateBtn.disabled = true;
+    }
+    if (elements.cancelInAppUpdateBtn) {
+      elements.cancelInAppUpdateBtn.disabled = true;
+    }
+    if (elements.updateProgressBarFill) elements.updateProgressBarFill.style.width = '0%';
+    if (elements.updateProgressPercent) elements.updateProgressPercent.textContent = '0%';
+    if (elements.updateProgressBytes) elements.updateProgressBytes.textContent = '0 MB / ...';
+    if (elements.updateProgressStatusText) {
+      elements.updateProgressStatusText.textContent = t('downloading_package');
+    }
+    window.NativeUpdater.downloadAndInstall(pendingApkDownloadUrl);
     return;
   }
 
-  showToast('🚀 Applying latest update...');
-  try {
-    if (swRegistration && swRegistration.waiting) {
-      swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
-    }
+  // Web Browser Fallback
+  if (swRegistration && swRegistration.waiting) {
+    showToast('🚀 Applying latest update...');
+    swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
     if ('caches' in window) {
       const keys = await caches.keys();
       await Promise.all(keys.map((k) => caches.delete(k)));
     }
-  } catch (e) {
-    // Ignore cache cleanup error
+    setTimeout(() => {
+      window.location.reload();
+    }, 450);
+    return;
   }
-  setTimeout(() => {
-    window.location.reload();
-  }, 450);
+
+  // Standalone web download
+  window.open(pendingApkDownloadUrl, '_system');
 }
 
 async function checkForAppUpdates(isManual = false) {
@@ -2307,6 +2501,9 @@ async function init() {
       updateCurrencySymbols();
       renderTable();
       renderBudgetTracker();
+      if (state.user) {
+        syncUserProfileToCloud({ currency: state.currency });
+      }
     });
   }
   updateCurrencySymbols();
@@ -2442,11 +2639,19 @@ async function init() {
   });
 
   elements.updateBannerApplyBtn?.addEventListener('click', () => {
-    applyAppUpdate();
+    openInAppUpdateModal();
   });
 
   elements.updateBannerDismissBtn?.addEventListener('click', () => {
     elements.updateNotificationBanner?.classList.add('hidden');
+  });
+
+  // Dedicated In-App Update Modal Listeners
+  elements.closeInAppUpdateModalBtn?.addEventListener('click', closeInAppUpdateModal);
+  elements.cancelInAppUpdateBtn?.addEventListener('click', closeInAppUpdateModal);
+  elements.startInAppUpdateBtn?.addEventListener('click', applyAppUpdate);
+  elements.inAppUpdateModal?.addEventListener('click', (e) => {
+    if (e.target === elements.inAppUpdateModal) closeInAppUpdateModal();
   });
 
   // Tucked-away Logout Button inside Settings

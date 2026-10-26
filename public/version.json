@@ -1,6 +1,6 @@
 {
-  "version": "1.3.2",
+  "version": "1.3.3",
   "releaseDate": "2026-10-26",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk",
-  "notes": "Added permanent fixed signing keystore (ledger.keystore) to eliminate Android 'App not installed as package conflicts with an existing package' signature mismatch error during future updates."
+  "notes": "Added in-app update download with live progress bar and direct installer launch; added full Supabase Cloud synchronization for custom avatars, usernames, active usage duration, and user preferences."
 }

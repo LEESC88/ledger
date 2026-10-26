@@ -476,7 +476,7 @@
               <div class="settings-update-info">
                 <div class="settings-update-header">
                   <span class="settings-update-title" data-i18n="app_version_label">Application Version</span>
-                  <span id="appVersionBadge" class="version-badge">v1.3.2</span>
+                  <span id="appVersionBadge" class="version-badge">v1.3.3</span>
                 </div>
                 <p id="updateStatusText" class="settings-update-desc" data-i18n="up_to_date_desc">You are running the latest version</p>
               </div>
@@ -630,6 +630,61 @@
     <div id="toastNotification" class="toast hidden">
       <span class="toast-indicator"></span>
       <span id="toastMessage" class="toast-msg">Operation completed</span>
+    </div>
+
+    <!-- Dedicated In-App Update Modal (Progress Bar & Automatic Installation) -->
+    <div id="inAppUpdateModal" class="modal-overlay hidden">
+      <div class="modal-dialog modal-dialog-sm update-modal-dialog">
+        <div class="modal-header">
+          <div class="modal-title-row">
+            <div class="modal-icon icon-update-pulse">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </div>
+            <div>
+              <h3 class="modal-title" data-i18n="inapp_update_title">App Update Available</h3>
+              <p class="modal-subtitle"><span id="inAppUpdateVersionBadge">v1.3.3</span></p>
+            </div>
+          </div>
+          <button id="closeInAppUpdateModalBtn" class="btn-close-modal" aria-label="Close modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <p id="inAppUpdateNotes" class="update-notes-body">
+            New version is ready with improvements.
+          </p>
+
+          <!-- In-App Download Progress View (Shown while downloading) -->
+          <div id="updateDownloadProgressArea" class="update-progress-area hidden">
+            <div class="update-progress-header">
+              <span id="updateProgressStatusText" class="progress-status-label" data-i18n="downloading_package">Downloading installation package...</span>
+              <span id="updateProgressPercent" class="progress-pct-bold">0%</span>
+            </div>
+            <div class="update-progress-bar-track">
+              <div id="updateProgressBarFill" class="update-progress-bar-fill" style="width: 0%"></div>
+            </div>
+            <div class="update-progress-meta">
+              <span id="updateProgressBytes" class="progress-bytes-label">0 MB / 0 MB</span>
+              <span class="progress-hint" data-i18n="keep_app_open">Please keep app open</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="cancelInAppUpdateBtn" class="btn-modal-secondary" data-i18n="cancel">Cancel</button>
+          <button id="startInAppUpdateBtn" class="btn-modal-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span id="startInAppUpdateBtnText" data-i18n="download_and_install">Download &amp; Install</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Monthly Budget Limit Edit Modal -->
