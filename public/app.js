@@ -6,7 +6,7 @@
  */
 
 // Current Client Release Version
-const APP_VERSION = '1.3.4';
+const APP_VERSION = '1.3.5';
 
 // Default Public Supabase BaaS Cloud Configuration (Enables standalone Mobile APK without Node server)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -72,7 +72,8 @@ const I18N = {
     feat_analytics: 'Smart Analytics',
     feat_sync: 'Cloud Sync',
     continue_google: 'Continue with Google',
-    login_encrypted_note: 'End-to-end isolated cloud storage via Google OAuth 2.0',
+    login_encrypted_note:
+      'End-to-end isolated cloud storage via Google OAuth 2.0',
     sync_synced: 'Synced',
     sync_offline: 'Offline',
     sync_syncing: 'Syncing',
@@ -176,7 +177,8 @@ const I18N = {
     retention_threshold: 'Retention Threshold',
     eligible_records: 'Eligible Historical Records',
     retention_title: 'Data Retention & Archive',
-    retention_desc: 'Export and clean up historical records older than your selected threshold.',
+    retention_desc:
+      'Export and clean up historical records older than your selected threshold.',
     archive_older_than: 'Archive records older than:',
     year_1: '1 Year',
     years_2: '2 Years',
@@ -212,6 +214,12 @@ const I18N = {
     set_initial_balance_title: 'Set Initial Balance',
     enter_initial_balance: 'Enter starting balance for this account',
     account_updated_toast: 'Account balance updated',
+    streak_label: 'Streak',
+    streak_modal_title: 'Streak & Achievements',
+    streak_modal_sub: 'Consistency builds financial freedom',
+    streak_days_unit: 'Days Streak',
+    achievements_heading: 'Milestone Badges',
+    close: 'Close',
   },
   zh: {
     login_badge: '极简个人财务管理',
@@ -331,7 +339,8 @@ const I18N = {
     retention_threshold: '清理时间范围',
     eligible_records: '符合条件的历史账单',
     retention_title: '历史数据归档与清理',
-    retention_desc: '将早于指定年限的历史账单导出备份为 CSV，并可选择从云端清理。',
+    retention_desc:
+      '将早于指定年限的历史账单导出备份为 CSV，并可选择从云端清理。',
     archive_older_than: '清理早于以下年限的记录:',
     year_1: '1 年前',
     years_2: '2 年前',
@@ -367,6 +376,12 @@ const I18N = {
     set_initial_balance_title: '设置初始余额',
     enter_initial_balance: '请输入此账户的起始资金/初始余额',
     account_updated_toast: '账户余额已更新',
+    streak_label: '连续记账',
+    streak_modal_title: '连续记账与成就徽章',
+    streak_modal_sub: '坚持记账，是财务自由的第一步',
+    streak_days_unit: '天连续记账',
+    achievements_heading: '成就徽章墙',
+    close: '关闭',
   },
 };
 
@@ -383,6 +398,7 @@ let state = {
   selectedAccountFilter: 'all',
   accounts: [],
   editingAccountName: null,
+  currentStreak: 0,
   searchQuery: '',
   monthlyBudget: 3000,
   isOnline: navigator.onLine,
@@ -401,7 +417,9 @@ const DEFAULT_ACCOUNTS = [
 
 function getAccountMeta(name) {
   const norm = (name || 'Cash').trim();
-  const found = DEFAULT_ACCOUNTS.find((a) => a.name.toLowerCase() === norm.toLowerCase());
+  const found = DEFAULT_ACCOUNTS.find(
+    (a) => a.name.toLowerCase() === norm.toLowerCase(),
+  );
   if (found) return found;
   return { name: norm, icon: '💵', type: 'general', zh: norm };
 }
@@ -424,7 +442,9 @@ const elements = {
 
   // Multi-Page Views & Navigation
   appPages: document.querySelectorAll('.app-page'),
-  bottomNavItems: document.querySelectorAll('.bottom-nav-item[data-nav-target]'),
+  bottomNavItems: document.querySelectorAll(
+    '.bottom-nav-item[data-nav-target]',
+  ),
   openCreateModalBtn: document.getElementById('openCreateModalBtn'),
   desktopCreateBtn: document.getElementById('desktopCreateBtn'),
   emptyCreateBtn: document.getElementById('emptyCreateBtn'),
@@ -505,14 +525,18 @@ const elements = {
   checkUpdateBtn: document.getElementById('checkUpdateBtn'),
   checkUpdateIcon: document.getElementById('checkUpdateIcon'),
   checkUpdateBtnText: document.getElementById('checkUpdateBtnText'),
-  openRetentionFromSettingsBtn: document.getElementById('openRetentionFromSettingsBtn'),
+  openRetentionFromSettingsBtn: document.getElementById(
+    'openRetentionFromSettingsBtn',
+  ),
 
   // Dedicated In-App Update Modal
   inAppUpdateModal: document.getElementById('inAppUpdateModal'),
   closeInAppUpdateModalBtn: document.getElementById('closeInAppUpdateModalBtn'),
   inAppUpdateVersionBadge: document.getElementById('inAppUpdateVersionBadge'),
   inAppUpdateNotes: document.getElementById('inAppUpdateNotes'),
-  updateDownloadProgressArea: document.getElementById('updateDownloadProgressArea'),
+  updateDownloadProgressArea: document.getElementById(
+    'updateDownloadProgressArea',
+  ),
   updateProgressStatusText: document.getElementById('updateProgressStatusText'),
   updateProgressPercent: document.getElementById('updateProgressPercent'),
   updateProgressBarFill: document.getElementById('updateProgressBarFill'),
@@ -530,7 +554,9 @@ const elements = {
   dropdownAvatar: document.getElementById('dropdownAvatar'),
   dropdownUserName: document.getElementById('dropdownUserName'),
   menuEditAvatarBtn: document.getElementById('menuEditAvatarBtn'),
-  themeSegmentBtns: document.querySelectorAll('.theme-segment-btn:not(.lang-segment-btn)'),
+  themeSegmentBtns: document.querySelectorAll(
+    '.theme-segment-btn:not(.lang-segment-btn)',
+  ),
   langSegmentBtns: document.querySelectorAll('.lang-segment-btn'),
   menuSettingsBtn: document.getElementById('menuSettingsBtn'),
   menuLogoutBtn: document.getElementById('menuLogoutBtn'),
@@ -557,7 +583,9 @@ const elements = {
   accountFilterSelect: document.getElementById('accountFilterSelect'),
   accountSelectorGrid: document.getElementById('accountSelectorGrid'),
   selectedAccountInput: document.getElementById('selectedAccountInput'),
-  settingsAccountsCenterCard: document.getElementById('settingsAccountsCenterCard'),
+  settingsAccountsCenterCard: document.getElementById(
+    'settingsAccountsCenterCard',
+  ),
   accountsWalletsList: document.getElementById('accountsWalletsList'),
   totalNetWorthValue: document.getElementById('totalNetWorthValue'),
   initialBalanceModal: document.getElementById('initialBalanceModal'),
@@ -565,7 +593,9 @@ const elements = {
   initialBalanceModalTitle: document.getElementById('initialBalanceModalTitle'),
   initialBalanceModalSub: document.getElementById('initialBalanceModalSub'),
   initialBalanceInput: document.getElementById('initialBalanceInput'),
-  closeInitialBalanceModalBtn: document.getElementById('closeInitialBalanceModalBtn'),
+  closeInitialBalanceModalBtn: document.getElementById(
+    'closeInitialBalanceModalBtn',
+  ),
   cancelInitialBalanceBtn: document.getElementById('cancelInitialBalanceBtn'),
   saveInitialBalanceBtn: document.getElementById('saveInitialBalanceBtn'),
 };
@@ -598,7 +628,10 @@ function setAppLanguage(lang) {
   const validLang = lang === 'zh' ? 'zh' : 'en';
   state.lang = validLang;
   localStorage.setItem('ledger_lang', validLang);
-  document.documentElement.setAttribute('lang', validLang === 'zh' ? 'zh-CN' : 'en');
+  document.documentElement.setAttribute(
+    'lang',
+    validLang === 'zh' ? 'zh-CN' : 'en',
+  );
 
   elements.langSegmentBtns.forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.langVal === validLang);
@@ -661,7 +694,10 @@ function switchAppPage(pageName) {
   if (target === 'analytics') {
     renderBudgetTracker();
     if (state.summary?.categoryBreakdown) {
-      setTimeout(() => renderCategoryChart(state.summary.categoryBreakdown), 30);
+      setTimeout(
+        () => renderCategoryChart(state.summary.categoryBreakdown),
+        30,
+      );
     }
   } else if (target === 'settings') {
     updateAccountModalData();
@@ -720,18 +756,20 @@ function renderCategoryGrid(type) {
     })
     .join('');
 
-  elements.categoryGridContainer.querySelectorAll('.cat-grid-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const chosen = btn.getAttribute('data-cat-val');
-      if (chosen && elements.selectCategory) {
-        elements.selectCategory.value = chosen;
-      }
-      elements.categoryGridContainer
-        .querySelectorAll('.cat-grid-btn')
-        .forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
+  elements.categoryGridContainer
+    .querySelectorAll('.cat-grid-btn')
+    .forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const chosen = btn.getAttribute('data-cat-val');
+        if (chosen && elements.selectCategory) {
+          elements.selectCategory.value = chosen;
+        }
+        elements.categoryGridContainer
+          .querySelectorAll('.cat-grid-btn')
+          .forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
     });
-  });
 }
 
 /**
@@ -751,21 +789,23 @@ function renderAccountPicker() {
     `;
   }).join('');
 
-  elements.accountSelectorGrid.querySelectorAll('.account-chip-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const chosen = btn.getAttribute('data-account');
-      if (chosen) {
-        state.selectedAccount = chosen;
-        if (elements.selectedAccountInput) {
-          elements.selectedAccountInput.value = chosen;
+  elements.accountSelectorGrid
+    .querySelectorAll('.account-chip-btn')
+    .forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const chosen = btn.getAttribute('data-account');
+        if (chosen) {
+          state.selectedAccount = chosen;
+          if (elements.selectedAccountInput) {
+            elements.selectedAccountInput.value = chosen;
+          }
         }
-      }
-      elements.accountSelectorGrid
-        .querySelectorAll('.account-chip-btn')
-        .forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
+        elements.accountSelectorGrid
+          .querySelectorAll('.account-chip-btn')
+          .forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
     });
-  });
 }
 
 /**
@@ -885,7 +925,9 @@ function updateSyncStatusUI() {
   if (!state.isOnline) {
     elements.syncStatusPill.className = 'sync-status-pill sync-pill-offline';
     elements.syncStatusText.textContent =
-      queue.length > 0 ? `${t('sync_offline')} (${queue.length})` : t('sync_offline');
+      queue.length > 0
+        ? `${t('sync_offline')} (${queue.length})`
+        : t('sync_offline');
   } else if (queue.length > 0) {
     elements.syncStatusPill.className = 'sync-status-pill sync-pill-offline';
     elements.syncStatusText.textContent = `${queue.length} Pending`;
@@ -899,7 +941,9 @@ async function syncOfflineDrafts() {
   if (state.isSyncing) return;
   if (!navigator.onLine) {
     showToast(
-      state.lang === 'zh' ? '当前处于离线状态，无法同步' : 'Cannot sync while offline',
+      state.lang === 'zh'
+        ? '当前处于离线状态，无法同步'
+        : 'Cannot sync while offline',
       true,
     );
     return;
@@ -986,7 +1030,9 @@ function updateSummaryStatusBadge(netBalance) {
 function calculateLocalSummaryMetrics() {
   let records = state.records;
   if (state.currentMonth !== 'all') {
-    records = records.filter((r) => r.date && r.date.startsWith(state.currentMonth));
+    records = records.filter(
+      (r) => r.date && r.date.startsWith(state.currentMonth),
+    );
   }
 
   let totalIncome = 0;
@@ -999,7 +1045,8 @@ function calculateLocalSummaryMetrics() {
       totalIncome += amt;
     } else {
       totalExpense += amt;
-      categoryBreakdown[record.category] = (categoryBreakdown[record.category] || 0) + amt;
+      categoryBreakdown[record.category] =
+        (categoryBreakdown[record.category] || 0) + amt;
     }
   }
 
@@ -1012,11 +1059,17 @@ function calculateLocalSummaryMetrics() {
   };
 
   if (elements.netBalanceValue)
-    elements.netBalanceValue.textContent = formatNumber(state.summary.netBalance);
+    elements.netBalanceValue.textContent = formatNumber(
+      state.summary.netBalance,
+    );
   if (elements.totalIncomeValue)
-    elements.totalIncomeValue.textContent = formatNumber(state.summary.totalIncome);
+    elements.totalIncomeValue.textContent = formatNumber(
+      state.summary.totalIncome,
+    );
   if (elements.totalExpenseValue)
-    elements.totalExpenseValue.textContent = formatNumber(state.summary.totalExpense);
+    elements.totalExpenseValue.textContent = formatNumber(
+      state.summary.totalExpense,
+    );
 
   updateSummaryStatusBadge(state.summary.netBalance);
   renderCategoryChart(categoryBreakdown);
@@ -1073,7 +1126,8 @@ async function loadBudget(month) {
   const cacheKey = getBudgetStorageKey(targetMonth);
   const defaultKey = getBudgetStorageKey('default');
 
-  const cached = localStorage.getItem(cacheKey) || localStorage.getItem(defaultKey);
+  const cached =
+    localStorage.getItem(cacheKey) || localStorage.getItem(defaultKey);
   if (cached && !isNaN(Number(cached))) {
     state.monthlyBudget = Number(cached);
   } else {
@@ -1093,7 +1147,12 @@ async function loadBudget(month) {
         .eq('month', targetMonth)
         .maybeSingle();
 
-      if (!error && data && data.amount !== null && !isNaN(Number(data.amount))) {
+      if (
+        !error &&
+        data &&
+        data.amount !== null &&
+        !isNaN(Number(data.amount))
+      ) {
         state.monthlyBudget = Number(data.amount);
         localStorage.setItem(cacheKey, state.monthlyBudget);
         renderBudgetTracker();
@@ -1101,9 +1160,12 @@ async function loadBudget(month) {
       }
     }
 
-    const res = await fetch(`/api/budgets?month=${encodeURIComponent(targetMonth)}`, {
-      headers: getAuthHeaders(),
-    });
+    const res = await fetch(
+      `/api/budgets?month=${encodeURIComponent(targetMonth)}`,
+      {
+        headers: getAuthHeaders(),
+      },
+    );
     if (res.ok) {
       const data = await res.json();
       if (data && data.amount !== null && !isNaN(Number(data.amount))) {
@@ -1160,7 +1222,8 @@ function renderBudgetTracker() {
   const budgetLimit = Number(state.monthlyBudget || 3000);
   const sym = state.currency || 'RM';
 
-  const percentage = budgetLimit > 0 ? Math.round((totalExpense / budgetLimit) * 100) : 0;
+  const percentage =
+    budgetLimit > 0 ? Math.round((totalExpense / budgetLimit) * 100) : 0;
   const barWidth = Math.min(Math.max(percentage, 0), 100);
 
   if (elements.budgetPeriodLabel) {
@@ -1187,7 +1250,10 @@ function renderBudgetTracker() {
   }
 
   elements.budgetPctVal?.classList.remove('text-warning', 'text-danger');
-  elements.budgetRemainingLabel?.classList.remove('text-warning', 'text-danger');
+  elements.budgetRemainingLabel?.classList.remove(
+    'text-warning',
+    'text-danger',
+  );
 
   if (percentage >= 100) {
     elements.budgetProgressBar?.classList.add('progress-danger');
@@ -1218,7 +1284,8 @@ function openBudgetModal() {
   if (!elements.budgetModal) return;
   const targetLabel =
     state.currentMonth === 'all' ? t('all_records') : state.currentMonth;
-  if (elements.budgetModalMonthText) elements.budgetModalMonthText.textContent = targetLabel;
+  if (elements.budgetModalMonthText)
+    elements.budgetModalMonthText.textContent = targetLabel;
   if (elements.budgetInputAmount)
     elements.budgetInputAmount.value = state.monthlyBudget || 3000;
   elements.budgetModal.classList.remove('hidden');
@@ -1233,7 +1300,9 @@ function handleSaveBudget() {
   const val = parseFloat(elements.budgetInputAmount?.value);
   if (isNaN(val) || val <= 0) {
     return showToast(
-      state.lang === 'zh' ? '请输入大于 0 的有效预算金额' : 'Please enter a valid budget amount',
+      state.lang === 'zh'
+        ? '请输入大于 0 的有效预算金额'
+        : 'Please enter a valid budget amount',
       true,
     );
   }
@@ -1386,7 +1455,9 @@ function renderTable() {
   let filtered = state.records;
 
   if (state.currentMonth !== 'all') {
-    filtered = filtered.filter((r) => r.date && r.date.startsWith(state.currentMonth));
+    filtered = filtered.filter(
+      (r) => r.date && r.date.startsWith(state.currentMonth),
+    );
   }
 
   if (state.currentFilter !== 'all') {
@@ -1394,7 +1465,9 @@ function renderTable() {
   }
 
   if (state.selectedAccountFilter && state.selectedAccountFilter !== 'all') {
-    filtered = filtered.filter((r) => (r.account_name || 'Cash') === state.selectedAccountFilter);
+    filtered = filtered.filter(
+      (r) => (r.account_name || 'Cash') === state.selectedAccountFilter,
+    );
   }
 
   if (state.searchQuery) {
@@ -1497,7 +1570,9 @@ async function handleRecordSubmit(e) {
 
   if (!amount || amount <= 0) {
     showToast(
-      state.lang === 'zh' ? '请输入大于 0 的金额' : 'Please enter an amount greater than 0',
+      state.lang === 'zh'
+        ? '请输入大于 0 的金额'
+        : 'Please enter an amount greater than 0',
       true,
     );
     return;
@@ -1787,18 +1862,31 @@ function exportToCSV() {
   }
 
   if (state.currentFilter !== 'all') {
-    recordsToExport = recordsToExport.filter((r) => r.type === state.currentFilter);
+    recordsToExport = recordsToExport.filter(
+      (r) => r.type === state.currentFilter,
+    );
   }
 
   if (recordsToExport.length === 0) {
     showToast(
-      state.lang === 'zh' ? '暂无可导出的账单记录' : 'No records available to export',
+      state.lang === 'zh'
+        ? '暂无可导出的账单记录'
+        : 'No records available to export',
       true,
     );
     return;
   }
 
-  const headers = ['ID', 'Date', 'Type', 'Category', 'Account', 'Amount', 'Currency', 'Note'];
+  const headers = [
+    'ID',
+    'Date',
+    'Type',
+    'Category',
+    'Account',
+    'Amount',
+    'Currency',
+    'Note',
+  ];
   const rows = recordsToExport.map((r) => [
     r.id,
     `"${r.date}"`,
@@ -1811,7 +1899,8 @@ function exportToCSV() {
   ]);
 
   const csvContent =
-    '\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
+    '\uFEFF' +
+    [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
 
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -1849,7 +1938,8 @@ function evaluateRetentionEligible() {
   if (!elements.retentionYearsSelect) return;
   const years = parseInt(elements.retentionYearsSelect.value) || 3;
   const cutoffDate = getRetentionCutoffDate(years);
-  if (elements.retentionCutoffDate) elements.retentionCutoffDate.textContent = cutoffDate;
+  if (elements.retentionCutoffDate)
+    elements.retentionCutoffDate.textContent = cutoffDate;
 
   const matchingRecords = state.records.filter((r) => r.date < cutoffDate);
   if (elements.retentionMatchCount)
@@ -1880,7 +1970,16 @@ function downLoadArchiveCSV() {
     return;
   }
 
-  const headers = ['ID', 'Date', 'Type', 'Category', 'Account', 'Amount', 'Currency', 'Note'];
+  const headers = [
+    'ID',
+    'Date',
+    'Type',
+    'Category',
+    'Account',
+    'Amount',
+    'Currency',
+    'Note',
+  ];
   const rows = matchingRecords.map((r) => [
     r.id,
     `"${r.date}"`,
@@ -1893,7 +1992,8 @@ function downLoadArchiveCSV() {
   ]);
 
   const csvContent =
-    '\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
+    '\uFEFF' +
+    [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const downloadLink = document.createElement('a');
@@ -2012,7 +2112,10 @@ function isDarkModeActive() {
   const attr = document.documentElement.getAttribute('data-theme');
   if (attr === 'dark') return true;
   if (attr === 'light') return false;
-  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  return (
+    window.matchMedia &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
 }
 
 function getInitialsAvatar(name) {
@@ -2030,7 +2133,13 @@ function getUserDisplayName(user) {
   const customName = localStorage.getItem('ledger_custom_name_' + user.id);
   if (customName && customName.trim()) return customName.trim();
   const meta = user.user_metadata || {};
-  return meta.custom_name || meta.full_name || meta.name || user.email?.split('@')[0] || 'User';
+  return (
+    meta.custom_name ||
+    meta.full_name ||
+    meta.name ||
+    user.email?.split('@')[0] ||
+    'User'
+  );
 }
 
 function getUserAvatar(user) {
@@ -2096,7 +2205,9 @@ function saveUsername() {
   cancelUsernameEdit();
   syncUserProfileToCloud({ custom_name: newName });
   showToast(
-    state.lang === 'zh' ? `用户名已更新为 "${newName}" 并同步至云端` : `Username updated to "${newName}" & synced`,
+    state.lang === 'zh'
+      ? `用户名已更新为 "${newName}" 并同步至云端`
+      : `Username updated to "${newName}" & synced`,
   );
 }
 
@@ -2104,7 +2215,9 @@ function saveUsername() {
  * Set application visual theme (Light / Dark / System with High Contrast)
  */
 function setAppTheme(themeVal) {
-  const mode = ['light', 'dark', 'system'].includes(themeVal) ? themeVal : 'system';
+  const mode = ['light', 'dark', 'system'].includes(themeVal)
+    ? themeVal
+    : 'system';
   localStorage.setItem('ledger_theme', mode);
 
   elements.themeSegmentBtns.forEach((btn) => {
@@ -2112,7 +2225,8 @@ function setAppTheme(themeVal) {
   });
 
   const prefersDark =
-    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    window.matchMedia &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches;
   const resolved = mode === 'system' ? (prefersDark ? 'dark' : 'light') : mode;
 
   document.documentElement.setAttribute('data-theme', resolved);
@@ -2157,8 +2271,10 @@ function updateAccountModalData() {
   setAvatarWithFallback(elements.accountModalAvatar, state.user);
   const displayName = getUserDisplayName(state.user);
 
-  if (elements.accountModalName) elements.accountModalName.textContent = displayName;
-  if (elements.accountModalEmail) elements.accountModalEmail.textContent = state.user.email;
+  if (elements.accountModalName)
+    elements.accountModalName.textContent = displayName;
+  if (elements.accountModalEmail)
+    elements.accountModalEmail.textContent = state.user.email;
 
   const firstLoginKey = 'ledger_first_login_' + state.user.id;
   const meta = state.user.user_metadata || {};
@@ -2170,14 +2286,13 @@ function updateAccountModalData() {
   }
 
   if (elements.accountMemberSince) {
-    elements.accountMemberSince.textContent = new Date(firstLogin).toLocaleDateString(
-      state.lang === 'zh' ? 'zh-CN' : 'en-US',
-      {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      },
-    );
+    elements.accountMemberSince.textContent = new Date(
+      firstLogin,
+    ).toLocaleDateString(state.lang === 'zh' ? 'zh-CN' : 'en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   }
   if (elements.accountUsageDuration) {
     elements.accountUsageDuration.textContent = formatUsageDuration(firstLogin);
@@ -2316,12 +2431,17 @@ function renderAccountsCenter() {
  * Open Modal to edit initial balance
  */
 function openInitialBalanceModal(accountName) {
-  const acc = (state.accounts || []).find((a) => a.name === accountName) || getAccountMeta(accountName);
+  const acc =
+    (state.accounts || []).find((a) => a.name === accountName) ||
+    getAccountMeta(accountName);
   state.editingAccountName = accountName;
-  if (elements.initialBalanceModalIcon) elements.initialBalanceModalIcon.textContent = acc.icon;
+  if (elements.initialBalanceModalIcon)
+    elements.initialBalanceModalIcon.textContent = acc.icon;
   if (elements.initialBalanceModalTitle) {
     elements.initialBalanceModalTitle.textContent =
-      state.lang === 'zh' ? `设置 ${getAccountDisplayLabel(accountName)} 初始余额` : `Set ${acc.name} Initial Balance`;
+      state.lang === 'zh'
+        ? `设置 ${getAccountDisplayLabel(accountName)} 初始余额`
+        : `Set ${acc.name} Initial Balance`;
   }
   if (elements.initialBalanceInput) {
     elements.initialBalanceInput.value =
@@ -2390,6 +2510,209 @@ async function handleSaveInitialBalance() {
 window.openInitialBalanceModal = openInitialBalanceModal;
 window.closeInitialBalanceModal = closeInitialBalanceModal;
 
+// ============================================================================
+// Module: Streak Counter & Motivation Badges
+// ============================================================================
+
+const MOTIVATION_BADGES = [
+  {
+    id: 'first_record',
+    icon: '🌱',
+    name_en: 'First Step',
+    name_zh: '新人起航',
+    desc_en: 'Recorded 1st entry',
+    desc_zh: '记下第1笔账单',
+  },
+  {
+    id: 'streak_3',
+    icon: '🥉',
+    name_en: '3-Day Spark',
+    name_zh: '连记 3 天',
+    desc_en: '3 consecutive days',
+    desc_zh: '连续记账坚持3天',
+  },
+  {
+    id: 'streak_7',
+    icon: '🥈',
+    name_en: 'Week Hero',
+    name_zh: '连记 7 天',
+    desc_en: '7 consecutive days',
+    desc_zh: '连续记账坚持7天',
+  },
+  {
+    id: 'streak_30',
+    icon: '🥇',
+    name_en: 'Habit Master',
+    name_zh: '连记 30 天',
+    desc_en: '30 consecutive days',
+    desc_zh: '连续记账坚持30天',
+  },
+  {
+    id: 'streak_100',
+    icon: '👑',
+    name_en: 'Century Legend',
+    name_zh: '百日达人',
+    desc_en: '100 consecutive days',
+    desc_zh: '连续记账坚持100天',
+  },
+];
+
+/**
+ * ----------------------------------------------------------------------------
+ * Task 1: calculateStreak(records)
+ * ----------------------------------------------------------------------------
+ * Compute active daily recording streak.
+ *
+ * @param {Array<Object>} records - List of all records (each has r.date: 'YYYY-MM-DD')
+ * @returns {number} Active streak count in days (0 if broken or no records)
+ *
+ * 💡 Hints:
+ * 1. If !records || records.length === 0, return 0.
+ * 2. Extract unique dates:
+ *    const uniqueDates = Array.from(new Set(records.map(r => r.date).filter(Boolean)));
+ * 3. Sort dates descending (newest first):
+ *    uniqueDates.sort((a, b) => b.localeCompare(a));
+ * 4. Get today and yesterday in ISO 'YYYY-MM-DD':
+ *    const now = new Date();
+ *    const today = now.toISOString().split('T')[0];
+ *    now.setDate(now.getDate() - 1);
+ *    const yesterday = now.toISOString().split('T')[0];
+ * 5. Check if uniqueDates[0] is either today or yesterday:
+ *    If not, streak is broken -> return 0.
+ * 6. Start streak = 1.
+ * 7. Loop through dates from i = 0 to uniqueDates.length - 2:
+ *    Calculate day difference between uniqueDates[i] and uniqueDates[i + 1]:
+ *    const diffDays = Math.round((new Date(uniqueDates[i]) - new Date(uniqueDates[i + 1])) / 86400000);
+ *    If diffDays === 1, streak++; else break;
+ * 8. Return streak.
+ */
+function calculateStreak(records) {
+  if (!records || records.length === 0) return 0;
+  const uniqueDates = Array.from(
+    new Set(records.map((r) => r.date).filter(Boolean)),
+  );
+  uniqueDates.sort((a, b) => b.localeCompare(a));
+
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  now.setDate(now.getDate() - 1);
+  const yesterday = now.toISOString().split('T')[0];
+
+  if (uniqueDates[0] !== today && uniqueDates[0] !== yesterday) {
+    return 0;
+  }
+
+  let streak = 1;
+  for (let i = 0; i < uniqueDates.length - 1; i++) {
+    const d1 = new Date(uniqueDates[i]);
+    const d2 = new Date(uniqueDates[i + 1]);
+    const diffDays = Math.round((d1 - d2) / 86400000);
+    if (diffDays === 1) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+/**
+ * ----------------------------------------------------------------------------
+ * Task 2: evaluateBadges(streakDays, totalRecords)
+ * ----------------------------------------------------------------------------
+ * Evaluate which milestone badges are unlocked.
+ *
+ * @param {number} streakDays - Current active consecutive days
+ * @param {number} totalRecords - Total transaction records count
+ * @returns {Array<string>} Array of unlocked badge IDs (e.g. ['first_record', 'streak_3'])
+ *
+ * 💡 Hints:
+ * 1. Initialize an empty array: const unlocked = [];
+ * 2. Check each milestone threshold:
+ *    - if (totalRecords >= 1) unlocked.push('first_record');
+ *    - if (streakDays >= 3)   unlocked.push('streak_3');
+ *    - if (streakDays >= 7)   unlocked.push('streak_7');
+ *    - if (streakDays >= 30)  unlocked.push('streak_30');
+ *    - if (streakDays >= 100) unlocked.push('streak_100');
+ * 3. Return unlocked.
+ */
+function evaluateBadges(streakDays, totalRecords) {
+  const unlocked = [];
+  if (totalRecords >= 1) unlocked.push('first_record');
+  if (streakDays >= 3) unlocked.push('streak_3');
+  if (streakDays >= 7) unlocked.push('streak_7');
+  if (streakDays >= 30) unlocked.push('streak_30');
+  if (streakDays >= 100) unlocked.push('streak_100');
+  return unlocked;
+}
+
+/**
+ * ----------------------------------------------------------------------------
+ * Task 3: renderStreakAndBadges()
+ * ----------------------------------------------------------------------------
+ * Render streak counter and achievement badges to the UI.
+ *
+ * 💡 Hints:
+ * 1. Calculate active streak:
+ *    state.streakDays = calculateStreak(state.records);
+ * 2. Evaluate unlocked badges:
+ *    state.unlockedBadges = evaluateBadges(state.streakDays, state.records.length);
+ * 3. Update top header flame pill:
+ *    if (elements.streakCountText) {
+ *      elements.streakCountText.textContent = `${state.streakDays}d`;
+ *    }
+ *    if (elements.streakPill) {
+ *      if (state.streakDays > 0) {
+ *        elements.streakPill.classList.add('streak-active');
+ *      } else {
+ *        elements.streakPill.classList.remove('streak-active');
+ *      }
+ *    }
+ *
+ */
+function renderStreakAndBadges() {
+  // ✍️ YOUR TURN: Write your code below this line:
+  state.streakDays = calculateStreak(state.records);
+  state.unlockedBadges = evaluateBadges(state.streakDays, state.records.length);
+
+  if (elements.streakCountText) {
+    elements.streakCountText.textContent = `${state.streakDays}d`;
+  }
+  if (elements.streakPill) {
+    if (state.streakDays > 0) {
+      elements.streakPill.classList.add('streak-active');
+    } else {
+      elements.streakPill.classList.remove('streak-active');
+    }
+  }
+  if (elements.settingsStreakCount) {
+    elements.settingsStreakCount.textContent = `${state.streakDays} ${state.lang === 'zh' ? '天连记' : 'Days'}`;
+  }
+  if (elements.badgesGridContainer) {
+    elements.badgesGridContainer.innerHTML = MOTIVATION_BADGES.map((badge) => {
+      const isUnlocked = state.unlockedBadges.includes(badge.id);
+      const name = state.lang === 'zh' ? badge.name_zh : badge.name_en;
+      const desc = state.lang === 'zh' ? badge.desc_zh : badge.desc_en;
+      const status = isUnlocked
+        ? state.lang === 'zh'
+          ? '已解锁'
+          : 'Unlocked'
+        : state.lang === 'zh'
+          ? '未解锁'
+          : 'Locked';
+      return `
+        <div class="badge-item ${isUnlocked ? 'unlocked' : 'locked'}">
+          <span class="badge-icon">${badge.icon}</span>
+          <span class="badge-name">${name}</span>
+          <span class="badge-desc">${desc}</span>
+          <span class="badge-status">${status}</span>
+        </div>
+        `;
+    }).join('');
+  }
+}
+
 /**
  * Custom Avatar Upload & Reset Handlers
  */
@@ -2401,13 +2724,19 @@ async function handleAvatarFileSelected(e) {
   }
 
   try {
-    showToast(state.lang === 'zh' ? '正在优化并同步头像...' : 'Optimizing and syncing avatar...');
+    showToast(
+      state.lang === 'zh'
+        ? '正在优化并同步头像...'
+        : 'Optimizing and syncing avatar...',
+    );
     const compressed = await compressAvatarImage(file, 128, 0.82);
     localStorage.setItem('ledger_custom_avatar_' + state.user.id, compressed);
     updateAuthUI(state.user);
     updateAccountModalData();
     syncUserProfileToCloud({ custom_avatar: compressed });
-    showToast(state.lang === 'zh' ? '头像已同步至云端' : 'Avatar synced to cloud');
+    showToast(
+      state.lang === 'zh' ? '头像已同步至云端' : 'Avatar synced to cloud',
+    );
   } catch (err) {
     showToast('Failed to process avatar image', true);
   }
@@ -2419,7 +2748,11 @@ function resetToGoogleAvatar() {
   updateAuthUI(state.user);
   updateAccountModalData();
   syncUserProfileToCloud({ custom_avatar: null });
-  showToast(state.lang === 'zh' ? '已恢复 Google 原始头像' : 'Reset to Google profile photo');
+  showToast(
+    state.lang === 'zh'
+      ? '已恢复 Google 原始头像'
+      : 'Reset to Google profile photo',
+  );
 }
 
 /**
@@ -2485,7 +2818,8 @@ window.__handleNativeOAuthCallback = async function (payloadStr) {
  * Initiate Google OAuth Sign-in Flow
  */
 async function signInWithGoogle() {
-  if (!supabaseClient) return showToast('Supabase client not initialized', true);
+  if (!supabaseClient)
+    return showToast('Supabase client not initialized', true);
   const redirectTarget = window.Capacitor
     ? 'com.leesc88.ledger://oauth'
     : window.location.origin;
@@ -2528,12 +2862,18 @@ function updateAuthUI(user) {
 
     // 1. Restore Custom Name from Cloud metadata
     if (meta.custom_name && meta.custom_name.trim()) {
-      localStorage.setItem('ledger_custom_name_' + user.id, meta.custom_name.trim());
+      localStorage.setItem(
+        'ledger_custom_name_' + user.id,
+        meta.custom_name.trim(),
+      );
     }
 
     // 2. Restore Custom Avatar from Cloud metadata
     if (meta.custom_avatar) {
-      localStorage.setItem('ledger_custom_avatar_' + user.id, meta.custom_avatar);
+      localStorage.setItem(
+        'ledger_custom_avatar_' + user.id,
+        meta.custom_avatar,
+      );
     }
 
     // 3. Restore or Anchor First Login Date (Active Days) in Cloud
@@ -2554,13 +2894,17 @@ function updateAuthUI(user) {
     if (meta.currency && meta.currency !== state.currency) {
       state.currency = meta.currency;
       localStorage.setItem('ledger_currency', state.currency);
-      if (elements.currencySelector) elements.currencySelector.value = state.currency;
+      if (elements.currencySelector)
+        elements.currencySelector.value = state.currency;
       updateCurrencySymbols();
     }
     if (meta.lang && meta.lang !== state.lang) {
       setAppLanguage(meta.lang);
     }
-    if (meta.theme && meta.theme !== (localStorage.getItem('ledger_theme') || 'system')) {
+    if (
+      meta.theme &&
+      meta.theme !== (localStorage.getItem('ledger_theme') || 'system')
+    ) {
       setAppTheme(meta.theme);
     }
 
@@ -2596,7 +2940,10 @@ async function registerServiceWorker() {
         const newWorker = swRegistration.installing;
         if (!newWorker) return;
         newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          if (
+            newWorker.state === 'installed' &&
+            navigator.serviceWorker.controller
+          ) {
             showUpdateAvailablePrompt(APP_VERSION);
           }
         });
@@ -2661,7 +3008,11 @@ function showUpdateAvailablePrompt(versionLabel, apkUrl, notes) {
 /**
  * Native Android Download Progress Callbacks
  */
-window.__onNativeDownloadProgress = function (percent, currentBytes, totalBytes) {
+window.__onNativeDownloadProgress = function (
+  percent,
+  currentBytes,
+  totalBytes,
+) {
   const pct = Math.min(Math.max(Number(percent) || 0, 0), 100);
   if (elements.updateProgressBarFill) {
     elements.updateProgressBarFill.style.width = pct + '%';
@@ -2671,7 +3022,8 @@ window.__onNativeDownloadProgress = function (percent, currentBytes, totalBytes)
   }
   if (elements.updateProgressBytes) {
     const curMb = (Number(currentBytes || 0) / (1024 * 1024)).toFixed(1);
-    const totMb = totalBytes > 0 ? (Number(totalBytes) / (1024 * 1024)).toFixed(1) : '?';
+    const totMb =
+      totalBytes > 0 ? (Number(totalBytes) / (1024 * 1024)).toFixed(1) : '?';
     elements.updateProgressBytes.textContent = `${curMb} MB / ${totMb} MB`;
   }
   if (pct >= 100 && elements.updateProgressStatusText) {
@@ -2684,8 +3036,10 @@ window.__onNativeDownloadError = function (errorMsg) {
   if (elements.updateProgressStatusText) {
     elements.updateProgressStatusText.textContent = `${t('download_error')}: ${errorMsg}`;
   }
-  if (elements.startInAppUpdateBtn) elements.startInAppUpdateBtn.disabled = false;
-  if (elements.cancelInAppUpdateBtn) elements.cancelInAppUpdateBtn.disabled = false;
+  if (elements.startInAppUpdateBtn)
+    elements.startInAppUpdateBtn.disabled = false;
+  if (elements.cancelInAppUpdateBtn)
+    elements.cancelInAppUpdateBtn.disabled = false;
 };
 
 /**
@@ -2693,7 +3047,10 @@ window.__onNativeDownloadError = function (errorMsg) {
  */
 async function applyAppUpdate() {
   // If running inside Android container with NativeUpdater interface
-  if (window.NativeUpdater && typeof window.NativeUpdater.downloadAndInstall === 'function') {
+  if (
+    window.NativeUpdater &&
+    typeof window.NativeUpdater.downloadAndInstall === 'function'
+  ) {
     elements.updateDownloadProgressArea?.classList.remove('hidden');
     if (elements.startInAppUpdateBtn) {
       elements.startInAppUpdateBtn.disabled = true;
@@ -2701,9 +3058,12 @@ async function applyAppUpdate() {
     if (elements.cancelInAppUpdateBtn) {
       elements.cancelInAppUpdateBtn.disabled = true;
     }
-    if (elements.updateProgressBarFill) elements.updateProgressBarFill.style.width = '0%';
-    if (elements.updateProgressPercent) elements.updateProgressPercent.textContent = '0%';
-    if (elements.updateProgressBytes) elements.updateProgressBytes.textContent = '0 MB / ...';
+    if (elements.updateProgressBarFill)
+      elements.updateProgressBarFill.style.width = '0%';
+    if (elements.updateProgressPercent)
+      elements.updateProgressPercent.textContent = '0%';
+    if (elements.updateProgressBytes)
+      elements.updateProgressBytes.textContent = '0 MB / ...';
     if (elements.updateProgressStatusText) {
       elements.updateProgressStatusText.textContent = t('downloading_package');
     }
@@ -2857,8 +3217,12 @@ async function init() {
   // 6. Category options & initial entry type
   setEntryType('expense');
 
-  elements.btnTypeExpense?.addEventListener('click', () => setEntryType('expense'));
-  elements.btnTypeIncome?.addEventListener('click', () => setEntryType('income'));
+  elements.btnTypeExpense?.addEventListener('click', () =>
+    setEntryType('expense'),
+  );
+  elements.btnTypeIncome?.addEventListener('click', () =>
+    setEntryType('income'),
+  );
 
   // 7. Filter tabs
   elements.filterTabs.forEach((tab) => {
@@ -2905,9 +3269,18 @@ async function init() {
   });
 
   // Initial Balance Modal Event Listeners
-  elements.closeInitialBalanceModalBtn?.addEventListener('click', closeInitialBalanceModal);
-  elements.cancelInitialBalanceBtn?.addEventListener('click', closeInitialBalanceModal);
-  elements.saveInitialBalanceBtn?.addEventListener('click', handleSaveInitialBalance);
+  elements.closeInitialBalanceModalBtn?.addEventListener(
+    'click',
+    closeInitialBalanceModal,
+  );
+  elements.cancelInitialBalanceBtn?.addEventListener(
+    'click',
+    closeInitialBalanceModal,
+  );
+  elements.saveInitialBalanceBtn?.addEventListener(
+    'click',
+    handleSaveInitialBalance,
+  );
   elements.initialBalanceModal?.addEventListener('click', (e) => {
     if (e.target === elements.initialBalanceModal) closeInitialBalanceModal();
   });
@@ -2919,7 +3292,10 @@ async function init() {
   // 11. Export CSV & Retention Modal
   elements.exportCsvBtn?.addEventListener('click', exportToCSV);
   elements.closeModalBtn?.addEventListener('click', closeRetentionModal);
-  elements.retentionYearsSelect?.addEventListener('change', evaluateRetentionEligible);
+  elements.retentionYearsSelect?.addEventListener(
+    'change',
+    evaluateRetentionEligible,
+  );
   elements.downloadArchiveBtn?.addEventListener('click', downLoadArchiveCSV);
   elements.purgeOldRecordsBtn?.addEventListener('click', purgeOldRecords);
   elements.retentionModal?.addEventListener('click', (e) => {
@@ -2957,7 +3333,10 @@ async function init() {
   elements.uploadAvatarTextBtn?.addEventListener('click', () =>
     elements.avatarFileInput?.click(),
   );
-  elements.avatarFileInput?.addEventListener('change', handleAvatarFileSelected);
+  elements.avatarFileInput?.addEventListener(
+    'change',
+    handleAvatarFileSelected,
+  );
   elements.resetAvatarBtn?.addEventListener('click', resetToGoogleAvatar);
 
   // Username Editing Event Listeners
@@ -3008,8 +3387,14 @@ async function init() {
   });
 
   // Dedicated In-App Update Modal Listeners
-  elements.closeInAppUpdateModalBtn?.addEventListener('click', closeInAppUpdateModal);
-  elements.cancelInAppUpdateBtn?.addEventListener('click', closeInAppUpdateModal);
+  elements.closeInAppUpdateModalBtn?.addEventListener(
+    'click',
+    closeInAppUpdateModal,
+  );
+  elements.cancelInAppUpdateBtn?.addEventListener(
+    'click',
+    closeInAppUpdateModal,
+  );
   elements.startInAppUpdateBtn?.addEventListener('click', applyAppUpdate);
   elements.inAppUpdateModal?.addEventListener('click', (e) => {
     if (e.target === elements.inAppUpdateModal) closeInAppUpdateModal();

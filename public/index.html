@@ -110,6 +110,12 @@
             <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
           </svg>
         </button>
+
+        <!-- Continuous Streak Flame Pill -->
+        <div id="streakPill" class="streak-pill" title="连续记账打卡">
+          <span class="streak-fire">🔥</span>
+          <span id="streakCountText" class="streak-count">0d</span>
+        </div>
       </div>
 
       <div class="header-controls">
@@ -423,7 +429,27 @@
             </div>
           </div>
 
-          <!-- 2. Accounts & Net Worth Center Card (Payment Channels & Real-time Balances) -->
+          <!-- 2. Motivation & Badges Card (Streak & Consistency Badges) -->
+          <div class="column-panel settings-card" id="streakBadgesCard">
+            <div class="accounts-center-header">
+              <div class="accounts-center-title-row">
+                <div class="accounts-header-text">
+                  <h3 class="settings-group-heading" data-i18n="badges_title">Achievements &amp; Motivation</h3>
+                  <p class="accounts-center-sub" data-i18n="badges_sub">Streak milestones &amp; consistency</p>
+                </div>
+                <div class="streak-badge-capsule">
+                  <span class="streak-fire">🔥</span>
+                  <span id="settingsStreakCount" class="settings-streak-val">0 Days</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="badges-grid" id="badgesGridContainer">
+              <!-- Dynamically populated by renderStreakAndBadges() -->
+            </div>
+          </div>
+
+          <!-- 3. Accounts & Net Worth Center Card (Payment Channels & Real-time Balances) -->
           <div class="column-panel settings-card" id="settingsAccountsCenterCard">
             <div class="accounts-center-header">
               <div class="accounts-center-title-row">
@@ -504,7 +530,7 @@
               <div class="settings-update-info">
                 <div class="settings-update-header">
                   <span class="settings-update-title" data-i18n="app_version_label">Application Version</span>
-                  <span id="appVersionBadge" class="version-badge">v1.3.4</span>
+                  <span id="appVersionBadge" class="version-badge">v1.3.5</span>
                 </div>
                 <p id="updateStatusText" class="settings-update-desc" data-i18n="up_to_date_desc">You are running the latest version</p>
               </div>
@@ -698,7 +724,7 @@
             </div>
             <div>
               <h3 class="modal-title" data-i18n="inapp_update_title">App Update Available</h3>
-              <p class="modal-subtitle"><span id="inAppUpdateVersionBadge">v1.3.4</span></p>
+              <p class="modal-subtitle"><span id="inAppUpdateVersionBadge">v1.3.5</span></p>
             </div>
           </div>
           <button id="closeInAppUpdateModalBtn" class="btn-close-modal" aria-label="Close modal">&times;</button>
