@@ -114,7 +114,7 @@ public class MainActivity extends BridgeActivity {
                         conn.setConnectTimeout(15000);
                         conn.setReadTimeout(30000);
                         conn.setInstanceFollowRedirects(false);
-                        conn.setRequestProperty("User-Agent", "LEDGER-Android-Client/1.3.3");
+                        conn.setRequestProperty("User-Agent", "LEDGER-Android-Client/1.3.4");
 
                         int responseCode = conn.getResponseCode();
                         if (responseCode == HttpURLConnection.HTTP_MOVED_PERM

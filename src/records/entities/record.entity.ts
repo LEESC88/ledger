@@ -44,6 +44,12 @@ export class Record {
   category: string;
 
   /**
+   * Account / Payment method name (e.g. 'Cash', 'TNG eWallet', 'Bank Card', 'Credit Card')
+   */
+  @Column({ type: 'text', name: 'account_name', nullable: true, default: 'Cash' })
+  account_name?: string;
+
+  /**
    * Date the transaction occurred (ISO format: YYYY-MM-DD)
    */
   @Column({ type: 'text' })

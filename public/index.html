@@ -229,7 +229,7 @@
             </div>
           </div>
 
-          <!-- Search Bar -->
+          <!-- Search Bar & Account Filter -->
           <div class="ledger-search-bar">
             <div class="search-input-wrapper">
               <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -246,6 +246,13 @@
               />
               <button id="clearSearchBtn" class="search-clear-btn hidden" title="Clear">✕</button>
             </div>
+            <select id="accountFilterSelect" class="header-select account-filter-select" aria-label="Filter by account">
+              <option value="all" data-i18n="filter_all_accounts">All Accounts</option>
+              <option value="Cash" data-i18n="account_cash">💵 Cash</option>
+              <option value="TNG eWallet">📱 TNG eWallet</option>
+              <option value="Bank Card" data-i18n="account_bank">🏦 Bank Card</option>
+              <option value="Credit Card" data-i18n="account_credit">💳 Credit Card</option>
+            </select>
             <span id="searchResultCount" class="search-result-count hidden">0</span>
           </div>
 
@@ -256,6 +263,7 @@
                 <tr>
                   <th class="th-date" data-i18n="col_date">Date</th>
                   <th class="th-category" data-i18n="col_category">Category</th>
+                  <th class="th-account" data-i18n="account_label">Account</th>
                   <th class="th-note" data-i18n="col_note">Note</th>
                   <th class="th-amount text-right" data-i18n="col_amount">Amount</th>
                   <th class="th-action text-center" data-i18n="col_action">Action</th>
@@ -415,7 +423,27 @@
             </div>
           </div>
 
-          <!-- 2. Preferences & System Card (Language, Theme, Currency, Updates, Backup, Log Out) -->
+          <!-- 2. Accounts & Net Worth Center Card (Payment Channels & Real-time Balances) -->
+          <div class="column-panel settings-card" id="settingsAccountsCenterCard">
+            <div class="accounts-center-header">
+              <div class="accounts-center-title-row">
+                <div class="accounts-header-text">
+                  <h3 class="settings-group-heading" data-i18n="accounts_center_title">Accounts &amp; Wallets</h3>
+                  <p class="accounts-center-sub" data-i18n="accounts_center_sub">Real-time balances &amp; payment channels</p>
+                </div>
+                <div class="net-worth-capsule">
+                  <span class="net-worth-label" data-i18n="net_worth">Net Worth</span>
+                  <div class="net-worth-val"><span class="currency-sym">RM</span> <span id="totalNetWorthValue">0.00</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="accounts-wallets-list" id="accountsWalletsList">
+              <!-- Dynamically populated by app.js -->
+            </div>
+          </div>
+
+          <!-- 3. Preferences & System Card (Language, Theme, Currency, Updates, Backup, Log Out) -->
           <div class="column-panel settings-card">
             <h3 class="settings-group-heading" data-i18n="preferences_heading">Preferences &amp; System</h3>
 
@@ -476,7 +504,7 @@
               <div class="settings-update-info">
                 <div class="settings-update-header">
                   <span class="settings-update-title" data-i18n="app_version_label">Application Version</span>
-                  <span id="appVersionBadge" class="version-badge">v1.3.3</span>
+                  <span id="appVersionBadge" class="version-badge">v1.3.4</span>
                 </div>
                 <p id="updateStatusText" class="settings-update-desc" data-i18n="up_to_date_desc">You are running the latest version</p>
               </div>
@@ -596,6 +624,30 @@
             </div>
           </div>
 
+          <!-- Visual Account / Payment Method Selector -->
+          <div class="account-picker-section">
+            <label class="field-label" data-i18n="account_label">Payment Account</label>
+            <div id="accountSelectorGrid" class="account-chip-grid">
+              <button type="button" class="account-chip-btn active" data-account="Cash">
+                <span class="account-chip-icon">💵</span>
+                <span class="account-chip-name" data-i18n="account_cash">Cash</span>
+              </button>
+              <button type="button" class="account-chip-btn" data-account="TNG eWallet">
+                <span class="account-chip-icon">📱</span>
+                <span class="account-chip-name">TNG eWallet</span>
+              </button>
+              <button type="button" class="account-chip-btn" data-account="Bank Card">
+                <span class="account-chip-icon">🏦</span>
+                <span class="account-chip-name" data-i18n="account_bank">Bank Card</span>
+              </button>
+              <button type="button" class="account-chip-btn" data-account="Credit Card">
+                <span class="account-chip-icon">💳</span>
+                <span class="account-chip-name" data-i18n="account_credit">Credit Card</span>
+              </button>
+            </div>
+            <input type="hidden" id="selectedAccountInput" value="Cash" />
+          </div>
+
           <!-- Date & Note Inputs -->
           <div class="create-meta-grid">
             <div class="create-field-group">
@@ -646,7 +698,7 @@
             </div>
             <div>
               <h3 class="modal-title" data-i18n="inapp_update_title">App Update Available</h3>
-              <p class="modal-subtitle"><span id="inAppUpdateVersionBadge">v1.3.3</span></p>
+              <p class="modal-subtitle"><span id="inAppUpdateVersionBadge">v1.3.4</span></p>
             </div>
           </div>
           <button id="closeInAppUpdateModalBtn" class="btn-close-modal" aria-label="Close modal">&times;</button>
@@ -787,6 +839,45 @@
           <button id="purgeOldRecordsBtn" class="btn-modal-danger">
             <span data-i18n="purge_btn">2. Purge Old</span>
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dedicated Initial Balance Edit Modal -->
+    <div id="initialBalanceModal" class="modal-overlay hidden">
+      <div class="modal-dialog modal-dialog-sm">
+        <div class="modal-header">
+          <div class="modal-title-row">
+            <div class="modal-icon">
+              <span id="initialBalanceModalIcon" style="font-size: 1.25rem;">💵</span>
+            </div>
+            <div>
+              <h3 class="modal-title" id="initialBalanceModalTitle" data-i18n="set_initial_balance_title">Set Initial Balance</h3>
+              <p class="modal-subtitle" id="initialBalanceModalSub" data-i18n="enter_initial_balance">Enter starting balance for this account</p>
+            </div>
+          </div>
+          <button id="closeInitialBalanceModalBtn" class="btn-close-modal" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="create-field-group">
+            <label for="initialBalanceInput" class="field-label" data-i18n="initial_balance">Initial Balance</label>
+            <div class="clean-amount-box">
+              <span class="amount-currency-label currency-sym">RM</span>
+              <input
+                type="number"
+                id="initialBalanceInput"
+                step="0.01"
+                placeholder="0.00"
+                class="amount-input"
+                inputmode="decimal"
+                required
+              />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="cancelInitialBalanceBtn" class="btn-modal-secondary" data-i18n="cancel">Cancel</button>
+          <button id="saveInitialBalanceBtn" class="btn-modal-primary" data-i18n="save">Save</button>
         </div>
       </div>
     </div>

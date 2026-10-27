@@ -40,6 +40,19 @@ export class CreateRecordDto {
   category: string;
 
   /**
+   * Account / payment channel (e.g. 'Cash', 'TNG eWallet', 'Bank Card', 'Credit Card')
+   */
+  @ApiPropertyOptional({
+    example: 'Cash',
+    description: 'Account or payment channel',
+    default: 'Cash',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  account_name?: string;
+
+  /**
    * Transaction date in ISO format (YYYY-MM-DD)
    */
   @ApiProperty({

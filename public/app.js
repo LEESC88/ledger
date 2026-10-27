@@ -6,7 +6,7 @@
  */
 
 // Current Client Release Version
-const APP_VERSION = '1.3.3';
+const APP_VERSION = '1.3.4';
 
 // Default Public Supabase BaaS Cloud Configuration (Enables standalone Mobile APK without Node server)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -198,6 +198,20 @@ const I18N = {
     keep_app_open: 'Please keep app open',
     installing_update: 'Download complete! Launching installer...',
     download_error: 'Download failed',
+    account_label: 'Payment Account',
+    account_cash: 'Cash',
+    account_tng: 'TNG eWallet',
+    account_bank: 'Bank Card',
+    account_credit: 'Credit Card',
+    filter_all_accounts: 'All Accounts',
+    accounts_center_title: 'Accounts & Wallets',
+    accounts_center_sub: 'Real-time balances & payment channels',
+    net_worth: 'Net Worth',
+    initial_balance: 'Initial Balance',
+    edit_initial_balance: 'Edit Initial Balance',
+    set_initial_balance_title: 'Set Initial Balance',
+    enter_initial_balance: 'Enter starting balance for this account',
+    account_updated_toast: 'Account balance updated',
   },
   zh: {
     login_badge: '极简个人财务管理',
@@ -339,6 +353,20 @@ const I18N = {
     keep_app_open: '请勿关闭应用',
     installing_update: '下载完成！正在调起安装程序...',
     download_error: '下载更新失败',
+    account_label: '支付/收款账户',
+    account_cash: '现金 (Cash)',
+    account_tng: 'TNG 电子钱包',
+    account_bank: '银行卡 (Bank)',
+    account_credit: '信用卡 (Credit)',
+    filter_all_accounts: '全部账户',
+    accounts_center_title: '资产与账户中心',
+    accounts_center_sub: '各账户预估余额与流水来源',
+    net_worth: '总净资产',
+    initial_balance: '初始余额',
+    edit_initial_balance: '修改初始余额',
+    set_initial_balance_title: '设置初始余额',
+    enter_initial_balance: '请输入此账户的起始资金/初始余额',
+    account_updated_toast: '账户余额已更新',
   },
 };
 
@@ -351,6 +379,10 @@ let state = {
   currentType: 'expense',
   currentFilter: 'all',
   currentMonth: 'all',
+  selectedAccount: 'Cash',
+  selectedAccountFilter: 'all',
+  accounts: [],
+  editingAccountName: null,
   searchQuery: '',
   monthlyBudget: 3000,
   isOnline: navigator.onLine,
@@ -358,6 +390,27 @@ let state = {
   records: [],
   summary: null,
 };
+
+// Default Supported Payment Accounts / Asset Wallets
+const DEFAULT_ACCOUNTS = [
+  { name: 'Cash', icon: '💵', type: 'cash', zh: '现金 (Cash)' },
+  { name: 'TNG eWallet', icon: '📱', type: 'ewallet', zh: 'TNG 电子钱包' },
+  { name: 'Bank Card', icon: '🏦', type: 'bank', zh: '银行卡 (Bank)' },
+  { name: 'Credit Card', icon: '💳', type: 'credit', zh: '信用卡 (Credit)' },
+];
+
+function getAccountMeta(name) {
+  const norm = (name || 'Cash').trim();
+  const found = DEFAULT_ACCOUNTS.find((a) => a.name.toLowerCase() === norm.toLowerCase());
+  if (found) return found;
+  return { name: norm, icon: '💵', type: 'general', zh: norm };
+}
+
+function getAccountDisplayLabel(name) {
+  const meta = getAccountMeta(name);
+  if (state.lang === 'zh') return meta.zh || meta.name;
+  return meta.name;
+}
 
 // Supabase Client Instance
 let supabaseClient = null;
@@ -499,6 +552,22 @@ const elements = {
   accountMemberSince: document.getElementById('accountMemberSince'),
   accountUsageDuration: document.getElementById('accountUsageDuration'),
   accountTransactionCount: document.getElementById('accountTransactionCount'),
+
+  // Accounts & Wallets Elements
+  accountFilterSelect: document.getElementById('accountFilterSelect'),
+  accountSelectorGrid: document.getElementById('accountSelectorGrid'),
+  selectedAccountInput: document.getElementById('selectedAccountInput'),
+  settingsAccountsCenterCard: document.getElementById('settingsAccountsCenterCard'),
+  accountsWalletsList: document.getElementById('accountsWalletsList'),
+  totalNetWorthValue: document.getElementById('totalNetWorthValue'),
+  initialBalanceModal: document.getElementById('initialBalanceModal'),
+  initialBalanceModalIcon: document.getElementById('initialBalanceModalIcon'),
+  initialBalanceModalTitle: document.getElementById('initialBalanceModalTitle'),
+  initialBalanceModalSub: document.getElementById('initialBalanceModalSub'),
+  initialBalanceInput: document.getElementById('initialBalanceInput'),
+  closeInitialBalanceModalBtn: document.getElementById('closeInitialBalanceModalBtn'),
+  cancelInitialBalanceBtn: document.getElementById('cancelInitialBalanceBtn'),
+  saveInitialBalanceBtn: document.getElementById('saveInitialBalanceBtn'),
 };
 
 /**
@@ -555,11 +624,13 @@ function setAppLanguage(lang) {
 
   // Re-render dynamic components with new language
   renderCategoryGrid(state.currentType);
+  renderAccountPicker();
   updateMonthFilterDropdown(state.records);
   renderTable();
   renderBudgetTracker();
   updateSyncStatusUI();
   updateAccountModalData();
+  renderAccountsCenter();
   if (state.summary) {
     updateSummaryStatusBadge(state.summary.netBalance);
     renderCategoryChart(state.summary.categoryBreakdown);
@@ -594,6 +665,7 @@ function switchAppPage(pageName) {
     }
   } else if (target === 'settings') {
     updateAccountModalData();
+    loadAccounts();
   }
 }
 
@@ -606,6 +678,7 @@ function openCreateModal() {
     elements.inputDate.value = new Date().toISOString().split('T')[0];
   }
   renderCategoryGrid(state.currentType);
+  renderAccountPicker();
   elements.createEntryModal?.classList.remove('hidden');
   setTimeout(() => {
     elements.inputAmount?.focus();
@@ -655,6 +728,40 @@ function renderCategoryGrid(type) {
       }
       elements.categoryGridContainer
         .querySelectorAll('.cat-grid-btn')
+        .forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+}
+
+/**
+ * Render Visual Account / Payment Method Chips inside Create Modal
+ */
+function renderAccountPicker() {
+  if (!elements.accountSelectorGrid) return;
+  const currentAcc = state.selectedAccount || 'Cash';
+  elements.accountSelectorGrid.innerHTML = DEFAULT_ACCOUNTS.map((acc) => {
+    const isSelected = acc.name === currentAcc;
+    const label = getAccountDisplayLabel(acc.name);
+    return `
+      <button type="button" class="account-chip-btn ${isSelected ? 'active' : ''}" data-account="${escapeHtml(acc.name)}">
+        <span class="account-chip-icon">${acc.icon}</span>
+        <span class="account-chip-name">${escapeHtml(label)}</span>
+      </button>
+    `;
+  }).join('');
+
+  elements.accountSelectorGrid.querySelectorAll('.account-chip-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const chosen = btn.getAttribute('data-account');
+      if (chosen) {
+        state.selectedAccount = chosen;
+        if (elements.selectedAccountInput) {
+          elements.selectedAccountInput.value = chosen;
+        }
+      }
+      elements.accountSelectorGrid
+        .querySelectorAll('.account-chip-btn')
         .forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
     });
@@ -819,6 +926,7 @@ async function syncOfflineDrafts() {
           type: item.payload.type,
           amount: item.payload.amount,
           category: item.payload.category,
+          account_name: item.payload.account_name || 'Cash',
           date: item.payload.date,
           note: item.payload.note || null,
         });
@@ -931,6 +1039,7 @@ function saveOfflineRecord(payload) {
     type: payload.type,
     amount: payload.amount,
     category: payload.category,
+    account_name: payload.account_name || 'Cash',
     date: payload.date,
     note: payload.note,
     isDraft: true,
@@ -1183,6 +1292,7 @@ async function loadRecords() {
     type: item.payload.type,
     amount: item.payload.amount,
     category: item.payload.category,
+    account_name: item.payload.account_name || 'Cash',
     date: item.payload.date,
     note: item.payload.note,
     isDraft: true,
@@ -1200,6 +1310,7 @@ async function loadRecords() {
     renderTable();
     calculateLocalSummaryMetrics();
     updateAccountModalData();
+    loadAccounts();
   };
 
   const userId = state.user?.id;
@@ -1237,6 +1348,7 @@ async function loadRecords() {
     renderTable();
     calculateLocalSummaryMetrics();
     updateAccountModalData();
+    loadAccounts();
   }
 }
 
@@ -1281,13 +1393,25 @@ function renderTable() {
     filtered = filtered.filter((r) => r.type === state.currentFilter);
   }
 
+  if (state.selectedAccountFilter && state.selectedAccountFilter !== 'all') {
+    filtered = filtered.filter((r) => (r.account_name || 'Cash') === state.selectedAccountFilter);
+  }
+
   if (state.searchQuery) {
     const q = state.searchQuery.toLowerCase().trim();
     filtered = filtered.filter((r) => {
       const catEn = (r.category || '').toLowerCase();
       const catLocal = getCategoryDisplayLabel(r.category).toLowerCase();
       const noteStr = (r.note || '').toLowerCase();
-      return catEn.includes(q) || catLocal.includes(q) || noteStr.includes(q);
+      const accStr = (r.account_name || 'Cash').toLowerCase();
+      const accLocal = getAccountDisplayLabel(r.account_name).toLowerCase();
+      return (
+        catEn.includes(q) ||
+        catLocal.includes(q) ||
+        noteStr.includes(q) ||
+        accStr.includes(q) ||
+        accLocal.includes(q)
+      );
     });
   }
 
@@ -1322,6 +1446,8 @@ function renderTable() {
         : '';
       const catIcon = getCategoryIcon(record.category);
       const catLabel = getCategoryDisplayLabel(record.category);
+      const accMeta = getAccountMeta(record.account_name);
+      const accLabel = getAccountDisplayLabel(record.account_name);
 
       return `
         <tr data-id="${record.id}" class="${isDraft ? 'row-draft' : ''}">
@@ -1330,6 +1456,12 @@ function renderTable() {
             <span class="category-tag">
               <span>${catIcon}</span>
               ${escapeHtml(catLabel)}
+            </span>
+          </td>
+          <td class="col-account">
+            <span class="account-pill-badge" title="${escapeHtml(accLabel)}">
+              <span class="account-pill-icon">${accMeta.icon}</span>
+              <span>${escapeHtml(accLabel)}</span>
             </span>
           </td>
           <td class="col-note" title="${escapeHtml(record.note || '')}">
@@ -1379,10 +1511,14 @@ async function handleRecordSubmit(e) {
     return;
   }
 
+  const account_name =
+    elements.selectedAccountInput?.value || state.selectedAccount || 'Cash';
+
   const payload = {
     type: state.currentType,
     amount,
     category,
+    account_name,
     date,
     ...(note ? { note } : {}),
   };
@@ -1407,6 +1543,7 @@ async function handleRecordSubmit(e) {
           type: payload.type,
           amount: payload.amount,
           category: payload.category,
+          account_name: payload.account_name,
           date: payload.date,
           note: payload.note || null,
         })
@@ -1661,12 +1798,13 @@ function exportToCSV() {
     return;
   }
 
-  const headers = ['ID', 'Date', 'Type', 'Category', 'Amount', 'Currency', 'Note'];
+  const headers = ['ID', 'Date', 'Type', 'Category', 'Account', 'Amount', 'Currency', 'Note'];
   const rows = recordsToExport.map((r) => [
     r.id,
     `"${r.date}"`,
     `"${r.type}"`,
     `"${(r.category || '').replace(/"/g, '""')}"`,
+    `"${(r.account_name || 'Cash').replace(/"/g, '""')}"`,
     Number(r.amount).toFixed(2),
     `"${state.currency}"`,
     `"${(r.note || '').replace(/"/g, '""')}"`,
@@ -1742,12 +1880,13 @@ function downLoadArchiveCSV() {
     return;
   }
 
-  const headers = ['ID', 'Date', 'Type', 'Category', 'Amount', 'Currency', 'Note'];
+  const headers = ['ID', 'Date', 'Type', 'Category', 'Account', 'Amount', 'Currency', 'Note'];
   const rows = matchingRecords.map((r) => [
     r.id,
     `"${r.date}"`,
     `"${r.type}"`,
     `"${(r.category || '').replace(/"/g, '""')}"`,
+    `"${(r.account_name || 'Cash').replace(/"/g, '""')}"`,
     Number(r.amount).toFixed(2),
     `"${state.currency}"`,
     `"${(r.note || '').replace(/"/g, '""')}"`,
@@ -2047,6 +2186,209 @@ function updateAccountModalData() {
     elements.accountTransactionCount.textContent = `${state.records.length}`;
   }
 }
+
+// ============================================================================
+// Accounts & Wallets Center Controller (Payment Methods & Asset Balances)
+// ============================================================================
+
+/**
+ * Load Accounts & Wallets and calculate dynamic balances
+ */
+async function loadAccounts() {
+  const userKey = state.user?.id || 'guest';
+  const cacheKey = `ledger_cached_accounts_${userKey}`;
+  let initialBalances = {};
+
+  // 1. Try reading from Supabase accounts table
+  if (supabaseClient && state.user?.id) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('accounts')
+        .select('*')
+        .eq('user_id', state.user.id);
+
+      if (!error && Array.isArray(data)) {
+        data.forEach((row) => {
+          if (row.name) {
+            initialBalances[row.name] = parseFloat(row.initial_balance) || 0;
+          }
+        });
+        localStorage.setItem(cacheKey, JSON.stringify(initialBalances));
+      }
+    } catch (e) {
+      console.warn('Failed to load accounts from Supabase:', e);
+    }
+  }
+
+  // Fallback to local storage
+  if (Object.keys(initialBalances).length === 0) {
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) initialBalances = JSON.parse(cached);
+    } catch (e) {}
+  }
+
+  // 2. Build accounts array with live calculated balances
+  let totalNetWorth = 0;
+  state.accounts = DEFAULT_ACCOUNTS.map((acc) => {
+    const initBal = Number(initialBalances[acc.name] || 0);
+    // Find all records belonging to this account (default 'Cash' for legacy records)
+    const matchingRecords = state.records.filter(
+      (r) => (r.account_name || 'Cash') === acc.name,
+    );
+    const totalIncome = matchingRecords
+      .filter((r) => r.type === 'income')
+      .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    const totalExpense = matchingRecords
+      .filter((r) => r.type === 'expense')
+      .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+
+    const currentBalance = initBal + totalIncome - totalExpense;
+    totalNetWorth += currentBalance;
+
+    return {
+      ...acc,
+      initial_balance: initBal,
+      totalIncome,
+      totalExpense,
+      currentBalance,
+    };
+  });
+
+  // 3. Render net worth and list
+  if (elements.totalNetWorthValue) {
+    elements.totalNetWorthValue.textContent = formatNumber(totalNetWorth);
+  }
+  renderAccountsCenter();
+}
+
+/**
+ * Render Accounts & Wallets in Settings page
+ */
+function renderAccountsCenter() {
+  if (!elements.accountsWalletsList) return;
+  const sym = state.currency;
+
+  elements.accountsWalletsList.innerHTML = (state.accounts || [])
+    .map((acc) => {
+      const label = getAccountDisplayLabel(acc.name);
+      const isPositive = acc.currentBalance >= 0;
+      const balClass = isPositive ? 'positive' : 'negative';
+      const balSign = acc.currentBalance >= 0 ? '' : '− ';
+      const initText =
+        state.lang === 'zh'
+          ? `初始: ${sym} ${formatNumber(acc.initial_balance)}`
+          : `Init: ${sym} ${formatNumber(acc.initial_balance)}`;
+      const flowText = `+${sym}${formatNumber(acc.totalIncome)} / −${sym}${formatNumber(acc.totalExpense)}`;
+
+      return `
+        <div class="wallet-card">
+          <div class="wallet-card-left">
+            <div class="wallet-icon-box">${acc.icon}</div>
+            <div class="wallet-meta">
+              <div class="wallet-name-row">
+                <span class="wallet-name">${escapeHtml(label)}</span>
+                <button
+                  type="button"
+                  class="btn-edit-wallet-init"
+                  onclick="openInitialBalanceModal('${escapeHtml(acc.name)}')"
+                  title="${state.lang === 'zh' ? '设置初始余额' : 'Set Initial Balance'}"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+              </div>
+              <span class="wallet-subtext">${initText} &bull; ${flowText}</span>
+            </div>
+          </div>
+          <div class="wallet-card-right">
+            <span class="wallet-current-bal ${balClass}">${balSign}${sym} ${formatNumber(acc.currentBalance)}</span>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+}
+
+/**
+ * Open Modal to edit initial balance
+ */
+function openInitialBalanceModal(accountName) {
+  const acc = (state.accounts || []).find((a) => a.name === accountName) || getAccountMeta(accountName);
+  state.editingAccountName = accountName;
+  if (elements.initialBalanceModalIcon) elements.initialBalanceModalIcon.textContent = acc.icon;
+  if (elements.initialBalanceModalTitle) {
+    elements.initialBalanceModalTitle.textContent =
+      state.lang === 'zh' ? `设置 ${getAccountDisplayLabel(accountName)} 初始余额` : `Set ${acc.name} Initial Balance`;
+  }
+  if (elements.initialBalanceInput) {
+    elements.initialBalanceInput.value =
+      acc.initial_balance !== undefined && acc.initial_balance !== 0
+        ? acc.initial_balance
+        : '';
+  }
+  elements.initialBalanceModal?.classList.remove('hidden');
+  setTimeout(() => elements.initialBalanceInput?.focus(), 60);
+}
+
+function closeInitialBalanceModal() {
+  elements.initialBalanceModal?.classList.add('hidden');
+  state.editingAccountName = null;
+}
+
+/**
+ * Save updated initial balance
+ */
+async function handleSaveInitialBalance() {
+  if (!state.editingAccountName) return;
+  const val = parseFloat(elements.initialBalanceInput?.value);
+  const newBal = isNaN(val) ? 0 : val;
+  const accountName = state.editingAccountName;
+  const accMeta = getAccountMeta(accountName);
+  const userKey = state.user?.id || 'guest';
+  const cacheKey = `ledger_cached_accounts_${userKey}`;
+
+  // 1. Update local storage cache
+  let initialBalances = {};
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) initialBalances = JSON.parse(cached);
+  } catch (e) {}
+  initialBalances[accountName] = newBal;
+  localStorage.setItem(cacheKey, JSON.stringify(initialBalances));
+
+  // 2. Sync to Supabase accounts table
+  if (supabaseClient && state.user?.id) {
+    try {
+      await supabaseClient.from('accounts').upsert(
+        {
+          user_id: state.user.id,
+          name: accountName,
+          type: accMeta.type,
+          icon: accMeta.icon,
+          initial_balance: newBal,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,name' },
+      );
+    } catch (e) {
+      console.warn('Failed to upsert account in Supabase:', e);
+    }
+  }
+
+  closeInitialBalanceModal();
+  await loadAccounts();
+  showToast(
+    state.lang === 'zh'
+      ? `${getAccountDisplayLabel(accountName)} 初始余额已更新为 ${state.currency} ${formatNumber(newBal)}`
+      : `${accountName} initial balance set to ${state.currency} ${formatNumber(newBal)}`,
+  );
+}
+
+window.openInitialBalanceModal = openInitialBalanceModal;
+window.closeInitialBalanceModal = closeInitialBalanceModal;
 
 /**
  * Custom Avatar Upload & Reset Handlers
@@ -2552,7 +2894,26 @@ async function init() {
   elements.refreshBtn?.addEventListener('click', () => {
     loadSummary();
     loadRecords();
+    loadAccounts();
     showToast(state.lang === 'zh' ? '数据已刷新' : 'Ledger data synced');
+  });
+
+  // Account Filter Select in Search Bar
+  elements.accountFilterSelect?.addEventListener('change', (e) => {
+    state.selectedAccountFilter = e.target.value;
+    renderTable();
+  });
+
+  // Initial Balance Modal Event Listeners
+  elements.closeInitialBalanceModalBtn?.addEventListener('click', closeInitialBalanceModal);
+  elements.cancelInitialBalanceBtn?.addEventListener('click', closeInitialBalanceModal);
+  elements.saveInitialBalanceBtn?.addEventListener('click', handleSaveInitialBalance);
+  elements.initialBalanceModal?.addEventListener('click', (e) => {
+    if (e.target === elements.initialBalanceModal) closeInitialBalanceModal();
+  });
+  elements.initialBalanceInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleSaveInitialBalance();
+    if (e.key === 'Escape') closeInitialBalanceModal();
   });
 
   // 11. Export CSV & Retention Modal
@@ -2679,6 +3040,8 @@ async function init() {
   // Initial data fetch
   loadSummary();
   loadRecords();
+  loadAccounts();
+  renderAccountPicker();
 
   // Network & Cloud Sync Listeners
   window.addEventListener('online', () => {

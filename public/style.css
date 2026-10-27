@@ -2193,6 +2193,7 @@ body {
     grid-template-columns: 1fr auto;
     grid-template-areas:
       "category amount"
+      "account actions"
       "note actions"
       "date actions";
     gap: 3px 10px;
@@ -2215,6 +2216,7 @@ body {
   }
 
   .ledger-table .col-category { grid-area: category; }
+  .ledger-table .col-account { grid-area: account; margin-top: 1px; }
   .ledger-table .col-amount { grid-area: amount; font-size: 0.92rem; text-align: right; }
   .ledger-table .col-note { grid-area: note; font-size: 0.8rem; color: var(--text-primary); margin-top: 2px; }
   .ledger-table .col-date { grid-area: date; font-size: 0.7rem; color: var(--text-muted); }
@@ -2244,4 +2246,255 @@ body {
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: 16px 14px calc(16px + env(safe-area-inset-bottom));
   }
+}
+
+/* ==========================================================================
+   ACCOUNTS & WALLETS MODULE (Payment Methods & Asset Balances)
+   ========================================================================== */
+
+.th-account,
+.col-account {
+  width: 125px;
+}
+
+.account-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-card);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.account-pill-badge .account-pill-icon {
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.account-filter-select {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+/* Create Modal Account Selector Grid */
+.account-picker-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.account-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.account-chip-btn {
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all var(--transition-quick);
+  min-height: 52px;
+}
+
+.account-chip-btn:hover {
+  border-color: var(--border-input);
+}
+
+.account-chip-btn .account-chip-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.account-chip-btn .account-chip-name {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.account-chip-btn.active {
+  background: var(--brand-cyan-subtle);
+  border-color: var(--brand-cyan);
+  box-shadow: 0 0 0 1px var(--brand-cyan);
+}
+
+.account-chip-btn.active .account-chip-name {
+  color: var(--brand-cyan);
+  font-weight: 700;
+}
+
+/* Settings Accounts Center */
+.accounts-center-header {
+  border-bottom: 1px solid var(--border-card);
+  padding-bottom: 12px;
+}
+
+.accounts-center-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.accounts-center-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.net-worth-capsule {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: var(--brand-cyan-subtle);
+  border: 1px solid var(--brand-cyan);
+  border-radius: var(--radius-md);
+  padding: 5px 10px;
+}
+
+.net-worth-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--brand-cyan);
+}
+
+.net-worth-val {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.accounts-wallets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.wallet-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  transition: border-color var(--transition-quick);
+}
+
+.wallet-card:hover {
+  border-color: var(--border-input);
+}
+
+.wallet-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wallet-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.wallet-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wallet-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wallet-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.btn-edit-wallet-init {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  transition: color var(--transition-quick);
+}
+
+.btn-edit-wallet-init:hover {
+  color: var(--brand-cyan);
+}
+
+.wallet-subtext {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.wallet-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.wallet-current-bal {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.wallet-current-bal.positive {
+  color: var(--accent-emerald, #10b981);
+}
+
+.wallet-current-bal.negative {
+  color: var(--accent-rose, #ef4444);
+}
+
+.wallet-flow-stats {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
 }
