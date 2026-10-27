@@ -40,7 +40,7 @@ export class CreateRecordDto {
   category: string;
 
   /**
-   * Account / payment channel (e.g. 'Cash', 'TNG eWallet', 'Bank Card', 'Credit Card')
+   * Account / payment channel (e.g. 'Cash', 'eWallet', 'Bank Card', 'Credit Card')
    */
   @ApiPropertyOptional({
     example: 'Cash',
