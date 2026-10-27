@@ -6,7 +6,7 @@
  */
 
 // Current Client Release Version
-const APP_VERSION = '1.3.5';
+const APP_VERSION = '1.3.6';
 
 // Default Public Supabase BaaS Cloud Configuration (Enables standalone Mobile APK without Node server)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -220,6 +220,12 @@ const I18N = {
     streak_days_unit: 'Days Streak',
     achievements_heading: 'Milestone Badges',
     close: 'Close',
+    daily_trend_title: 'Daily Spending Trend',
+    daily_trend_subtitle: 'Daily expense trajectory this month',
+    trend_peak: 'Peak',
+    no_trend_data: 'No spending recorded for this month',
+    today: 'Today',
+    yesterday: 'Yesterday',
   },
   zh: {
     login_badge: '极简个人财务管理',
@@ -382,6 +388,12 @@ const I18N = {
     streak_days_unit: '天连续记账',
     achievements_heading: '成就徽章墙',
     close: '关闭',
+    daily_trend_title: '本月每日开销趋势',
+    daily_trend_subtitle: '当月每日支出走势',
+    trend_peak: '最高支出',
+    no_trend_data: '本月暂无支出记录',
+    today: '今天',
+    yesterday: '昨天',
   },
 };
 
@@ -598,6 +610,15 @@ const elements = {
   ),
   cancelInitialBalanceBtn: document.getElementById('cancelInitialBalanceBtn'),
   saveInitialBalanceBtn: document.getElementById('saveInitialBalanceBtn'),
+
+  // Bottom Sheet & Gesture
+  createSheetDragHandle: document.getElementById('createSheetDragHandle'),
+  createSheetDialog: document.querySelector('.create-sheet-dialog'),
+
+  // Daily Spending Trend Chart
+  dailyTrendChart: document.getElementById('dailyTrendChart'),
+  trendPeakDayBadge: document.getElementById('trendPeakDayBadge'),
+  trendEmptyOverlay: document.getElementById('trendEmptyOverlay'),
 };
 
 /**
@@ -606,6 +627,23 @@ const elements = {
 function t(key) {
   const dict = I18N[state.lang] || I18N.en;
   return dict[key] || I18N.en[key] || '';
+}
+
+/**
+ * Native Haptic Feedback (Vibration API)
+ * @param {number} [duration=10] Vibration duration in milliseconds
+ */
+function triggerHaptic(duration = 10) {
+  try {
+    if (
+      typeof navigator !== 'undefined' &&
+      typeof navigator.vibrate === 'function'
+    ) {
+      navigator.vibrate(duration);
+    }
+  } catch (err) {
+    // Non-blocking fallback for platforms without vibration hardware
+  }
 }
 
 /**
@@ -667,6 +705,7 @@ function setAppLanguage(lang) {
   if (state.summary) {
     updateSummaryStatusBadge(state.summary.netBalance);
     renderCategoryChart(state.summary.categoryBreakdown);
+    updateDailySpendingTrend();
   }
 }
 
@@ -674,6 +713,7 @@ function setAppLanguage(lang) {
  * Switch Active Page View (ledger | analytics | settings)
  */
 function switchAppPage(pageName) {
+  triggerHaptic(10);
   const target = ['ledger', 'analytics', 'settings'].includes(pageName)
     ? pageName
     : 'ledger';
@@ -699,6 +739,7 @@ function switchAppPage(pageName) {
         30,
       );
     }
+    setTimeout(() => updateDailySpendingTrend(), 30);
   } else if (target === 'settings') {
     updateAccountModalData();
     loadAccounts();
@@ -709,6 +750,7 @@ function switchAppPage(pageName) {
  * Open & Close Create Transaction Modal
  */
 function openCreateModal() {
+  triggerHaptic(10);
   closeProfileDropdown();
   if (elements.inputDate && !elements.inputDate.value) {
     elements.inputDate.value = new Date().toISOString().split('T')[0];
@@ -723,6 +765,80 @@ function openCreateModal() {
 
 function closeCreateModal() {
   elements.createEntryModal?.classList.add('hidden');
+  if (elements.createSheetDialog) {
+    elements.createSheetDialog.style.transform = '';
+  }
+}
+
+/**
+ * Native Bottom Sheet Pull-Down Drag Gesture & Dismissal
+ */
+function initBottomSheetGestures() {
+  const dialog = elements.createSheetDialog;
+  const overlay = elements.createEntryModal;
+  if (!dialog || !overlay) return;
+
+  let startY = 0;
+  let currentDeltaY = 0;
+  let isDragging = false;
+
+  const onTouchStart = (e) => {
+    if (dialog.scrollTop > 0) return;
+    startY = e.touches[0].clientY;
+    currentDeltaY = 0;
+    isDragging = true;
+    dialog.style.transition = 'none';
+  };
+
+  const onTouchMove = (e) => {
+    if (!isDragging) return;
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - startY;
+
+    if (deltaY > 0) {
+      currentDeltaY = deltaY;
+      dialog.style.transform = `translateY(${deltaY}px)`;
+      if (e.cancelable) e.preventDefault();
+    } else {
+      currentDeltaY = 0;
+      dialog.style.transform = '';
+    }
+  };
+
+  const onTouchEnd = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    dialog.style.transition = 'transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
+
+    if (currentDeltaY > 80) {
+      triggerHaptic(10);
+      dialog.style.transform = 'translateY(100%)';
+      setTimeout(() => {
+        closeCreateModal();
+        dialog.style.transform = '';
+        dialog.style.transition = '';
+      }, 200);
+    } else {
+      dialog.style.transform = '';
+      setTimeout(() => {
+        dialog.style.transition = '';
+      }, 200);
+    }
+  };
+
+  const dragHandle = elements.createSheetDragHandle;
+  if (dragHandle) {
+    dragHandle.addEventListener('touchstart', onTouchStart, { passive: true });
+    dragHandle.addEventListener('touchmove', onTouchMove, { passive: false });
+    dragHandle.addEventListener('touchend', onTouchEnd);
+  }
+
+  const header = dialog.querySelector('.create-sheet-header');
+  if (header) {
+    header.addEventListener('touchstart', onTouchStart, { passive: true });
+    header.addEventListener('touchmove', onTouchMove, { passive: false });
+    header.addEventListener('touchend', onTouchEnd);
+  }
 }
 
 /**
@@ -1073,6 +1189,7 @@ function calculateLocalSummaryMetrics() {
 
   updateSummaryStatusBadge(state.summary.netBalance);
   renderCategoryChart(categoryBreakdown);
+  updateDailySpendingTrend();
   renderBudgetTracker();
 }
 
@@ -1342,6 +1459,7 @@ async function loadSummary() {
 
     updateSummaryStatusBadge(data.netBalance);
     renderCategoryChart(data.categoryBreakdown);
+    updateDailySpendingTrend();
     await loadBudget(state.currentMonth);
   } catch (err) {
     calculateLocalSummaryMetrics();
@@ -1448,6 +1566,206 @@ function updateMonthFilterDropdown(records) {
 }
 
 /**
+ * Render a single ledger record table row (HTML string)
+ */
+function renderRecordRowHtml(record, sym) {
+  const isIncome = record.type === 'income';
+  const sign = isIncome ? `+ ${sym} ` : `− ${sym} `;
+  const amountClass = isIncome ? 'amount-income' : 'amount-expense';
+  const isDraft = record.isDraft || String(record.id).startsWith('draft-');
+  const draftBadge = isDraft
+    ? `<span class="tag-draft" title="Pending sync">⚡</span>`
+    : '';
+  const catIcon = getCategoryIcon(record.category);
+  const catLabel = getCategoryDisplayLabel(record.category);
+  const accMeta = getAccountMeta(record.account_name);
+  const accLabel = getAccountDisplayLabel(record.account_name);
+
+  return `
+    <tr data-id="${record.id}" class="${isDraft ? 'row-draft' : ''}">
+      <td class="col-date">${escapeHtml(record.date)}${draftBadge}</td>
+      <td class="col-category">
+        <span class="category-tag">
+          <span>${catIcon}</span>
+          ${escapeHtml(catLabel)}
+        </span>
+      </td>
+      <td class="col-account">
+        <span class="account-pill-badge" title="${escapeHtml(accLabel)}">
+          <span class="account-pill-icon">${accMeta.icon}</span>
+          <span>${escapeHtml(accLabel)}</span>
+        </span>
+      </td>
+      <td class="col-note" title="${escapeHtml(record.note || '')}">
+        ${escapeHtml(record.note || '—')}
+      </td>
+      <td class="col-amount text-right ${amountClass}">
+        ${sign}${formatNumber(record.amount)}
+      </td>
+      <td class="col-actions text-center">
+        <button class="btn-del" onclick="handleDelete('${record.id}')" title="Delete">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+      </td>
+    </tr>
+  `;
+}
+
+/**
+ * Format a YYYY-MM-DD date string into a localized human-readable date
+ * e.g., "10月26日 周日" or "Sun, Oct 26"
+ */
+function formatDisplayDate(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      const day = parseInt(parts[2], 10);
+      const d = new Date(year, month - 1, day);
+      if (state.lang === 'zh') {
+        const weekdays = [
+          '周日',
+          '周一',
+          '周二',
+          '周三',
+          '周四',
+          '周五',
+          '周六',
+        ];
+        return `${month}月${day}日 ${weekdays[d.getDay()]}`;
+      } else {
+        const months = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
+        const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        return `${weekdays[d.getDay()]}, ${months[month - 1]} ${day}`;
+      }
+    }
+  } catch (e) {}
+  return dateStr;
+}
+
+/**
+ * ============================================================================
+ * ✍️ YOUR TURN TO IMPLEMENT: groupRecordsByDate(records)
+ * ============================================================================
+ * Task:
+ * Transform an array of transaction records into an array of date-grouped
+ * objects sorted by date in descending order (newest date first).
+ *
+ * @param {Array<Object>} records - Array of transaction record objects
+ *   Each record contains: { id, date: "YYYY-MM-DD", type: "expense"|"income", amount: number, ... }
+ * @returns {Array<Object>} Array of date-grouped objects with structure:
+ *   [
+ *     {
+ *       date: "2026-10-26",
+ *       relativeLabel: "Today" | "Yesterday" | "", // or localized "今天" | "昨天" if state.lang === 'zh'
+ *       totalExpense: 45.00,
+ *       totalIncome: 0.00,
+ *       records: [ ...records on this date... ]
+ *     },
+ *     ...
+ *   ]
+ *
+ * STEP-BY-STEP IMPLEMENTATION HINTS:
+ * 1. Check if records is empty or falsy:
+ *      if (!records || records.length === 0) return [];
+ * 2. Get today's and yesterday's dates in "YYYY-MM-DD" format:
+ *      const now = new Date();
+ *      const today = now.toISOString().split('T')[0];
+ *      now.setDate(now.getDate() - 1);
+ *      const yesterday = now.toISOString().split('T')[0];
+ * 3. Group records using a Map or Object:
+ *      const groupsMap = new Map();
+ *      for (const record of records) {
+ *        if (!record.date) continue;
+ *        if (!groupsMap.has(record.date)) {
+ *          let relative = '';
+ *          if (record.date === today) {
+ *            relative = state.lang === 'zh' ? '今天' : 'Today';
+ *          } else if (record.date === yesterday) {
+ *            relative = state.lang === 'zh' ? '昨天' : 'Yesterday';
+ *          }
+ *          groupsMap.set(record.date, {
+ *            date: record.date,
+ *            relativeLabel: relative,
+ *            totalExpense: 0,
+ *            totalIncome: 0,
+ *            records: []
+ *          });
+ *        }
+ *        const group = groupsMap.get(record.date);
+ *        if (record.type === 'expense') {
+ *          group.totalExpense += Number(record.amount || 0);
+ *        } else if (record.type === 'income') {
+ *          group.totalIncome += Number(record.amount || 0);
+ *        }
+ *        group.records.push(record);
+ *      }
+ * 4. Sort the groups by date descending:
+ *      const sortedGroups = Array.from(groupsMap.values()).sort((a, b) => b.date.localeCompare(a.date));
+ * 5. Return sortedGroups.
+ * ============================================================================
+ */
+function groupRecordsByDate(records) {
+  // ✍️ YOUR TURN: Write your code below this line:
+  if (!records || records.length === 0) return [];
+
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  now.setDate(now.getDate() - 1);
+  const yesterday = now.toISOString().split('T')[0];
+
+  const groupsMap = new Map();
+  for (const record of records) {
+    if (!record.date) continue;
+    if (!groupsMap.has(record.date)) {
+      let relative = '';
+      if (record.date === today) {
+        relative = state.lang === 'zh' ? '今天' : 'Today';
+      } else if (record.date === yesterday) {
+        relative = state.lang === 'zh' ? '昨天' : 'Yesterday';
+      }
+      groupsMap.set(record.date, {
+        date: record.date,
+        relativeLabel: relative,
+        totalExpense: 0,
+        totalIncome: 0,
+        records: [],
+      });
+    }
+
+    const group = groupsMap.get(record.date);
+    if (record.type === 'expense') {
+      group.totalExpense += Number(record.amount || 0);
+    } else if (record.type === 'income') {
+      group.totalIncome += Number(record.amount || 0);
+    }
+    group.records.push(record);
+  }
+  const sortedGroups = Array.from(groupsMap.values()).sort((a, b) =>
+    b.date.localeCompare(a.date),
+  );
+  return sortedGroups;
+}
+
+/**
  * Render Audit Ledger Table
  */
 function renderTable() {
@@ -1508,53 +1826,53 @@ function renderTable() {
   elements.emptyState?.classList.add('hidden');
   const sym = state.currency;
 
-  elements.recordsTbody.innerHTML = filtered
-    .map((record) => {
-      const isIncome = record.type === 'income';
-      const sign = isIncome ? `+ ${sym} ` : `− ${sym} `;
-      const amountClass = isIncome ? 'amount-income' : 'amount-expense';
-      const isDraft = record.isDraft || String(record.id).startsWith('draft-');
-      const draftBadge = isDraft
-        ? `<span class="tag-draft" title="Pending sync">⚡</span>`
-        : '';
-      const catIcon = getCategoryIcon(record.category);
-      const catLabel = getCategoryDisplayLabel(record.category);
-      const accMeta = getAccountMeta(record.account_name);
-      const accLabel = getAccountDisplayLabel(record.account_name);
+  const dateGroups = groupRecordsByDate(filtered);
+  if (Array.isArray(dateGroups) && dateGroups.length > 0) {
+    elements.recordsTbody.innerHTML = dateGroups
+      .map((group) => {
+        const formattedDate = formatDisplayDate(group.date);
+        const relativeTag = group.relativeLabel
+          ? `<span class="timeline-relative-tag ${group.relativeLabel === 'Today' || group.relativeLabel === '今天' ? 'tag-today' : group.relativeLabel === 'Yesterday' || group.relativeLabel === '昨天' ? 'tag-yesterday' : ''}">${escapeHtml(group.relativeLabel)}</span>`
+          : '';
+        const expSum =
+          group.totalExpense > 0
+            ? `<span class="timeline-sum timeline-sum-expense">−${sym} ${formatNumber(group.totalExpense)}</span>`
+            : '';
+        const incSum =
+          group.totalIncome > 0
+            ? `<span class="timeline-sum timeline-sum-income">+${sym} ${formatNumber(group.totalIncome)}</span>`
+            : '';
 
-      return `
-        <tr data-id="${record.id}" class="${isDraft ? 'row-draft' : ''}">
-          <td class="col-date">${escapeHtml(record.date)}${draftBadge}</td>
-          <td class="col-category">
-            <span class="category-tag">
-              <span>${catIcon}</span>
-              ${escapeHtml(catLabel)}
-            </span>
-          </td>
-          <td class="col-account">
-            <span class="account-pill-badge" title="${escapeHtml(accLabel)}">
-              <span class="account-pill-icon">${accMeta.icon}</span>
-              <span>${escapeHtml(accLabel)}</span>
-            </span>
-          </td>
-          <td class="col-note" title="${escapeHtml(record.note || '')}">
-            ${escapeHtml(record.note || '—')}
-          </td>
-          <td class="col-amount text-right ${amountClass}">
-            ${sign}${formatNumber(record.amount)}
-          </td>
-          <td class="col-actions text-center">
-            <button class="btn-del" onclick="handleDelete('${record.id}')" title="Delete">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-            </button>
-          </td>
-        </tr>
-      `;
-    })
-    .join('');
+        const headerRow = `
+          <tr class="timeline-date-row">
+            <td colspan="6" class="timeline-date-cell">
+              <div class="timeline-date-inner">
+                <div class="timeline-date-left">
+                  <span class="timeline-calendar-icon">📅</span>
+                  <span class="timeline-date-title">${escapeHtml(formattedDate)}</span>
+                  ${relativeTag}
+                </div>
+                <div class="timeline-date-right">
+                  ${expSum}
+                  ${incSum}
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+
+        const recordRows = (group.records || [])
+          .map((record) => renderRecordRowHtml(record, sym))
+          .join('');
+        return headerRow + recordRows;
+      })
+      .join('');
+  } else {
+    // Fallback: render flat rows if groupRecordsByDate is not yet implemented or returned empty
+    elements.recordsTbody.innerHTML = filtered
+      .map((record) => renderRecordRowHtml(record, sym))
+      .join('');
+  }
 }
 
 /**
@@ -1652,6 +1970,7 @@ async function handleRecordSubmit(e) {
         ? `✅ 已记账 ${state.currency} ${formatNumber(amount)}`
         : `✅ Recorded ${state.currency} ${formatNumber(amount)}`,
     );
+    triggerHaptic(15);
     elements.inputAmount.value = '';
     elements.inputNote.value = '';
     closeCreateModal();
@@ -1666,6 +1985,7 @@ async function handleRecordSubmit(e) {
       err.message?.includes('NetworkError')
     ) {
       saveOfflineRecord(payload);
+      triggerHaptic(15);
     } else {
       showToast(err.message, true);
     }
@@ -1687,6 +2007,7 @@ window.handleDelete = async function (id) {
   if (!confirm(confirmMsg)) {
     return;
   }
+  triggerHaptic(12);
 
   if (isDraft) {
     let queue = getOfflineQueue();
@@ -1847,6 +2168,233 @@ function renderCategoryChart(breakdown) {
       },
     },
   });
+}
+
+let dailyTrendChartInstance = null;
+
+/**
+ * Render Month's Daily Spending Trend Line / Area Chart
+ */
+function renderDailyTrendChart(trendData) {
+  const chartCanvas = document.getElementById('dailyTrendChart');
+  if (!chartCanvas) return;
+
+  const {
+    labels = [],
+    data = [],
+    peakDay = null,
+    peakAmount = 0,
+  } = trendData || {};
+  const totalSpent = (data || []).reduce((sum, v) => sum + Number(v || 0), 0);
+
+  if (!labels.length || totalSpent <= 0) {
+    if (dailyTrendChartInstance) {
+      dailyTrendChartInstance.destroy();
+      dailyTrendChartInstance = null;
+    }
+    elements.trendEmptyOverlay?.classList.remove('hidden');
+    if (elements.trendPeakDayBadge) {
+      elements.trendPeakDayBadge.textContent = `${t('trend_peak')}: —`;
+    }
+    return;
+  }
+
+  elements.trendEmptyOverlay?.classList.add('hidden');
+  if (elements.trendPeakDayBadge) {
+    if (peakDay && peakAmount > 0) {
+      const sym = state.currency || 'RM';
+      const dayLabel = state.lang === 'zh' ? `${peakDay}日` : `Day ${peakDay}`;
+      elements.trendPeakDayBadge.textContent = `${t('trend_peak')}: ${dayLabel} (${sym} ${formatNumber(peakAmount)})`;
+    } else {
+      elements.trendPeakDayBadge.textContent = `${t('trend_peak')}: —`;
+    }
+  }
+
+  if (dailyTrendChartInstance) {
+    dailyTrendChartInstance.destroy();
+  }
+
+  const isDark = isDarkModeActive();
+  const ctx = chartCanvas.getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 180);
+  gradient.addColorStop(
+    0,
+    isDark ? 'rgba(13, 148, 136, 0.4)' : 'rgba(13, 148, 136, 0.25)',
+  );
+  gradient.addColorStop(
+    1,
+    isDark ? 'rgba(13, 148, 136, 0.01)' : 'rgba(13, 148, 136, 0.01)',
+  );
+
+  dailyTrendChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: t('expense'),
+          data: data,
+          borderColor: '#0D9488',
+          borderWidth: 2,
+          backgroundColor: gradient,
+          fill: true,
+          tension: 0.35,
+          pointRadius: (ctx) => (Number(ctx.raw) > 0 ? 3 : 0),
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#0D9488',
+          pointBorderColor: isDark ? '#111827' : '#FFFFFF',
+          pointBorderWidth: 1.5,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        intersect: false,
+        mode: 'index',
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: isDark ? '#1F2937' : '#0F172A',
+          titleColor: '#F8FAFC',
+          bodyColor: '#E2E8F0',
+          padding: 8,
+          cornerRadius: 8,
+          callbacks: {
+            title: (items) => {
+              const day = items[0]?.label;
+              return state.lang === 'zh' ? `${day}日` : `Day ${day}`;
+            },
+            label: (item) => {
+              const val = Number(item.raw) || 0;
+              return ` ${t('expense')}: ${state.currency} ${formatNumber(val)}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            color: isDark ? '#94A3B8' : '#64748B',
+            font: { size: 10, weight: '500' },
+            maxTicksLimit: 12,
+          },
+        },
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+          },
+          ticks: {
+            color: isDark ? '#94A3B8' : '#64748B',
+            font: { size: 10 },
+            maxTicksLimit: 5,
+            callback: (v) => `${v}`,
+          },
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Trigger recalculation and re-rendering of the Daily Spending Trend
+ */
+function updateDailySpendingTrend() {
+  const trendData = calculateDailySpendingTrend(
+    state.records,
+    state.currentMonth,
+  );
+  renderDailyTrendChart(trendData);
+}
+
+/**
+ * ============================================================================
+ * ✍️ YOUR TURN TO IMPLEMENT: calculateDailySpendingTrend(records, currentMonth)
+ * ============================================================================
+ * Task:
+ * Calculate daily expense totals across all days of the selected month
+ * for the "Daily Spending Trend" area/line chart.
+ *
+ * @param {Array<Object>} records - All transaction records
+ * @param {string} currentMonth - Selected month string (e.g. "2026-10" or "all")
+ * @returns {Object} Chart data object with structure:
+ *   {
+ *     labels: ["1", "2", "3", ...], // day of month strings
+ *     data: [0, 15.5, 0, 42.0, ...], // sum of expense amount for each day
+ *     peakDay: 15, // the day of the month with the highest expense (or null)
+ *     peakAmount: 120.00 // the maximum daily expense amount
+ *   }
+ *
+ * STEP-BY-STEP IMPLEMENTATION HINTS:
+ * 1. Determine target YYYY-MM:
+ *      const targetMonth = (currentMonth && currentMonth !== 'all')
+ *        ? currentMonth
+ *        : new Date().toISOString().slice(0, 7);
+ * 2. Parse year and month numbers:
+ *      const [year, month] = targetMonth.split('-').map(Number);
+ * 3. Find total days in that month:
+ *      const daysInMonth = new Date(year, month, 0).getDate();
+ * 4. Initialize labels and dailyTotals arrays:
+ *      const labels = Array.from({ length: daysInMonth }, (_, i) => String(i + 1));
+ *      const dailyTotals = new Array(daysInMonth).fill(0);
+ * 5. Filter expense records that belong to targetMonth:
+ *      const monthExpenses = (records || []).filter(
+ *        r => r.type === 'expense' && r.date && r.date.startsWith(targetMonth)
+ *      );
+ * 6. Accumulate daily expense amounts:
+ *      for (const record of monthExpenses) {
+ *        const dayNum = parseInt(record.date.split('-')[2], 10);
+ *        if (dayNum >= 1 && dayNum <= daysInMonth) {
+ *          dailyTotals[dayNum - 1] += Number(record.amount || 0);
+ *        }
+ *      }
+ * 7. Find peak day and peak amount:
+ *      let peakAmount = 0;
+ *      let peakDay = null;
+ *      dailyTotals.forEach((val, idx) => {
+ *        if (val > peakAmount) {
+ *          peakAmount = val;
+ *          peakDay = idx + 1;
+ *        }
+ *      });
+ * 8. Return { labels, data: dailyTotals, peakDay, peakAmount }.
+ * ============================================================================
+ */
+function calculateDailySpendingTrend(records, currentMonth) {
+  // ✍️ YOUR TURN: Write your code below this line:
+  const targetMonth =
+    currentMonth && currentMonth !== 'all'
+      ? currentMonth
+      : new Date().toISOString().slice(0, 7);
+  const [year, month] = targetMonth.split('-').map(Number);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const labels = Array.from({ length: daysInMonth }, (_, i) => String(i + 1));
+  const dailyTotals = new Array(daysInMonth).fill(0);
+  const monthExpenses = (records || []).filter(
+    (r) => r.type === 'expense' && r.date && r.date.startsWith(targetMonth),
+  );
+
+  for (const record of monthExpenses) {
+    const dayNum = parseInt(record.date.split('-')[2], 10);
+    if (dayNum >= 1 && dayNum <= daysInMonth) {
+      dailyTotals[dayNum - 1] += Number(record.amount || 0);
+    }
+  }
+
+  let peakAmount = 0;
+  let peakDay = null;
+  dailyTotals.forEach((val, idx) => {
+    if (val > peakAmount) {
+      peakAmount = val;
+      peakDay = idx + 1;
+    }
+  });
+
+  return { labels, data: dailyTotals, peakDay, peakAmount };
 }
 
 /**
@@ -2237,6 +2785,9 @@ function setAppTheme(themeVal) {
 
   if (categoryChartInstance && state.summary?.categoryBreakdown) {
     renderCategoryChart(state.summary.categoryBreakdown);
+  }
+  if (dailyTrendChartInstance) {
+    updateDailySpendingTrend();
   }
 
   if (state.user) {
@@ -3190,6 +3741,7 @@ async function init() {
   elements.createEntryModal?.addEventListener('click', (e) => {
     if (e.target === elements.createEntryModal) closeCreateModal();
   });
+  initBottomSheetGestures();
 
   // 3. Transaction form submission
   elements.recordForm?.addEventListener('submit', handleRecordSubmit);
@@ -3203,6 +3755,7 @@ async function init() {
       updateCurrencySymbols();
       renderTable();
       renderBudgetTracker();
+      updateDailySpendingTrend();
       if (state.user) {
         syncUserProfileToCloud({ currency: state.currency });
       }
@@ -3217,16 +3770,19 @@ async function init() {
   // 6. Category options & initial entry type
   setEntryType('expense');
 
-  elements.btnTypeExpense?.addEventListener('click', () =>
-    setEntryType('expense'),
-  );
-  elements.btnTypeIncome?.addEventListener('click', () =>
-    setEntryType('income'),
-  );
+  elements.btnTypeExpense?.addEventListener('click', () => {
+    triggerHaptic(8);
+    setEntryType('expense');
+  });
+  elements.btnTypeIncome?.addEventListener('click', () => {
+    triggerHaptic(8);
+    setEntryType('income');
+  });
 
   // 7. Filter tabs
   elements.filterTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
+      triggerHaptic(8);
       elements.filterTabs.forEach((t) => t.classList.remove('active'));
       tab.classList.add('active');
       state.currentFilter = tab.dataset.filter;
@@ -3239,6 +3795,7 @@ async function init() {
     state.currentMonth = e.target.value;
     loadSummary();
     renderTable();
+    updateDailySpendingTrend();
   });
 
   // 9. Search Input and Clear Button

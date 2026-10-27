@@ -345,6 +345,28 @@
           </div>
         </div>
 
+        <!-- Daily Spending Trend Line / Area Chart Card -->
+        <div class="column-panel analytics-chart-panel analytics-trend-panel">
+          <div class="chart-header">
+            <div>
+              <h2 class="section-title" data-i18n="daily_trend_title">Daily Spending Trend</h2>
+              <p class="section-desc" data-i18n="daily_trend_subtitle">Daily expense trajectory this month</p>
+            </div>
+            <span id="trendPeakDayBadge" class="chart-badge">Peak: —</span>
+          </div>
+          <div class="chart-wrapper trend-chart-wrapper">
+            <canvas id="dailyTrendChart"></canvas>
+            <div id="trendEmptyOverlay" class="chart-empty hidden">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+              <span data-i18n="no_trend_data">No spending recorded for this month</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Category Breakdown Donut Chart Card -->
         <div class="column-panel analytics-chart-panel">
           <div class="chart-header">
@@ -530,7 +552,7 @@
               <div class="settings-update-info">
                 <div class="settings-update-header">
                   <span class="settings-update-title" data-i18n="app_version_label">Application Version</span>
-                  <span id="appVersionBadge" class="version-badge">v1.3.5</span>
+                  <span id="appVersionBadge" class="version-badge">v1.3.6</span>
                 </div>
                 <p id="updateStatusText" class="settings-update-desc" data-i18n="up_to_date_desc">You are running the latest version</p>
               </div>
@@ -608,6 +630,7 @@
          =================================================================== -->
     <div id="createEntryModal" class="modal-overlay create-sheet-overlay hidden">
       <div class="modal-dialog create-sheet-dialog">
+        <div class="sheet-drag-handle" id="createSheetDragHandle" aria-hidden="true"></div>
         <div class="create-sheet-header">
           <div class="create-sheet-title-wrap">
             <h3 class="modal-title" data-i18n="create_modal_title">New Transaction</h3>
@@ -724,7 +747,7 @@
             </div>
             <div>
               <h3 class="modal-title" data-i18n="inapp_update_title">App Update Available</h3>
-              <p class="modal-subtitle"><span id="inAppUpdateVersionBadge">v1.3.5</span></p>
+              <p class="modal-subtitle"><span id="inAppUpdateVersionBadge">v1.3.6</span></p>
             </div>
           </div>
           <button id="closeInAppUpdateModalBtn" class="btn-close-modal" aria-label="Close modal">&times;</button>
