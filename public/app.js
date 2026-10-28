@@ -6,7 +6,7 @@
  */
 
 // Current Client Release Version
-const APP_VERSION = '1.3.7';
+const APP_VERSION = '1.3.8';
 
 // Default BaaS Cloud Configuration (Decoded from safe payload, overridable by window.__ENV__)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -46,22 +46,54 @@ const CATEGORIES = {
   ],
 };
 
-// Visual Category Metadata (Icons, High-Contrast Palette Colors & Bilingual Labels)
+// Consistent Line-Art SVG Icons (Matches modern tab bar outline style)
+const SVG_ICONS = {
+  dining: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>`,
+  transport: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>`,
+  shopping: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>`,
+  housing: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`,
+  entertainment: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="2.18" ry="2.18"></rect><line x1="7" x2="7" y1="2" y2="22"></line><line x1="17" x2="17" y1="2" y2="22"></line><line x1="2" x2="22" y1="12" y2="12"></line><line x1="2" x2="7" y1="7" y2="7"></line><line x1="2" x2="7" y1="17" y2="17"></line><line x1="17" x2="22" y1="17" y2="17"></line><line x1="17" x2="22" y1="7" y2="7"></line></svg>`,
+  medical: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>`,
+  subscriptions: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path><path d="M16 21h5v-5"></path></svg>`,
+  otherExpense: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg>`,
+  salary: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg>`,
+  freelance: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"></path></svg>`,
+  invest: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>`,
+  bonus: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"></rect><path d="M12 8v13"></path><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"></path><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path></svg>`,
+  refund: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>`,
+  otherIncome: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v8M8 12h8"></path></svg>`,
+
+  // Accounts
+  cash: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg>`,
+  ewallet: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg>`,
+  bank: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"></line><line x1="6" x2="6" y1="18" y2="11"></line><line x1="10" x2="10" y1="18" y2="11"></line><line x1="14" x2="14" y1="18" y2="11"></line><line x1="18" x2="18" y1="18" y2="11"></line><polygon points="12 2 20 7 4 7"></polygon></svg>`,
+  credit: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>`,
+
+  // Modules & Utilities
+  target: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`,
+  claims: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path></svg>`,
+  calendar: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>`,
+  plus: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
+  trash: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
+  users: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
+};
+
+// Visual Category Metadata (Line Icons, High-Contrast Palette Colors & Bilingual Labels)
 const CATEGORY_META = {
-  'Food & Dining': { icon: '🍽️', en: 'Dining', zh: '餐饮美食', color: '#F97316' }, // Warm Orange
-  Transportation: { icon: '🚗', en: 'Transport', zh: '交通出行', color: '#0EA5E9' }, // Vibrant Sky Blue
-  Shopping: { icon: '🛍️', en: 'Shopping', zh: '购物消费', color: '#EC4899' }, // Bright Pink
-  'Housing & Utilities': { icon: '🏠', en: 'Housing', zh: '居家水电', color: '#EAB308' }, // Amber Gold
-  Entertainment: { icon: '🎬', en: 'Leisure', zh: '休闲娱乐', color: '#8B5CF6' }, // Royal Purple
-  Healthcare: { icon: '💊', en: 'Medical', zh: '医疗健康', color: '#EF4444' }, // Red Coral
-  Subscriptions: { icon: '🔄', en: 'Subscript.', zh: '会员订阅', color: '#06B6D4' }, // Vibrant Cyan
-  'Other Expense': { icon: '📦', en: 'Other', zh: '其他支出', color: '#64748B' }, // Slate Grey
-  Salary: { icon: '💰', en: 'Salary', zh: '薪资收入', color: '#10B981' }, // Emerald Green
-  Freelance: { icon: '💻', en: 'Freelance', zh: '兼职副业', color: '#14B8A6' }, // Teal
-  'Investment & Dividends': { icon: '📈', en: 'Invest', zh: '投资理财', color: '#6366F1' }, // Indigo
-  Bonus: { icon: '🎁', en: 'Bonus', zh: '奖金补贴', color: '#F59E0B' }, // Warm Amber
-  Refund: { icon: '↩️', en: 'Refund', zh: '退款报销', color: '#3B82F6' }, // Cobalt Blue
-  'Other Income': { icon: '✨', en: 'Other', zh: '其他收入', color: '#A855F7' }, // Purple
+  'Food & Dining': { icon: SVG_ICONS.dining, en: 'Dining', zh: '餐饮美食', color: '#F97316' },
+  Transportation: { icon: SVG_ICONS.transport, en: 'Transport', zh: '交通出行', color: '#0EA5E9' },
+  Shopping: { icon: SVG_ICONS.shopping, en: 'Shopping', zh: '购物消费', color: '#EC4899' },
+  'Housing & Utilities': { icon: SVG_ICONS.housing, en: 'Housing', zh: '居家水电', color: '#EAB308' },
+  Entertainment: { icon: SVG_ICONS.entertainment, en: 'Leisure', zh: '休闲娱乐', color: '#8B5CF6' },
+  Healthcare: { icon: SVG_ICONS.medical, en: 'Medical', zh: '医疗健康', color: '#EF4444' },
+  Subscriptions: { icon: SVG_ICONS.subscriptions, en: 'Subscript.', zh: '会员订阅', color: '#06B6D4' },
+  'Other Expense': { icon: SVG_ICONS.otherExpense, en: 'Other', zh: '其他支出', color: '#64748B' },
+  Salary: { icon: SVG_ICONS.salary, en: 'Salary', zh: '薪资收入', color: '#10B981' },
+  Freelance: { icon: SVG_ICONS.freelance, en: 'Freelance', zh: '兼职副业', color: '#14B8A6' },
+  'Investment & Dividends': { icon: SVG_ICONS.invest, en: 'Invest', zh: '投资理财', color: '#6366F1' },
+  Bonus: { icon: SVG_ICONS.bonus, en: 'Bonus', zh: '奖金补贴', color: '#F59E0B' },
+  Refund: { icon: SVG_ICONS.refund, en: 'Refund', zh: '退款报销', color: '#3B82F6' },
+  'Other Income': { icon: SVG_ICONS.otherIncome, en: 'Other', zh: '其他收入', color: '#A855F7' },
 };
 
 // Full Bilingual Dictionary (Loaded dynamically from public/i18n.js)
@@ -87,14 +119,19 @@ let state = {
   isSyncing: false,
   records: [],
   summary: null,
+  projects: [],
+  claims: [],
+  budgetTopUps: {},
+  activeProjectTab: 'sinking',
+  selectedAccountsMonth: 'current',
 };
 
 // Default Supported Payment Accounts / Asset Wallets
 const DEFAULT_ACCOUNTS = [
-  { name: 'Cash', icon: '💵', type: 'cash', zh: '现金 (Cash)' },
-  { name: 'eWallet', icon: '📱', type: 'ewallet', zh: '电子钱包' },
-  { name: 'Bank Card', icon: '🏦', type: 'bank', zh: '银行卡 (Bank)' },
-  { name: 'Credit Card', icon: '💳', type: 'credit', zh: '信用卡 (Credit)' },
+  { name: 'Cash', icon: SVG_ICONS.cash, type: 'cash', zh: '现金 (Cash)' },
+  { name: 'eWallet', icon: SVG_ICONS.ewallet, type: 'ewallet', zh: '电子钱包' },
+  { name: 'Bank Card', icon: SVG_ICONS.bank, type: 'bank', zh: '银行卡 (Bank)' },
+  { name: 'Credit Card', icon: SVG_ICONS.credit, type: 'credit', zh: '信用卡 (Credit)' },
 ];
 
 function getAccountMeta(name) {
@@ -106,7 +143,7 @@ function getAccountMeta(name) {
     (a) => a.name.toLowerCase() === norm.toLowerCase(),
   );
   if (found) return found;
-  return { name: norm, icon: '💵', type: 'general', zh: norm };
+  return { name: norm, icon: SVG_ICONS.cash, type: 'general', zh: norm };
 }
 
 function getAccountDisplayLabel(name) {
@@ -177,6 +214,61 @@ const elements = {
   searchInput: document.getElementById('searchInput'),
   clearSearchBtn: document.getElementById('clearSearchBtn'),
   searchResultCount: document.getElementById('searchResultCount'),
+
+  // Projects & Claims Module Elements
+  pageProjects: document.getElementById('pageProjects'),
+  openNewProjectBtn: document.getElementById('openNewProjectBtn'),
+  tabSinkingFundsBtn: document.getElementById('tabSinkingFundsBtn'),
+  tabClaimsBtn: document.getElementById('tabClaimsBtn'),
+  sinkingFundsView: document.getElementById('sinkingFundsView'),
+  claimsView: document.getElementById('claimsView'),
+  sinkingFundsList: document.getElementById('sinkingFundsList'),
+  claimsList: document.getElementById('claimsList'),
+  claimsPendingTotalVal: document.getElementById('claimsPendingTotalVal'),
+  openNewClaimBtn: document.getElementById('openNewClaimBtn'),
+
+  // Budget Top-Up Elements
+  quickTopupBudgetBtn: document.getElementById('quickTopupBudgetBtn'),
+  budgetFormulaRow: document.getElementById('budgetFormulaRow'),
+  budgetFormulaText: document.getElementById('budgetFormulaText'),
+  budgetLockedBar: document.getElementById('budgetLockedBar'),
+  topupBudgetModal: document.getElementById('topupBudgetModal'),
+  closeTopupBudgetModalBtn: document.getElementById('closeTopupBudgetModalBtn'),
+  cancelTopupBudgetBtn: document.getElementById('cancelTopupBudgetBtn'),
+  saveTopupBudgetBtn: document.getElementById('saveTopupBudgetBtn'),
+  budgetTopupAmountInput: document.getElementById('budgetTopupAmountInput'),
+  budgetTopupReasonInput: document.getElementById('budgetTopupReasonInput'),
+
+  // New Project Modal Elements
+  newProjectModal: document.getElementById('newProjectModal'),
+  closeNewProjectModalBtn: document.getElementById('closeNewProjectModalBtn'),
+  cancelNewProjectBtn: document.getElementById('cancelNewProjectBtn'),
+  saveNewProjectBtn: document.getElementById('saveNewProjectBtn'),
+  projectInputTitle: document.getElementById('projectInputTitle'),
+  projectInputAmount: document.getElementById('projectInputAmount'),
+  btnModeBudgetDeduct: document.getElementById('btnModeBudgetDeduct'),
+  btnModeExtraFund: document.getElementById('btnModeExtraFund'),
+  projectModeTip: document.getElementById('projectModeTip'),
+
+  // Confirmation Modal Elements
+  confirmActionModal: document.getElementById('confirmActionModal'),
+  closeConfirmModalBtn: document.getElementById('closeConfirmModalBtn'),
+  cancelConfirmBtn: document.getElementById('cancelConfirmBtn'),
+  proceedConfirmBtn: document.getElementById('proceedConfirmBtn'),
+  confirmModalIcon: document.getElementById('confirmModalIcon'),
+  confirmModalTitle: document.getElementById('confirmModalTitle'),
+  confirmModalSub: document.getElementById('confirmModalSub'),
+  confirmModalDesc: document.getElementById('confirmModalDesc'),
+
+  // Advanced Create Record Toggles & Drawers
+  toggleFundLinkBtn: document.getElementById('toggleFundLinkBtn'),
+  toggleSplitBillBtn: document.getElementById('toggleSplitBillBtn'),
+  sinkingFundDrawer: document.getElementById('sinkingFundDrawer'),
+  splitBillDrawer: document.getElementById('splitBillDrawer'),
+  entryProjectSelect: document.getElementById('entryProjectSelect'),
+  splitMyShareInput: document.getElementById('splitMyShareInput'),
+  addFriendRowBtn: document.getElementById('addFriendRowBtn'),
+  splitFriendsList: document.getElementById('splitFriendsList'),
 
   // Network & Cloud Sync Elements
   syncStatusPill: document.getElementById('syncStatusPill'),
@@ -273,16 +365,17 @@ const elements = {
   ),
   accountsWalletsList: document.getElementById('accountsWalletsList'),
   totalNetWorthValue: document.getElementById('totalNetWorthValue'),
-  initialBalanceModal: document.getElementById('initialBalanceModal'),
-  initialBalanceModalIcon: document.getElementById('initialBalanceModalIcon'),
-  initialBalanceModalTitle: document.getElementById('initialBalanceModalTitle'),
-  initialBalanceModalSub: document.getElementById('initialBalanceModalSub'),
-  initialBalanceInput: document.getElementById('initialBalanceInput'),
-  closeInitialBalanceModalBtn: document.getElementById(
-    'closeInitialBalanceModalBtn',
+  spendingAccountsMonthFilter: document.getElementById(
+    'spendingAccountsMonthFilter',
   ),
-  cancelInitialBalanceBtn: document.getElementById('cancelInitialBalanceBtn'),
-  saveInitialBalanceBtn: document.getElementById('saveInitialBalanceBtn'),
+
+  // Avatar Lightbox Preview Elements
+  avatarLightboxModal: document.getElementById('avatarLightboxModal'),
+  avatarLightboxBackdrop: document.getElementById('avatarLightboxBackdrop'),
+  closeAvatarLightboxBtn: document.getElementById('closeAvatarLightboxBtn'),
+  avatarLightboxImg: document.getElementById('avatarLightboxImg'),
+  avatarLightboxName: document.getElementById('avatarLightboxName'),
+  avatarLightboxEmail: document.getElementById('avatarLightboxEmail'),
 
   // Bottom Sheet & Gesture
   createSheetDragHandle: document.getElementById('createSheetDragHandle'),
@@ -292,6 +385,12 @@ const elements = {
   dailyTrendChart: document.getElementById('dailyTrendChart'),
   trendPeakDayBadge: document.getElementById('trendPeakDayBadge'),
   trendEmptyOverlay: document.getElementById('trendEmptyOverlay'),
+
+  // Streak & Motivation Badges Elements
+  streakPill: document.getElementById('streakPill'),
+  streakCountText: document.getElementById('streakCountText'),
+  settingsStreakCount: document.getElementById('settingsStreakCount'),
+  badgesGridContainer: document.getElementById('badgesGridContainer'),
 };
 
 /**
@@ -329,7 +428,7 @@ function getCategoryDisplayLabel(cat) {
 }
 
 function getCategoryIcon(cat) {
-  return CATEGORY_META[cat]?.icon || '📌';
+  return CATEGORY_META[cat]?.icon || SVG_ICONS.otherExpense;
 }
 
 /**
@@ -375,6 +474,7 @@ function setAppLanguage(lang) {
   updateSyncStatusUI();
   updateAccountModalData();
   renderAccountsCenter();
+  renderStreakAndBadges();
   if (state.summary) {
     updateSummaryStatusBadge(state.summary.netBalance);
     renderCategoryChart(state.summary.categoryBreakdown);
@@ -387,7 +487,7 @@ function setAppLanguage(lang) {
  */
 function switchAppPage(pageName) {
   triggerHaptic(10);
-  const target = ['ledger', 'analytics', 'settings'].includes(pageName)
+  const target = ['ledger', 'projects', 'analytics', 'settings'].includes(pageName)
     ? pageName
     : 'ledger';
   state.activePage = target;
@@ -413,6 +513,8 @@ function switchAppPage(pageName) {
       );
     }
     setTimeout(() => updateDailySpendingTrend(), 30);
+  } else if (target === 'projects') {
+    renderProjectsView();
   } else if (target === 'settings') {
     updateAccountModalData();
     loadAccounts();
@@ -425,6 +527,7 @@ function switchAppPage(pageName) {
 function openCreateModal() {
   triggerHaptic(10);
   closeProfileDropdown();
+  updateProjectDropdownOptions();
   if (elements.inputDate && !elements.inputDate.value) {
     elements.inputDate.value = new Date().toISOString().split('T')[0];
   }
@@ -794,8 +897,8 @@ async function syncOfflineDrafts() {
   if (successCount > 0) {
     showToast(
       state.lang === 'zh'
-        ? `✅ 已同步 ${successCount} 笔离线账单`
-        : `✅ Synced ${successCount} offline transaction(s)!`,
+        ? `已同步 ${successCount} 笔离线账单`
+        : `Synced ${successCount} offline transaction(s)!`,
     );
     await Promise.all([loadRecords(), loadSummary()]);
   }
@@ -895,8 +998,8 @@ function saveOfflineRecord(payload) {
 
   showToast(
     state.lang === 'zh'
-      ? `⚡ 已离线保存（待同步 ${queue.length} 笔）`
-      : `⚡ Offline: Saved locally (${queue.length} pending)`,
+      ? `已离线保存（待同步 ${queue.length} 笔）`
+      : `Offline: Saved locally (${queue.length} pending)`,
   );
   if (elements.inputAmount) elements.inputAmount.value = '';
   if (elements.inputNote) elements.inputNote.value = '';
@@ -1009,9 +1112,43 @@ function renderBudgetTracker() {
   if (!elements.budgetTrackerBanner) return;
 
   const totalExpense = Number(state.summary?.totalExpense || 0);
-  const budgetLimit = Number(state.monthlyBudget || 3000);
+  const baseBudget = Number(state.monthlyBudget || 3000);
+  const targetMonth = state.currentMonth === 'all' ? getCurrentMonthKey() : state.currentMonth;
+  const topUps = getBudgetTopUpTotal(targetMonth);
+  const lockedFunds = getLockedSinkingFundAmount(targetMonth);
+  const effectiveBudget = Math.max(0, baseBudget + topUps - lockedFunds);
   const sym = state.currency || 'RM';
 
+  // Update Formula Row if topups or locked funds exist
+  if (elements.budgetFormulaRow && elements.budgetFormulaText) {
+    if (topUps > 0 || lockedFunds > 0) {
+      elements.budgetFormulaRow.classList.remove('hidden');
+      elements.budgetFormulaText.textContent = `${t('budget_base_label')}: ${sym} ${formatNumber(baseBudget)} ` +
+        (topUps > 0 ? `+ ${t('budget_topup_label')}: ${sym} ${formatNumber(topUps)} ` : '') +
+        (lockedFunds > 0 ? `- ${t('budget_locked_label')}: ${sym} ${formatNumber(lockedFunds)} ` : '') +
+        `= 有效日常: ${sym} ${formatNumber(effectiveBudget)}`;
+    } else {
+      elements.budgetFormulaRow.classList.add('hidden');
+    }
+  }
+
+  // Update Striped Locked Bar in Track
+  if (elements.budgetLockedBar) {
+    const totalCapacity = baseBudget + topUps;
+    const lockedPct = totalCapacity > 0 ? Math.min(100, Math.round((lockedFunds / totalCapacity) * 100)) : 0;
+    elements.budgetLockedBar.style.width = `${lockedPct}%`;
+  }
+
+  // Proactive near-limit / erosion alert
+  if (lockedFunds > 0 && totalExpense > effectiveBudget) {
+    const eroded = totalExpense - effectiveBudget;
+    if (!state._hasAlertedErosion) {
+      state._hasAlertedErosion = true;
+      showToast(`注意：日常消费已超标透支 ${sym} ${formatNumber(eroded)}，侵蚀了专款储备！`, true);
+    }
+  }
+
+  const budgetLimit = effectiveBudget;
   const percentage =
     budgetLimit > 0 ? Math.round((totalExpense / budgetLimit) * 100) : 0;
   const barWidth = Math.min(Math.max(percentage, 0), 100);
@@ -1171,6 +1308,7 @@ async function loadRecords() {
     calculateLocalSummaryMetrics();
     updateAccountModalData();
     loadAccounts();
+    renderStreakAndBadges();
   };
 
   const userId = state.user?.id;
@@ -1209,6 +1347,7 @@ async function loadRecords() {
     calculateLocalSummaryMetrics();
     updateAccountModalData();
     loadAccounts();
+    renderStreakAndBadges();
   }
 }
 
@@ -1247,7 +1386,7 @@ function renderRecordRowHtml(record, sym) {
   const amountClass = isIncome ? 'amount-income' : 'amount-expense';
   const isDraft = record.isDraft || String(record.id).startsWith('draft-');
   const draftBadge = isDraft
-    ? `<span class="tag-draft" title="Pending sync">⚡</span>`
+    ? `<span class="tag-draft" title="Pending sync"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polyline></svg></span>`
     : '';
   const catIcon = getCategoryIcon(record.category);
   const catLabel = getCategoryDisplayLabel(record.category);
@@ -1270,7 +1409,7 @@ function renderRecordRowHtml(record, sym) {
         </span>
       </td>
       <td class="col-note" title="${escapeHtml(record.note || '')}">
-        ${escapeHtml(record.note || '—')}
+        ${renderRecordSourceBadgeHtml(record)}${escapeHtml(formatRecordCleanNote(record.note))}
       </td>
       <td class="col-amount text-right ${amountClass}">
         ${sign}${formatNumber(record.amount)}
@@ -1521,7 +1660,7 @@ function renderTable() {
             <td colspan="6" class="timeline-date-cell">
               <div class="timeline-date-inner">
                 <div class="timeline-date-left">
-                  <span class="timeline-calendar-icon">📅</span>
+                  <span class="timeline-calendar-icon">${SVG_ICONS.calendar}</span>
                   <span class="timeline-date-title">${escapeHtml(formattedDate)}</span>
                   ${relativeTag}
                 </div>
@@ -1601,6 +1740,84 @@ async function handleRecordSubmit(e) {
     const userId = state.user?.id;
     let created = false;
 
+    // Check Project & Split Bill Associations
+    const selectedProjectId = elements.entryProjectSelect?.value;
+    const isSplitActive = elements.toggleSplitBillBtn?.classList.contains('active');
+
+    let finalAmount = payload.amount;
+    let finalNote = payload.note || '';
+
+    if (selectedProjectId) {
+      const fund = (state.projects || []).find((p) => p.id === selectedProjectId);
+      if (fund) {
+        fund.spent_amount = (parseFloat(fund.spent_amount) || 0) + payload.amount;
+        saveProjects(state.projects);
+        finalNote = `[专款: ${fund.title}] ${finalNote}`.trim();
+      }
+    }
+
+    if (isSplitActive) {
+      const myShare = parseFloat(elements.splitMyShareInput?.value) || 0;
+      finalAmount = myShare;
+      finalNote = `[AA分摊: 总付 RM ${payload.amount}] ${finalNote}`.trim();
+
+      // Collect friend rows
+      const friendRows = elements.splitFriendsList?.querySelectorAll('.split-friend-row') || [];
+      const friends = [];
+      friendRows.forEach((row) => {
+        const name = (row.querySelector('.friend-name-input')?.value || '').trim();
+        const amt = parseFloat(row.querySelector('.friend-amount-input')?.value) || 0;
+        if (name && amt > 0) {
+          friends.push({ name, amount: amt, paid: false });
+        }
+      });
+
+      if (friends.length > 0) {
+        const claim = {
+          id: 'claim_' + Date.now(),
+          title: payload.category + ' ' + (payload.note || '聚餐分摊'),
+          total_amount: payload.amount,
+          my_share: myShare,
+          friends: friends,
+          date: payload.date,
+          status: 'active',
+          created_at: new Date().toISOString(),
+        };
+        const claims = state.claims || [];
+        claims.unshift(claim);
+        saveClaims(claims);
+
+        // Sync claim to Supabase Cloud & backend API
+        if (supabaseClient && state.user?.id) {
+          supabaseClient.from('claims').insert({
+            id: claim.id,
+            user_id: state.user.id,
+            title: claim.title,
+            total_amount: claim.total_amount,
+            my_share: claim.my_share,
+            friends: claim.friends,
+            status: claim.status,
+            date: claim.date,
+          }).catch(() => {});
+        }
+
+        fetch('/api/claims', {
+          method: 'POST',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            title: claim.title,
+            totalAmount: claim.total_amount,
+            myShare: claim.my_share,
+            friends: claim.friends,
+            date: claim.date,
+          }),
+        }).catch(() => {});
+      }
+    }
+
+    payload.amount = finalAmount;
+    payload.note = finalNote;
+
     if (supabaseClient && userId) {
       const { error } = await supabaseClient
         .from('records')
@@ -1640,13 +1857,18 @@ async function handleRecordSubmit(e) {
 
     showToast(
       state.lang === 'zh'
-        ? `✅ 已记账 ${state.currency} ${formatNumber(amount)}`
-        : `✅ Recorded ${state.currency} ${formatNumber(amount)}`,
+        ? `已记账 ${state.currency} ${formatNumber(amount)}`
+        : `Recorded ${state.currency} ${formatNumber(amount)}`,
     );
     triggerHaptic(15);
     elements.inputAmount.value = '';
     elements.inputNote.value = '';
     closeCreateModal();
+
+    // Immediately refresh claims and sinking funds views
+    renderClaims();
+    renderSinkingFunds();
+    renderBudgetTracker();
 
     await Promise.all([loadRecords(), loadSummary()]);
   } catch (err) {
@@ -2078,9 +2300,63 @@ function calculateDailySpendingTrend(records, currentMonth) {
 }
 
 /**
- * Export Filtered Records as RFC 4180 Compliant CSV
+ * Save file via Native OS File Picker if supported (allowing custom folder/file selection),
+ * or fallback to standard browser download
+ * @param {Blob} blob - The file blob
+ * @param {string} defaultFileName - Suggested file name
+ * @param {string} fileDescription - Description of file type for OS dialog
+ * @returns {Promise<{ success?: boolean, canceled?: boolean, fileName: string, isNativePicker?: boolean }>}
  */
-function exportToCSV() {
+async function saveBlobWithPicker(
+  blob,
+  defaultFileName,
+  fileDescription = 'CSV 表格文件 (*.csv)',
+) {
+  if (typeof window.showSaveFilePicker === 'function') {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: defaultFileName,
+        types: [
+          {
+            description: fileDescription,
+            accept: { 'text/csv': ['.csv'] },
+          },
+        ],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return {
+        success: true,
+        fileName: handle.name || defaultFileName,
+        isNativePicker: true,
+      };
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        // User deliberately clicked cancel in OS save dialog
+        return { canceled: true, fileName: defaultFileName };
+      }
+      console.warn('showSaveFilePicker failed, falling back to download:', err);
+    }
+  }
+
+  // Fallback download link for browsers without showSaveFilePicker
+  const url = URL.createObjectURL(blob);
+  const downloadLink = document.createElement('a');
+  downloadLink.href = url;
+  downloadLink.setAttribute('download', defaultFileName);
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return { success: true, fileName: defaultFileName, isNativePicker: false };
+}
+
+/**
+ * Export Filtered Records as Professional RFC 4180 Compliant CSV
+ * Supports OS Save-As file location selection and beautiful Excel formatting
+ */
+async function exportToCSV() {
   let recordsToExport = state.records;
 
   if (state.currentMonth !== 'all') {
@@ -2105,51 +2381,186 @@ function exportToCSV() {
     return;
   }
 
-  const headers = [
-    'ID',
-    'Date',
-    'Type',
-    'Category',
-    'Account',
-    'Amount',
-    'Currency',
-    'Note',
+  const isZh = state.lang === 'zh';
+  const headers = isZh
+    ? [
+        '序号',
+        '记账日期',
+        '收支类型',
+        '消费分类',
+        '支付账户',
+        '金额',
+        '币种',
+        '备注说明',
+        '关联专款',
+        '创建时间',
+      ]
+    : [
+        'No.',
+        'Date',
+        'Type',
+        'Category',
+        'Account',
+        'Amount',
+        'Currency',
+        'Note',
+        'Linked Project',
+        'Created At',
+      ];
+
+  let totalExpense = 0;
+  let totalIncome = 0;
+  let expenseCount = 0;
+  let incomeCount = 0;
+
+  const rows = recordsToExport.map((r, idx) => {
+    const isExpense = r.type === 'expense';
+    const numAmt = Math.abs(Number(r.amount) || 0);
+    if (isExpense) {
+      totalExpense += numAmt;
+      expenseCount++;
+    } else {
+      totalIncome += numAmt;
+      incomeCount++;
+    }
+
+    const typeLabel = isExpense
+      ? isZh
+        ? '支出'
+        : 'Expense'
+      : isZh
+        ? '收入'
+        : 'Income';
+    const catLabel = getCategoryDisplayLabel(r.category);
+    const accLabel = getAccountDisplayName(r.account_name);
+    const amtStr = (isExpense ? -numAmt : numAmt).toFixed(2);
+    const noteStr = (r.note || '').replace(/"/g, '""');
+    const proj = r.project_id
+      ? state.projects?.find((p) => p.id === r.project_id)?.title || ''
+      : '';
+    const projStr = proj.replace(/"/g, '""');
+    const createdAtStr = r.createdAt
+      ? new Date(r.createdAt).toLocaleString(isZh ? 'zh-CN' : 'en-US', {
+          hour12: false,
+        })
+      : '';
+
+    return [
+      idx + 1,
+      `"${r.date}"`,
+      `"${typeLabel}"`,
+      `"${catLabel}"`,
+      `"${accLabel}"`,
+      amtStr,
+      `"${state.currency || 'MYR'}"`,
+      `"${noteStr}"`,
+      `"${projStr}"`,
+      `"${createdAtStr}"`,
+    ];
+  });
+
+  const netBalance = totalIncome - totalExpense;
+  const periodLabel =
+    state.currentMonth === 'all'
+      ? isZh
+        ? '全部月份'
+        : 'All Months'
+      : state.currentMonth;
+
+  // Professional summary footer block
+  const summaryEmptyRow = ['""', '""', '""', '""', '""', '""', '""', '""', '""', '""'];
+  const summaryHeaderRow = isZh
+    ? ['""', '""', '""', '"【数据统计汇总】"', '""', '""', '""', '""', '""', '""']
+    : ['""', '""', '""', '"【Summary Metrics】"', '""', '""', '""', '""', '""', '""'];
+  const summaryExpenseRow = [
+    '""',
+    '""',
+    '""',
+    `"${isZh ? '总支出 (Total Expense)' : 'Total Expense'}"`,
+    '""',
+    (-totalExpense).toFixed(2),
+    `"${state.currency || 'MYR'}"`,
+    `"${isZh ? `共 ${expenseCount} 笔支出` : `${expenseCount} expenses`}"`,
+    '""',
+    '""',
   ];
-  const rows = recordsToExport.map((r) => [
-    r.id,
-    `"${r.date}"`,
-    `"${r.type}"`,
-    `"${(r.category || '').replace(/"/g, '""')}"`,
-    `"${(r.account_name || 'Cash').replace(/"/g, '""')}"`,
-    Number(r.amount).toFixed(2),
-    `"${state.currency}"`,
-    `"${(r.note || '').replace(/"/g, '""')}"`,
-  ]);
+  const summaryIncomeRow = [
+    '""',
+    '""',
+    '""',
+    `"${isZh ? '总收入 (Total Income)' : 'Total Income'}"`,
+    '""',
+    totalIncome.toFixed(2),
+    `"${state.currency || 'MYR'}"`,
+    `"${isZh ? `共 ${incomeCount} 笔收入` : `${incomeCount} incomes`}"`,
+    '""',
+    '""',
+  ];
+  const summaryNetRow = [
+    '""',
+    '""',
+    '""',
+    `"${isZh ? '收支净额 (Net Balance)' : 'Net Balance'}"`,
+    '""',
+    netBalance.toFixed(2),
+    `"${state.currency || 'MYR'}"`,
+    `"${isZh ? (netBalance >= 0 ? '结余盈余' : '净支出超支') : netBalance >= 0 ? 'Surplus' : 'Deficit'}"`,
+    '""',
+    '""',
+  ];
+  const summaryMetaRow = [
+    '""',
+    '""',
+    '""',
+    `"${isZh ? '统计周期' : 'Period'}"`,
+    '""',
+    `"${periodLabel}"`,
+    '""',
+    `"${isZh ? '导出时间: ' + new Date().toLocaleString('zh-CN', { hour12: false }) : 'Exported: ' + new Date().toISOString()}"`,
+    '""',
+    '""',
+  ];
 
-  const csvContent =
-    '\uFEFF' +
-    [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
+  const allRows = [
+    headers.join(','),
+    ...rows.map((e) => e.join(',')),
+    summaryEmptyRow.join(','),
+    summaryHeaderRow.join(','),
+    summaryExpenseRow.join(','),
+    summaryIncomeRow.join(','),
+    summaryNetRow.join(','),
+    summaryMetaRow.join(','),
+  ];
 
+  const csvContent = '\uFEFF' + allRows.join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const downloadLink = document.createElement('a');
 
-  const periodLabel = state.currentMonth === 'all' ? 'all' : state.currentMonth;
-  downloadLink.href = url;
-  downloadLink.setAttribute(
-    'download',
-    `ledger_export_${periodLabel}_${new Date().toISOString().slice(0, 10)}.csv`,
-  );
-  document.body.appendChild(downloadLink);
-  downloadLink.click();
-  document.body.removeChild(downloadLink);
-  URL.revokeObjectURL(url);
+  const defaultFileName = `ledger_export_${state.currentMonth === 'all' ? 'all' : state.currentMonth}_${new Date().toISOString().slice(0, 10)}.csv`;
 
-  showToast(
-    state.lang === 'zh'
-      ? `已导出 ${recordsToExport.length} 笔账单至 CSV`
-      : `Exported ${recordsToExport.length} transactions to CSV`,
+  const saveRes = await saveBlobWithPicker(
+    blob,
+    defaultFileName,
+    isZh ? '账单明细 CSV 表格 (*.csv)' : 'Ledger Export CSV (*.csv)',
   );
+
+  if (saveRes.canceled) {
+    showToast(isZh ? '已取消导出' : 'Export canceled');
+    return;
+  }
+
+  if (saveRes.isNativePicker) {
+    showToast(
+      isZh
+        ? `已成功保存 ${recordsToExport.length} 笔账单至：${saveRes.fileName}`
+        : `Successfully saved ${recordsToExport.length} records to ${saveRes.fileName}`,
+    );
+  } else {
+    showToast(
+      isZh
+        ? `已导出 ${recordsToExport.length} 笔账单至默认「下载」文件夹`
+        : `Exported ${recordsToExport.length} records to Downloads folder`,
+    );
+  }
 }
 
 // ============================================================================
@@ -2188,54 +2599,80 @@ function closeRetentionModal() {
   elements.retentionModal?.classList.add('hidden');
 }
 
-function downLoadArchiveCSV() {
+async function downLoadArchiveCSV() {
   const years = parseInt(elements.retentionYearsSelect.value) || 3;
   const cutoffDate = getRetentionCutoffDate(years);
   const matchingRecords = state.records.filter((r) => r.date < cutoffDate);
 
   if (matchingRecords.length === 0) {
-    showToast('No records available for archiving', true);
+    showToast(
+      state.lang === 'zh'
+        ? '没有符合归档年限的历史账单'
+        : 'No records available for archiving',
+      true,
+    );
     return;
   }
 
-  const headers = [
-    'ID',
-    'Date',
-    'Type',
-    'Category',
-    'Account',
-    'Amount',
-    'Currency',
-    'Note',
-  ];
-  const rows = matchingRecords.map((r) => [
-    r.id,
+  const isZh = state.lang === 'zh';
+  const headers = isZh
+    ? [
+        '序号',
+        '记账日期',
+        '收支类型',
+        '消费分类',
+        '支付账户',
+        '金额',
+        '币种',
+        '备注说明',
+        '创建时间',
+      ]
+    : [
+        'No.',
+        'Date',
+        'Type',
+        'Category',
+        'Account',
+        'Amount',
+        'Currency',
+        'Note',
+        'Created At',
+      ];
+
+  const rows = matchingRecords.map((r, idx) => [
+    idx + 1,
     `"${r.date}"`,
-    `"${r.type}"`,
-    `"${(r.category || '').replace(/"/g, '""')}"`,
-    `"${(r.account_name || 'Cash').replace(/"/g, '""')}"`,
-    Number(r.amount).toFixed(2),
-    `"${state.currency}"`,
+    `"${r.type === 'expense' ? (isZh ? '支出' : 'Expense') : isZh ? '收入' : 'Income'}"`,
+    `"${getCategoryDisplayLabel(r.category)}"`,
+    `"${getAccountDisplayName(r.account_name)}"`,
+    (r.type === 'expense' ? -Number(r.amount) : Number(r.amount)).toFixed(2),
+    `"${state.currency || 'MYR'}"`,
     `"${(r.note || '').replace(/"/g, '""')}"`,
+    `"${r.createdAt ? new Date(r.createdAt).toLocaleString(isZh ? 'zh-CN' : 'en-US', { hour12: false }) : ''}"`,
   ]);
 
   const csvContent =
     '\uFEFF' +
     [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const downloadLink = document.createElement('a');
-  downloadLink.href = url;
-  downloadLink.setAttribute(
-    'download',
-    `ledger_archive_older_than_${years}y_${cutoffDate}.csv`,
-  );
-  document.body.appendChild(downloadLink);
-  downloadLink.click();
-  document.body.removeChild(downloadLink);
-  URL.revokeObjectURL(url);
+  const defaultFileName = `ledger_archive_older_than_${years}y_${cutoffDate}.csv`;
 
-  showToast(`Downloaded ${matchingRecords.length} archived transactions`);
+  const saveRes = await saveBlobWithPicker(
+    blob,
+    defaultFileName,
+    isZh ? '归档账单 CSV (*.csv)' : 'Archive Records CSV (*.csv)',
+  );
+
+  if (saveRes.canceled) {
+    showToast(isZh ? '已取消归档导出' : 'Archive export canceled');
+    return;
+  }
+
+  showToast(
+    isZh
+      ? `已成功归档导出 ${matchingRecords.length} 笔历史账单`
+      : `Downloaded ${matchingRecords.length} archived transactions`,
+  );
 }
 
 async function purgeOldRecords() {
@@ -2531,215 +2968,169 @@ function updateAccountModalData() {
   if (elements.accountTransactionCount) {
     elements.accountTransactionCount.textContent = `${state.records.length}`;
   }
+  renderStreakAndBadges();
 }
 
 // ============================================================================
-// Accounts & Wallets Center Controller (Payment Methods & Asset Balances)
+// Accounts Monthly Spending Breakdown Controller (Payment Channels & Expenses)
 // ============================================================================
 
 /**
- * Load Accounts & Wallets and calculate dynamic balances
+ * Update the Month Selector inside the Account Spending Breakdown Card
  */
-async function loadAccounts() {
-  const userKey = state.user?.id || 'guest';
-  const cacheKey = `ledger_cached_accounts_${userKey}`;
-  let initialBalances = {};
+function updateSpendingAccountsMonthOptions() {
+  const select = elements.spendingAccountsMonthFilter;
+  if (!select) return;
 
-  // 1. Try reading from Supabase accounts table
-  if (supabaseClient && state.user?.id) {
-    try {
-      const { data, error } = await supabaseClient
-        .from('accounts')
-        .select('*')
-        .eq('user_id', state.user.id);
+  const currentKey = getCurrentMonthKey();
+  if (!state.selectedAccountsMonth) {
+    state.selectedAccountsMonth = 'current';
+  }
 
-      if (!error && Array.isArray(data)) {
-        data.forEach((row) => {
-          if (row.name) {
-            initialBalances[row.name] = parseFloat(row.initial_balance) || 0;
-          }
-        });
-        localStorage.setItem(cacheKey, JSON.stringify(initialBalances));
-      }
-    } catch (e) {
-      console.warn('Failed to load accounts from Supabase:', e);
+  // Extract all distinct months from expense records
+  const monthsSet = new Set();
+  monthsSet.add(currentKey);
+  (state.records || []).forEach((r) => {
+    if (r.date && r.date.length >= 7) {
+      monthsSet.add(r.date.substring(0, 7));
     }
-  }
-
-  // Fallback to local storage
-  if (Object.keys(initialBalances).length === 0) {
-    try {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) initialBalances = JSON.parse(cached);
-    } catch (e) {}
-  }
-
-  // 2. Build accounts array with live calculated balances
-  let totalNetWorth = 0;
-  state.accounts = DEFAULT_ACCOUNTS.map((acc) => {
-    const initBal = Number(initialBalances[acc.name] || 0);
-    // Find all records belonging to this account (default 'Cash' for legacy records)
-    const matchingRecords = state.records.filter(
-      (r) => (r.account_name || 'Cash') === acc.name,
-    );
-    const totalIncome = matchingRecords
-      .filter((r) => r.type === 'income')
-      .reduce((sum, r) => sum + Number(r.amount || 0), 0);
-    const totalExpense = matchingRecords
-      .filter((r) => r.type === 'expense')
-      .reduce((sum, r) => sum + Number(r.amount || 0), 0);
-
-    const currentBalance = initBal + totalIncome - totalExpense;
-    totalNetWorth += currentBalance;
-
-    return {
-      ...acc,
-      initial_balance: initBal,
-      totalIncome,
-      totalExpense,
-      currentBalance,
-    };
   });
 
-  // 3. Render net worth and list
-  if (elements.totalNetWorthValue) {
-    elements.totalNetWorthValue.textContent = formatNumber(totalNetWorth);
+  const sortedMonths = Array.from(monthsSet).sort().reverse();
+  const prevVal = state.selectedAccountsMonth;
+
+  select.innerHTML = `
+    <option value="current">${state.lang === 'zh' ? `本月 (${currentKey})` : `This Month (${currentKey})`}</option>
+    ${sortedMonths
+      .filter((m) => m !== currentKey)
+      .map((m) => `<option value="${m}">${m}</option>`)
+      .join('')}
+    <option value="all">${state.lang === 'zh' ? '全部历史汇总' : 'All Time'}</option>
+  `;
+
+  if (prevVal === 'all') {
+    select.value = 'all';
+  } else if (prevVal === currentKey || prevVal === 'current') {
+    select.value = 'current';
+  } else if (sortedMonths.includes(prevVal)) {
+    select.value = prevVal;
+  } else {
+    select.value = 'current';
+    state.selectedAccountsMonth = 'current';
   }
+}
+
+/**
+ * Load Accounts & Wallets
+ */
+function loadAccounts() {
   renderAccountsCenter();
 }
 
 /**
- * Render Accounts & Wallets in Settings page
+ * Render Account Monthly Spending Breakdown in Settings page
  */
 function renderAccountsCenter() {
   if (!elements.accountsWalletsList) return;
-  const sym = state.currency;
+  const sym = state.currency || 'RM';
 
-  elements.accountsWalletsList.innerHTML = (state.accounts || [])
-    .map((acc) => {
-      const label = getAccountDisplayLabel(acc.name);
-      const isPositive = acc.currentBalance >= 0;
-      const balClass = isPositive ? 'positive' : 'negative';
-      const balSign = acc.currentBalance >= 0 ? '' : '− ';
-      const initText =
-        state.lang === 'zh'
-          ? `初始: ${sym} ${formatNumber(acc.initial_balance)}`
-          : `Init: ${sym} ${formatNumber(acc.initial_balance)}`;
-      const flowText = `+${sym}${formatNumber(acc.totalIncome)} / −${sym}${formatNumber(acc.totalExpense)}`;
+  updateSpendingAccountsMonthOptions();
 
-      return `
-        <div class="wallet-card">
-          <div class="wallet-card-left">
-            <div class="wallet-icon-box">${acc.icon}</div>
-            <div class="wallet-meta">
-              <div class="wallet-name-row">
-                <span class="wallet-name">${escapeHtml(label)}</span>
-                <button
-                  type="button"
-                  class="btn-edit-wallet-init"
-                  onclick="openInitialBalanceModal('${escapeHtml(acc.name)}')"
-                  title="${state.lang === 'zh' ? '设置初始余额' : 'Set Initial Balance'}"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                </button>
-              </div>
-              <span class="wallet-subtext">${initText} &bull; ${flowText}</span>
+  const selectedMonth = state.selectedAccountsMonth === 'current'
+    ? getCurrentMonthKey()
+    : state.selectedAccountsMonth;
+
+  // Filter records by selected month and expense type
+  const matchingRecords = (state.records || []).filter((r) => {
+    if (r.type !== 'expense') return false;
+    if (selectedMonth === 'all') return true;
+    return r.date && r.date.startsWith(selectedMonth);
+  });
+
+  // Calculate total expense for this selected period
+  const totalPeriodExpense = matchingRecords.reduce(
+    (sum, r) => sum + Number(r.amount || 0),
+    0,
+  );
+
+  if (elements.totalNetWorthValue) {
+    elements.totalNetWorthValue.textContent = formatNumber(totalPeriodExpense);
+  }
+
+  elements.accountsWalletsList.innerHTML = DEFAULT_ACCOUNTS.map((acc) => {
+    const label = getAccountDisplayLabel(acc.name);
+    // Find all expense records for this account in the selected month
+    const accExpenses = matchingRecords.filter(
+      (r) => (r.account_name || 'Cash') === acc.name,
+    );
+    const spentAmount = accExpenses.reduce(
+      (sum, r) => sum + Number(r.amount || 0),
+      0,
+    );
+    const txCount = accExpenses.length;
+    const pct = totalPeriodExpense > 0
+      ? Math.round((spentAmount / totalPeriodExpense) * 100)
+      : 0;
+
+    let subText = '';
+    if (spentAmount > 0) {
+      subText = state.lang === 'zh'
+        ? `${txCount} 笔消费 · 占当期 ${pct}%`
+        : `${txCount} record(s) · ${pct}% of total`;
+    } else {
+      subText = state.lang === 'zh' ? '暂无支出' : 'No spending';
+    }
+
+    return `
+      <div class="wallet-card">
+        <div class="wallet-card-left">
+          <div class="wallet-icon-box">${acc.icon}</div>
+          <div class="wallet-meta">
+            <div class="wallet-name-row">
+              <span class="wallet-name">${escapeHtml(label)}</span>
             </div>
-          </div>
-          <div class="wallet-card-right">
-            <span class="wallet-current-bal ${balClass}">${balSign}${sym} ${formatNumber(acc.currentBalance)}</span>
+            <span class="wallet-subtext">${subText}</span>
           </div>
         </div>
-      `;
-    })
-    .join('');
+        <div class="wallet-card-right">
+          <span class="wallet-spending-amount">${sym} ${formatNumber(spentAmount)}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
-/**
- * Open Modal to edit initial balance
- */
-function openInitialBalanceModal(accountName) {
-  const acc =
-    (state.accounts || []).find((a) => a.name === accountName) ||
-    getAccountMeta(accountName);
-  state.editingAccountName = accountName;
-  if (elements.initialBalanceModalIcon)
-    elements.initialBalanceModalIcon.textContent = acc.icon;
-  if (elements.initialBalanceModalTitle) {
-    elements.initialBalanceModalTitle.textContent =
-      state.lang === 'zh'
-        ? `设置 ${getAccountDisplayLabel(accountName)} 初始余额`
-        : `Set ${acc.name} Initial Balance`;
+// ============================================================================
+// Avatar Lightbox Preview (Social Media Full-Size Modal)
+// ============================================================================
+function openAvatarLightbox(imgSrc) {
+  triggerHaptic(10);
+  if (!elements.avatarLightboxModal) return;
+
+  const currentAvatarSrc = imgSrc ||
+    elements.accountModalAvatar?.src ||
+    elements.userAvatar?.src ||
+    '';
+
+  if (!currentAvatarSrc) return;
+
+  if (elements.avatarLightboxImg) {
+    elements.avatarLightboxImg.src = currentAvatarSrc;
   }
-  if (elements.initialBalanceInput) {
-    elements.initialBalanceInput.value =
-      acc.initial_balance !== undefined && acc.initial_balance !== 0
-        ? acc.initial_balance
-        : '';
+  if (elements.avatarLightboxName) {
+    elements.avatarLightboxName.textContent = getUserDisplayName(state.user) || 'User';
   }
-  elements.initialBalanceModal?.classList.remove('hidden');
-  setTimeout(() => elements.initialBalanceInput?.focus(), 60);
-}
-
-function closeInitialBalanceModal() {
-  elements.initialBalanceModal?.classList.add('hidden');
-  state.editingAccountName = null;
-}
-
-/**
- * Save updated initial balance
- */
-async function handleSaveInitialBalance() {
-  if (!state.editingAccountName) return;
-  const val = parseFloat(elements.initialBalanceInput?.value);
-  const newBal = isNaN(val) ? 0 : val;
-  const accountName = state.editingAccountName;
-  const accMeta = getAccountMeta(accountName);
-  const userKey = state.user?.id || 'guest';
-  const cacheKey = `ledger_cached_accounts_${userKey}`;
-
-  // 1. Update local storage cache
-  let initialBalances = {};
-  try {
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) initialBalances = JSON.parse(cached);
-  } catch (e) {}
-  initialBalances[accountName] = newBal;
-  localStorage.setItem(cacheKey, JSON.stringify(initialBalances));
-
-  // 2. Sync to Supabase accounts table
-  if (supabaseClient && state.user?.id) {
-    try {
-      await supabaseClient.from('accounts').upsert(
-        {
-          user_id: state.user.id,
-          name: accountName,
-          type: accMeta.type,
-          icon: accMeta.icon,
-          initial_balance: newBal,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id,name' },
-      );
-    } catch (e) {
-      console.warn('Failed to upsert account in Supabase:', e);
-    }
+  if (elements.avatarLightboxEmail) {
+    elements.avatarLightboxEmail.textContent = state.user?.email || '';
   }
 
-  closeInitialBalanceModal();
-  await loadAccounts();
-  showToast(
-    state.lang === 'zh'
-      ? `${getAccountDisplayLabel(accountName)} 初始余额已更新为 ${state.currency} ${formatNumber(newBal)}`
-      : `${accountName} initial balance set to ${state.currency} ${formatNumber(newBal)}`,
-  );
+  elements.avatarLightboxModal.classList.remove('hidden');
 }
 
-window.openInitialBalanceModal = openInitialBalanceModal;
-window.closeInitialBalanceModal = closeInitialBalanceModal;
+function closeAvatarLightbox() {
+  triggerHaptic(10);
+  elements.avatarLightboxModal?.classList.add('hidden');
+}
 
 // ============================================================================
 // Module: Streak Counter & Motivation Badges
@@ -2748,7 +3139,7 @@ window.closeInitialBalanceModal = closeInitialBalanceModal;
 const MOTIVATION_BADGES = [
   {
     id: 'first_record',
-    icon: '🌱',
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>`,
     name_en: 'First Step',
     name_zh: '新人起航',
     desc_en: 'Recorded 1st entry',
@@ -2756,7 +3147,7 @@ const MOTIVATION_BADGES = [
   },
   {
     id: 'streak_3',
-    icon: '🥉',
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"></circle><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path></svg>`,
     name_en: '3-Day Spark',
     name_zh: '连记 3 天',
     desc_en: '3 consecutive days',
@@ -2764,7 +3155,7 @@ const MOTIVATION_BADGES = [
   },
   {
     id: 'streak_7',
-    icon: '🥈',
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"></circle><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path></svg>`,
     name_en: 'Week Hero',
     name_zh: '连记 7 天',
     desc_en: '7 consecutive days',
@@ -2772,7 +3163,7 @@ const MOTIVATION_BADGES = [
   },
   {
     id: 'streak_30',
-    icon: '🥇',
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"></circle><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path></svg>`,
     name_en: 'Habit Master',
     name_zh: '连记 30 天',
     desc_en: '30 consecutive days',
@@ -2780,7 +3171,7 @@ const MOTIVATION_BADGES = [
   },
   {
     id: 'streak_100',
-    icon: '👑',
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"></path></svg>`,
     name_en: 'Century Legend',
     name_zh: '百日达人',
     desc_en: '100 consecutive days',
@@ -2824,10 +3215,23 @@ function calculateStreak(records) {
   );
   uniqueDates.sort((a, b) => b.localeCompare(a));
 
+  if (uniqueDates.length === 0) return 0;
+
   const now = new Date();
-  const today = now.toISOString().split('T')[0];
-  now.setDate(now.getDate() - 1);
-  const yesterday = now.toISOString().split('T')[0];
+  const formatYMD = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const today = formatYMD(now);
+  const yesterdayDate = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - 1,
+  );
+  const yesterday = formatYMD(yesterdayDate);
 
   if (uniqueDates[0] !== today && uniqueDates[0] !== yesterday) {
     return 0;
@@ -2835,14 +3239,41 @@ function calculateStreak(records) {
 
   let streak = 1;
   for (let i = 0; i < uniqueDates.length - 1; i++) {
-    const d1 = new Date(uniqueDates[i]);
-    const d2 = new Date(uniqueDates[i + 1]);
-    const diffDays = Math.round((d1 - d2) / 86400000);
+    const d1 = new Date(uniqueDates[i] + 'T00:00:00');
+    const d2 = new Date(uniqueDates[i + 1] + 'T00:00:00');
+    const diffDays = Math.round((d1.getTime() - d2.getTime()) / 86400000);
     if (diffDays === 1) {
       streak++;
     } else {
       break;
     }
+  }
+
+  // Synchronize streak with active usage duration if user has records
+  let usageDays = 0;
+  if (state.user) {
+    const firstLoginKey = 'ledger_first_login_' + state.user.id;
+    const meta = state.user.user_metadata || {};
+    const firstLogin = meta.first_login_at || localStorage.getItem(firstLoginKey);
+    if (firstLogin) {
+      const diffMs = Math.max(0, Date.now() - new Date(firstLogin).getTime());
+      usageDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+    }
+  } else {
+    for (let k = 0; k < localStorage.length; k++) {
+      const key = localStorage.key(k);
+      if (key && key.startsWith('ledger_first_login_')) {
+        const val = localStorage.getItem(key);
+        if (val) {
+          const diffMs = Math.max(0, Date.now() - new Date(val).getTime());
+          usageDays = Math.max(usageDays, Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1);
+        }
+      }
+    }
+  }
+
+  if (usageDays > 0 && usageDays > streak) {
+    streak = usageDays;
   }
 
   return streak;
@@ -3086,6 +3517,8 @@ async function signOutUser() {
  */
 function updateAuthUI(user) {
   if (user) {
+    localStorage.setItem('ledger_has_session', 'true');
+    document.documentElement.classList.add('has-auth-session');
     elements.loginLandingView?.classList.add('hidden');
     elements.appLayout?.classList.remove('hidden');
 
@@ -3149,6 +3582,8 @@ function updateAuthUI(user) {
     setAvatarWithFallback(elements.dropdownAvatar, user);
     updateAccountModalData();
   } else {
+    localStorage.removeItem('ledger_has_session');
+    document.documentElement.classList.remove('has-auth-session');
     elements.loginLandingView?.classList.remove('hidden');
     elements.appLayout?.classList.add('hidden');
     closeProfileDropdown();
@@ -3222,8 +3657,8 @@ function showUpdateAvailablePrompt(versionLabel, apkUrl, notes) {
   if (elements.updateBannerText) {
     elements.updateBannerText.textContent =
       state.lang === 'zh'
-        ? `🎉 发现新版本 (v${versionLabel})！点击立即更新。`
-        : `🎉 New update available (v${versionLabel})! Tap Update Now.`;
+        ? `发现新版本 (v${versionLabel})！点击立即更新。`
+        : `New update available (v${versionLabel})! Tap Update Now.`;
   }
   elements.updateNotificationBanner?.classList.remove('hidden');
   if (elements.updateStatusText) {
@@ -3304,7 +3739,7 @@ async function applyAppUpdate() {
 
   // Web Browser Fallback
   if (swRegistration && swRegistration.waiting) {
-    showToast('🚀 Applying latest update...');
+    showToast('Applying latest update...');
     swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
     if ('caches' in window) {
       const keys = await caches.keys();
@@ -3379,9 +3814,9 @@ async function checkForAppUpdates(isManual = false) {
 
     if (isManual) {
       if (elements.updateStatusText) {
-        elements.updateStatusText.textContent = `✅ ${t('up_to_date')} (v${APP_VERSION})`;
+        elements.updateStatusText.textContent = `${t('up_to_date')} (v${APP_VERSION})`;
       }
-      showToast(`✅ ${t('up_to_date')} (v${APP_VERSION})`);
+      showToast(`${t('up_to_date')} (v${APP_VERSION})`);
     }
   } catch (err) {
     if (isManual) {
@@ -3505,26 +3940,27 @@ async function init() {
     renderTable();
   });
 
-  // Initial Balance Modal Event Listeners
-  elements.closeInitialBalanceModalBtn?.addEventListener(
-    'click',
-    closeInitialBalanceModal,
-  );
-  elements.cancelInitialBalanceBtn?.addEventListener(
-    'click',
-    closeInitialBalanceModal,
-  );
-  elements.saveInitialBalanceBtn?.addEventListener(
-    'click',
-    handleSaveInitialBalance,
-  );
-  elements.initialBalanceModal?.addEventListener('click', (e) => {
-    if (e.target === elements.initialBalanceModal) closeInitialBalanceModal();
+  // Monthly Spending by Account Month Filter
+  elements.spendingAccountsMonthFilter?.addEventListener('change', (e) => {
+    state.selectedAccountsMonth = e.target.value;
+    renderAccountsCenter();
   });
-  elements.initialBalanceInput?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleSaveInitialBalance();
-    if (e.key === 'Escape') closeInitialBalanceModal();
+
+  // Avatar Lightbox Preview Click Listeners
+  elements.userAvatar?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openAvatarLightbox(elements.userAvatar.src);
   });
+  elements.accountModalAvatar?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openAvatarLightbox(elements.accountModalAvatar.src);
+  });
+  elements.dropdownAvatar?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openAvatarLightbox(elements.dropdownAvatar.src);
+  });
+  elements.closeAvatarLightboxBtn?.addEventListener('click', closeAvatarLightbox);
+  elements.avatarLightboxBackdrop?.addEventListener('click', closeAvatarLightbox);
 
   // 11. Export CSV & Retention Modal
   elements.exportCsvBtn?.addEventListener('click', exportToCSV);
@@ -3540,6 +3976,10 @@ async function init() {
   });
 
   // 12. Profile Dropdown & Inline Settings Profile Event Listeners
+  setupProjectsModuleEventListeners();
+  loadProjects();
+  loadClaims();
+  loadBudgetTopUps();
   elements.landingGoogleLoginBtn?.addEventListener('click', signInWithGoogle);
   elements.userProfilePill?.addEventListener('click', toggleProfileDropdown);
   document.addEventListener('click', (e) => {
@@ -3725,6 +4165,960 @@ async function init() {
   } catch (authErr) {
     updateAuthUI(null);
   }
+}
+
+
+// ============================================================================
+// 13. PROJECTS, SINKING FUNDS & SPLIT BILL CLAIMS MODULE
+// ============================================================================
+
+function getCurrentMonthKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function getProjectsStorageKey() {
+  const userKey = state.user?.id || 'guest';
+  return `ledger_projects_${userKey}`;
+}
+
+function getClaimsStorageKey() {
+  const userKey = state.user?.id || 'guest';
+  return `ledger_claims_${userKey}`;
+}
+
+function getBudgetTopUpsStorageKey() {
+  const userKey = state.user?.id || 'guest';
+  return `ledger_budget_topups_${userKey}`;
+}
+
+function loadProjects() {
+  try {
+    const raw = localStorage.getItem(getProjectsStorageKey());
+    state.projects = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    state.projects = [];
+  }
+}
+
+function saveProjects(projects) {
+  state.projects = projects;
+  try {
+    localStorage.setItem(getProjectsStorageKey(), JSON.stringify(projects));
+  } catch (e) {}
+}
+
+function loadClaims() {
+  try {
+    const raw = localStorage.getItem(getClaimsStorageKey());
+    state.claims = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    state.claims = [];
+  }
+}
+
+function saveClaims(claims) {
+  state.claims = claims;
+  try {
+    localStorage.setItem(getClaimsStorageKey(), JSON.stringify(claims));
+  } catch (e) {}
+}
+
+function loadBudgetTopUps() {
+  try {
+    const raw = localStorage.getItem(getBudgetTopUpsStorageKey());
+    state.budgetTopUps = raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    state.budgetTopUps = {};
+  }
+}
+
+function saveBudgetTopUps(topups) {
+  state.budgetTopUps = topups;
+  try {
+    localStorage.setItem(getBudgetTopUpsStorageKey(), JSON.stringify(topups));
+  } catch (e) {}
+}
+
+function getBudgetTopUpTotal(month) {
+  if (!month || month === 'all') month = getCurrentMonthKey();
+  const list = state.budgetTopUps[month];
+  if (!Array.isArray(list)) return 0;
+  return list.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+}
+
+function getLockedSinkingFundAmount(month) {
+  if (!month || month === 'all') month = getCurrentMonthKey();
+  if (!Array.isArray(state.projects)) return 0;
+  return state.projects
+    .filter((p) => p.status === 'active' && p.mode === 'budget_deduct')
+    .reduce((sum, p) => {
+      const target = parseFloat(p.target_amount) || 0;
+      const spent = parseFloat(p.spent_amount) || 0;
+      const lockedRemaining = Math.max(0, target - spent);
+      return sum + lockedRemaining;
+    }, 0);
+}
+
+function renderRecordSourceBadgeHtml(record) {
+  if (!record) return '';
+  const note = record.note || '';
+  if (record.project_title) {
+    return `<span class="badge-source-fund">${SVG_ICONS.target} ${escapeHtml(record.project_title)}</span> `;
+  }
+  if (note.includes('[🎯') || note.includes('[专款:')) {
+    const m = note.match(/\[(?:🎯|专款:)\s*([^\]]+)\]/);
+    if (m) return `<span class="badge-source-fund">${SVG_ICONS.target} ${escapeHtml(m[1])}</span> `;
+  }
+  if (note.includes('[👥') || note.includes('[AA分摊:') || note.includes('[代垫:')) {
+    const m = note.match(/\[(?:👥|AA分摊:|代垫:)\s*([^\]]+)\]/);
+    if (m) return `<span class="badge-source-claim">${SVG_ICONS.users} ${escapeHtml(m[1])}</span> `;
+  }
+  return '';
+}
+
+function formatRecordCleanNote(note) {
+  if (!note) return '—';
+  // Strip out bracket tags for cleaner secondary subtitle
+  return note.replace(/\[(?:🎯|👥|专款:|AA分摊:|代垫:)[^\]]+\]/g, '').trim() || '—';
+}
+
+async function fetchProjectsFromBackend() {
+  const userId = state.user?.id;
+  if (supabaseClient && userId) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('projects')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (!error && Array.isArray(data)) {
+        state.projects = data.map((d) => ({
+          id: d.id,
+          title: d.title,
+          icon: d.icon || SVG_ICONS.target,
+          target_amount: parseFloat(d.target_amount) || 0,
+          spent_amount: parseFloat(d.spent_amount) || 0,
+          mode: d.mode,
+          month: d.month,
+          status: d.status,
+          created_at: d.created_at,
+        }));
+        saveProjects(state.projects);
+        renderSinkingFunds();
+        renderBudgetTracker();
+        return;
+      }
+    } catch (e) {}
+  }
+
+  try {
+    const res = await fetch('/api/projects', {
+      headers: getAuthHeaders(),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        state.projects = data.map((d) => ({
+          id: d.id,
+          title: d.title,
+          icon: d.icon || SVG_ICONS.target,
+          target_amount: d.targetAmount,
+          spent_amount: d.spentAmount || 0,
+          mode: d.mode,
+          month: d.month,
+          status: d.status,
+          created_at: d.createdAt,
+        }));
+        saveProjects(state.projects);
+        renderSinkingFunds();
+        renderBudgetTracker();
+      }
+    }
+  } catch (e) {}
+}
+
+async function fetchClaimsFromBackend() {
+  const userId = state.user?.id;
+  if (supabaseClient && userId) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('claims')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (!error && Array.isArray(data)) {
+        state.claims = data.map((c) => ({
+          id: c.id,
+          title: c.title,
+          total_amount: parseFloat(c.total_amount) || 0,
+          my_share: parseFloat(c.my_share) || 0,
+          friends: Array.isArray(c.friends)
+            ? c.friends
+            : (typeof c.friends === 'string' ? JSON.parse(c.friends) : []),
+          status: c.status,
+          date: c.date,
+          created_at: c.created_at,
+        }));
+        saveClaims(state.claims);
+        renderClaims();
+        return;
+      }
+    } catch (e) {}
+  }
+
+  try {
+    const res = await fetch('/api/claims', {
+      headers: getAuthHeaders(),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        state.claims = data.map((c) => ({
+          id: c.id,
+          title: c.title,
+          total_amount: c.totalAmount,
+          my_share: c.myShare,
+          friends: c.friends || [],
+          status: c.status,
+          date: c.date,
+          created_at: c.createdAt,
+        }));
+        saveClaims(state.claims);
+        renderClaims();
+      }
+    }
+  } catch (e) {}
+}
+
+function renderProjectsView() {
+  loadProjects();
+  loadClaims();
+  loadBudgetTopUps();
+
+  renderSinkingFunds();
+  renderClaims();
+
+  fetchProjectsFromBackend();
+  fetchClaimsFromBackend();
+}
+
+function renderSinkingFunds() {
+  const container = elements.sinkingFundsList;
+  if (!container) return;
+
+  const sym = state.currency || 'RM';
+  const activeFunds = (state.projects || []).filter((p) => p.status === 'active');
+  const settledFunds = (state.projects || []).filter((p) => p.status === 'settled');
+
+  if (state.projects.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state-card" style="text-align: center; padding: 36px 16px; background: var(--bg-surface); border: 1px dashed var(--border-card); border-radius: 16px;">
+        <div class="empty-icon-wrap" style="display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: var(--brand-cyan-subtle); color: var(--brand-cyan); margin-bottom: 12px;">
+          ${SVG_ICONS.target}
+        </div>
+        <h4 style="font-weight: 700; color: var(--text-primary); margin: 0;">${t('sinking_fund_empty')}</h4>
+      </div>
+    `;
+    return;
+  }
+
+  const allFunds = [...activeFunds, ...settledFunds];
+  container.innerHTML = allFunds.map((fund) => {
+    const target = parseFloat(fund.target_amount) || 0;
+    const spent = parseFloat(fund.spent_amount) || 0;
+    const remaining = Math.max(0, target - spent);
+    const pct = target > 0 ? Math.min(100, Math.round((spent / target) * 100)) : 0;
+    const isSettled = fund.status === 'settled';
+    const isBudgetMode = fund.mode === 'budget_deduct';
+
+    const modePill = isBudgetMode
+      ? `<span class="project-mode-pill mode-budget">${t('fund_mode_budget')}</span>`
+      : `<span class="project-mode-pill mode-extra">${t('fund_mode_extra')}</span>`;
+
+    const statusPill = isSettled
+      ? `<span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(34, 197, 94, 0.1); color: #16a34a; font-weight: 600;">${t('fund_settled')}</span>`
+      : `<span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(13, 148, 136, 0.1); color: var(--brand-cyan); font-weight: 600;">${t('fund_status_active')}</span>`;
+
+    // Equation breakdown
+    let equationText = '';
+    if (spent > 0) {
+      equationText = `${t('fund_target')} ${sym} ${formatNumber(target)} - ${t('fund_spent')} ${sym} ${formatNumber(spent)} = 待结算 ${sym} ${formatNumber(remaining)}`;
+    } else if (isBudgetMode) {
+      const base = Number(state.monthlyBudget || 3000);
+      equationText = `日常可用 ${sym} ${formatNumber(base - target)} + 专款 ${sym} ${formatNumber(target)} = 总基准 ${sym} ${formatNumber(base)}`;
+    } else {
+      equationText = `预定储备 ${sym} ${formatNumber(target)} (不占用日常预算)`;
+    }
+
+    const releaseBtn = (!isSettled && remaining > 0 && isBudgetMode)
+      ? `<button type="button" class="btn-card-action" onclick="releaseFundRemainingToBudget('${fund.id}')">${t('btn_release_to_budget')}</button>`
+      : '';
+
+    const settleBtn = !isSettled
+      ? `<button type="button" class="btn-card-action btn-action-settle" onclick="settleFund('${fund.id}')">${t('btn_settle_fund')}</button>`
+      : '';
+
+    return `
+      <div class="project-card" data-fund-id="${fund.id}">
+        <div class="project-card-header">
+          <div class="project-title-group">
+            <div class="project-icon-badge">${SVG_ICONS.target}</div>
+            <div>
+              <h4 class="project-name-text">${escapeHtml(fund.title)}</h4>
+              <div style="display: flex; gap: 6px; align-items: center; margin-top: 2px;">
+                ${modePill}
+                ${statusPill}
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-del" onclick="deleteProject('${fund.id}')" title="Delete">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </button>
+        </div>
+
+        <div class="project-math-equation">${equationText}</div>
+
+        <div class="project-progress-track">
+          <div class="project-progress-spent" style="width: ${pct}%; background: ${pct > 100 ? '#ef4444' : 'var(--brand-cyan)'};"></div>
+        </div>
+
+        <div class="project-card-stats">
+          <span>${t('fund_spent')}: <strong>${sym} ${formatNumber(spent)}</strong></span>
+          <span>${pct}%</span>
+          <span>${t('fund_remaining')}: <strong>${sym} ${formatNumber(remaining)}</strong></span>
+        </div>
+
+        <div class="project-card-actions">
+          ${releaseBtn}
+          ${settleBtn}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderClaims() {
+  const container = elements.claimsList;
+  if (!container) return;
+
+  const sym = state.currency || 'RM';
+  const claims = state.claims || [];
+
+  // Compute total pending across all unpaid friend shares
+  let totalPending = 0;
+  claims.forEach((claim) => {
+    (claim.friends || []).forEach((f) => {
+      if (!f.paid) totalPending += (parseFloat(f.amount) || 0);
+    });
+  });
+
+  if (elements.claimsPendingTotalVal) {
+    elements.claimsPendingTotalVal.textContent = `${sym} ${formatNumber(totalPending)}`;
+  }
+
+  if (claims.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state-card" style="text-align: center; padding: 36px 16px; background: var(--bg-surface); border: 1px dashed var(--border-card); border-radius: 16px;">
+        <div class="empty-icon-wrap" style="display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: var(--brand-cyan-subtle); color: var(--brand-cyan); margin-bottom: 12px;">
+          ${SVG_ICONS.claims}
+        </div>
+        <h4 style="font-weight: 700; color: var(--text-primary); margin: 0;">${t('claims_empty')}</h4>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = claims.map((claim) => {
+    const totalAmount = parseFloat(claim.total_amount) || 0;
+    const myShare = parseFloat(claim.my_share) || 0;
+    const friends = claim.friends || [];
+    const allPaid = friends.length > 0 && friends.every((f) => f.paid);
+
+    const friendsHtml = friends.map((f, idx) => {
+      const isPaid = f.paid;
+      const statusBtn = isPaid
+        ? `<button type="button" class="btn-mark-paid paid" onclick="toggleClaimFriendPaid('${claim.id}', ${idx})">已收回</button>`
+        : `<button type="button" class="btn-mark-paid" onclick="toggleClaimFriendPaid('${claim.id}', ${idx})">点我收款</button>`;
+
+      return `
+        <div class="claim-friend-row">
+          <div class="claim-friend-info">
+            <span class="claim-friend-avatar" style="display: inline-flex; align-items: center; color: var(--text-secondary);">${SVG_ICONS.users}</span>
+            <span style="font-weight: 600; color: var(--text-primary);">${escapeHtml(f.name)}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <strong style="font-family: var(--font-mono, monospace);">${sym} ${formatNumber(f.amount)}</strong>
+            ${statusBtn}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const settleAllBtn = !allPaid
+      ? `<button type="button" class="btn-card-action btn-action-settle" onclick="settleAllClaim('${claim.id}')">${t('btn_all_settled')}</button>`
+      : `<span style="font-size: 0.78rem; font-weight: 700; color: #16a34a; background: rgba(34, 197, 94, 0.1); padding: 4px 10px; border-radius: 9999px;">全员结清归档</span>`;
+
+    return `
+      <div class="claim-card" data-claim-id="${claim.id}">
+        <div class="claim-card-header">
+          <div>
+            <h4 class="claim-title-text">${escapeHtml(claim.title)}</h4>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(claim.date || '')} · 我自己消费: ${sym} ${formatNumber(myShare)}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="claim-total-badge">垫付总额: ${sym} ${formatNumber(totalAmount - myShare)}</span>
+            <button type="button" class="btn-del" onclick="deleteClaim('${claim.id}')" title="Delete">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="claim-friend-list">
+          ${friendsHtml}
+        </div>
+
+        <div class="project-card-actions">
+          ${settleAllBtn}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Open Transaction Modal specifically in Split mode
+function openCreateModalWithSplit() {
+  openCreateModal();
+  if (elements.toggleSplitBillBtn && !elements.toggleSplitBillBtn.classList.contains('active')) {
+    elements.toggleSplitBillBtn.click();
+  }
+}
+
+// Modals: New Project
+function openNewProjectModal() {
+  triggerHaptic(10);
+  if (!elements.newProjectModal) return;
+  if (elements.projectInputTitle) elements.projectInputTitle.value = '';
+  if (elements.projectInputAmount) elements.projectInputAmount.value = '500';
+  elements.newProjectModal.classList.remove('hidden');
+}
+
+function closeNewProjectModal() {
+  triggerHaptic(10);
+  elements.newProjectModal?.classList.add('hidden');
+}
+
+function saveNewProject() {
+  const title = (elements.projectInputTitle?.value || '').trim();
+  const amount = parseFloat(elements.projectInputAmount?.value) || 0;
+  const isBudget = elements.btnModeBudgetDeduct?.classList.contains('active');
+  const mode = isBudget ? 'budget_deduct' : 'extra';
+
+  if (!title) {
+    return showToast('请输入专款名称 (例如：修车保养、年度旅行)', true);
+  }
+  if (amount <= 0) {
+    return showToast('请输入有效的预留金额', true);
+  }
+
+  const newProject = {
+    id: 'proj_' + Date.now(),
+    title: title,
+    icon: SVG_ICONS.target,
+    target_amount: amount,
+    spent_amount: 0,
+    mode: mode,
+    month: getCurrentMonthKey(),
+    status: 'active',
+    created_at: new Date().toISOString(),
+  };
+
+  const list = state.projects || [];
+  list.unshift(newProject);
+  saveProjects(list);
+  renderSinkingFunds();
+  renderBudgetTracker();
+
+  // Sync to Supabase Cloud
+  if (supabaseClient && state.user?.id) {
+    supabaseClient.from('projects').insert({
+      id: newProject.id,
+      user_id: state.user.id,
+      title: newProject.title,
+      icon: 'target',
+      target_amount: newProject.target_amount,
+      spent_amount: newProject.spent_amount,
+      mode: newProject.mode,
+      month: newProject.month,
+      status: newProject.status,
+    }).catch(() => {});
+  }
+
+  // Sync to backend API
+  fetch('/api/projects', {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
+      title: newProject.title,
+      targetAmount: newProject.target_amount,
+      mode: newProject.mode,
+      month: newProject.month,
+    }),
+  }).catch(() => {});
+
+  triggerHaptic(15);
+  closeNewProjectModal();
+  showToast(state.lang === 'zh' ? `专款【${title}】建立成功` : `Project ${title} created!`);
+}
+
+// Release Remaining Sinking Fund to Budget
+function releaseFundRemainingToBudget(fundId) {
+  triggerHaptic(10);
+  const fund = (state.projects || []).find((p) => p.id === fundId);
+  if (!fund) return;
+
+  const target = parseFloat(fund.target_amount) || 0;
+  const spent = parseFloat(fund.spent_amount) || 0;
+  const remaining = Math.max(0, target - spent);
+
+  showConfirmModal({
+    title: '确认提前释放结余？',
+    subtitle: fund.title,
+    desc: `当前专款预留 ${state.currency} ${formatNumber(target)}，实际已用 ${state.currency} ${formatNumber(spent)}。提前释放后，剩余未用的 ${state.currency} ${formatNumber(remaining)} 将立即归还回日常月度预算，专款将标为已结清。`,
+    confirmText: '确认释放并结清',
+    danger: false,
+    onConfirm: async () => {
+      fund.target_amount = spent;
+      fund.status = 'settled';
+      saveProjects(state.projects);
+      renderSinkingFunds();
+      renderBudgetTracker();
+
+      if (supabaseClient && state.user?.id) {
+        supabaseClient.from('projects').update({
+          target_amount: spent,
+          status: 'settled',
+          updated_at: new Date().toISOString(),
+        }).eq('id', fundId).eq('user_id', state.user.id).catch(() => {});
+      }
+
+      try {
+        await fetch('/api/projects/' + fundId + '/release', {
+          method: 'PATCH',
+          headers: getAuthHeaders(),
+        });
+      } catch (e) {}
+      showToast(`结余 ${state.currency} ${formatNumber(remaining)} 已释放回日常预算`);
+    }
+  });
+}
+
+function settleFund(fundId) {
+  triggerHaptic(10);
+  const fund = (state.projects || []).find((p) => p.id === fundId);
+  if (!fund) return;
+
+  showConfirmModal({
+    title: '确认结案平账？',
+    subtitle: fund.title,
+    desc: `确定要将专款【${fund.title}】结案平账吗？平账后此项目将正式归档。`,
+    confirmText: '确认结案',
+    danger: false,
+    onConfirm: async () => {
+      fund.status = 'settled';
+      saveProjects(state.projects);
+      renderSinkingFunds();
+      renderBudgetTracker();
+
+      if (supabaseClient && state.user?.id) {
+        supabaseClient.from('projects').update({
+          status: 'settled',
+          updated_at: new Date().toISOString(),
+        }).eq('id', fundId).eq('user_id', state.user.id).catch(() => {});
+      }
+
+      try {
+        await fetch('/api/projects/' + fundId + '/settle', {
+          method: 'PATCH',
+          headers: getAuthHeaders(),
+        });
+      } catch (e) {}
+      triggerHaptic(15);
+      showToast(`专款【${fund.title}】已结案平账`);
+    }
+  });
+}
+
+function deleteProject(fundId) {
+  triggerHaptic(10);
+  const fund = (state.projects || []).find((p) => p.id === fundId);
+  if (!fund) return;
+
+  const remaining = Math.max(0, fund.target_amount - fund.spent_amount);
+
+  showConfirmModal({
+    title: '确认撤销该专款？',
+    subtitle: fund.title,
+    desc: `确定要撤销【${fund.title}】专款吗？撤销后，剩余未用的 ${state.currency} ${formatNumber(remaining)} 将原路释放回日常预算，已产生的流水不受影响。`,
+    confirmText: '确认撤销',
+    danger: true,
+    onConfirm: async () => {
+      state.projects = (state.projects || []).filter((p) => p.id !== fundId);
+      saveProjects(state.projects);
+      renderSinkingFunds();
+      renderBudgetTracker();
+
+      if (supabaseClient && state.user?.id) {
+        supabaseClient.from('projects').delete().eq('id', fundId).eq('user_id', state.user.id).catch(() => {});
+      }
+
+      try {
+        await fetch('/api/projects/' + fundId, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
+      } catch (e) {}
+      triggerHaptic(15);
+      showToast('专款已撤销');
+    }
+  });
+}
+
+// Claims Actions
+async function toggleClaimFriendPaid(claimId, friendIdx) {
+  triggerHaptic(12);
+  const claim = (state.claims || []).find((c) => c.id === claimId);
+  if (!claim || !claim.friends?.[friendIdx]) return;
+
+  const friend = claim.friends[friendIdx];
+  friend.paid = !friend.paid;
+  saveClaims(state.claims);
+  renderClaims();
+
+  if (supabaseClient && state.user?.id) {
+    supabaseClient.from('claims').update({
+      friends: claim.friends,
+      updated_at: new Date().toISOString(),
+    }).eq('id', claimId).eq('user_id', state.user.id).catch(() => {});
+  }
+
+  try {
+    await fetch(`/api/claims/${claimId}/friend/${friendIdx}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+    });
+  } catch (e) {}
+
+  const statusMsg = friend.paid
+    ? `已收到 ${friend.name} 的 ${state.currency} ${formatNumber(friend.amount)}`
+    : `已标记为待收`;
+  showToast(statusMsg);
+}
+
+function settleAllClaim(claimId) {
+  triggerHaptic(15);
+  const claim = (state.claims || []).find((c) => c.id === claimId);
+  if (!claim) return;
+
+  showConfirmModal({
+    title: '确认全额结清？',
+    subtitle: claim.title,
+    desc: '确定要将此笔账单的所有分摊款项标记为全额结清吗？',
+    confirmText: '确认结清',
+    danger: false,
+    onConfirm: async () => {
+      (claim.friends || []).forEach((f) => { f.paid = true; });
+      claim.status = 'settled';
+      saveClaims(state.claims);
+      renderClaims();
+
+      if (supabaseClient && state.user?.id) {
+        supabaseClient.from('claims').update({
+          friends: claim.friends,
+          status: 'settled',
+          updated_at: new Date().toISOString(),
+        }).eq('id', claimId).eq('user_id', state.user.id).catch(() => {});
+      }
+
+      try {
+        await fetch(`/api/claims/${claimId}/settle-all`, {
+          method: 'PATCH',
+          headers: getAuthHeaders(),
+        });
+      } catch (e) {}
+      showToast('该笔代垫款项已全额结清');
+    }
+  });
+}
+
+function deleteClaim(claimId) {
+  triggerHaptic(10);
+  const claim = (state.claims || []).find((c) => c.id === claimId);
+  if (!claim) return;
+
+  showConfirmModal({
+    title: '确认删除该待收账单？',
+    subtitle: claim.title,
+    desc: '确定要删除此笔代垫记录吗？此操作不可撤销。',
+    confirmText: '确认删除',
+    danger: true,
+    onConfirm: async () => {
+      state.claims = (state.claims || []).filter((c) => c.id !== claimId);
+      saveClaims(state.claims);
+      renderClaims();
+
+      if (supabaseClient && state.user?.id) {
+        supabaseClient.from('claims').delete().eq('id', claimId).eq('user_id', state.user.id).catch(() => {});
+      }
+
+      try {
+        await fetch(`/api/claims/${claimId}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
+      } catch (e) {}
+      showToast('已删除待收账单');
+    }
+  });
+}
+
+// Budget Top-Up Management (History, Add, Delete)
+function renderBudgetTopupHistory() {
+  const container = document.getElementById('budgetTopupHistoryContainer');
+  if (!container) return;
+
+  const month = state.currentMonth === 'all' ? getCurrentMonthKey() : state.currentMonth;
+  const topups = (state.budgetTopUps && Array.isArray(state.budgetTopUps[month]))
+    ? state.budgetTopUps[month]
+    : [];
+
+  const sym = state.currency || 'RM';
+
+  if (topups.length === 0) {
+    container.innerHTML = `
+      <div class="topup-history-empty" style="text-align: center; padding: 12px 8px; color: var(--text-muted); font-size: 0.8rem;">
+        本月暂无追加记录
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin: 16px 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px;">
+      本月已追加记录 (${topups.length})
+    </div>
+    <div class="topup-history-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;">
+      ${topups.map((item) => `
+        <div class="topup-history-item" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 8px;">
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <strong style="font-size: 0.85rem; color: var(--text-primary); font-weight: 600;">${escapeHtml(item.reason || '临时追加额度')}</strong>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml((item.date || '').slice(0, 10))}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-weight: 700; color: #16a34a; font-family: var(--font-mono, monospace); font-size: 0.9rem;">+ ${sym} ${formatNumber(item.amount)}</span>
+            <button type="button" class="btn-del-topup" onclick="deleteBudgetTopup('${item.id}')" title="删除此笔追加" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; transition: all 0.15s ease;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function deleteBudgetTopup(topupId) {
+  triggerHaptic(10);
+  const month = state.currentMonth === 'all' ? getCurrentMonthKey() : state.currentMonth;
+  const topups = state.budgetTopUps || {};
+  if (!Array.isArray(topups[month])) return;
+
+  const idx = topups[month].findIndex((t) => t.id === topupId);
+  if (idx === -1) return;
+
+  const [removed] = topups[month].splice(idx, 1);
+  saveBudgetTopUps(topups);
+  triggerHaptic(15);
+  showToast(`已删除追加预算 ${state.currency} ${formatNumber(removed.amount)}`);
+  renderBudgetTopupHistory();
+  renderBudgetTracker();
+}
+
+function openTopupBudgetModal() {
+  triggerHaptic(10);
+  if (!elements.topupBudgetModal) return;
+  if (elements.budgetTopupAmountInput) elements.budgetTopupAmountInput.value = '300';
+  if (elements.budgetTopupReasonInput) elements.budgetTopupReasonInput.value = '';
+  renderBudgetTopupHistory();
+  elements.topupBudgetModal.classList.remove('hidden');
+}
+
+function closeTopupBudgetModal() {
+  triggerHaptic(10);
+  elements.topupBudgetModal?.classList.add('hidden');
+}
+
+function saveBudgetTopup() {
+  const amount = parseFloat(elements.budgetTopupAmountInput?.value) || 0;
+  const reason = (elements.budgetTopupReasonInput?.value || '').trim() || '临时追加额度';
+  const month = state.currentMonth === 'all' ? getCurrentMonthKey() : state.currentMonth;
+
+  if (amount <= 0) {
+    return showToast('请输入有效的追加金额', true);
+  }
+
+  const topups = state.budgetTopUps || {};
+  if (!Array.isArray(topups[month])) topups[month] = [];
+
+  topups[month].push({
+    id: 'topup_' + Date.now(),
+    amount: amount,
+    reason: reason,
+    date: new Date().toISOString(),
+  });
+
+  saveBudgetTopUps(topups);
+  triggerHaptic(15);
+  closeTopupBudgetModal();
+  showToast(`已为本月追加预算 ${state.currency} ${formatNumber(amount)}`);
+  renderBudgetTracker();
+}
+
+// Safe Action Confirmation Modal
+let currentConfirmCallback = null;
+function showConfirmModal({ title, subtitle, desc, onConfirm, confirmText, danger }) {
+  if (!elements.confirmActionModal) return;
+  if (elements.confirmModalTitle) elements.confirmModalTitle.textContent = title || '请确认';
+  if (elements.confirmModalSub) elements.confirmModalSub.textContent = subtitle || '';
+  if (elements.confirmModalDesc) elements.confirmModalDesc.textContent = desc || '';
+  if (elements.proceedConfirmBtn) {
+    elements.proceedConfirmBtn.textContent = confirmText || '确认';
+    elements.proceedConfirmBtn.className = danger ? 'btn-modal-danger' : 'btn-modal-primary';
+  }
+  currentConfirmCallback = onConfirm;
+  elements.confirmActionModal.classList.remove('hidden');
+}
+
+function closeConfirmModal() {
+  triggerHaptic(10);
+  elements.confirmActionModal?.classList.add('hidden');
+  currentConfirmCallback = null;
+}
+
+// Populate Project Select in Transaction Creation Modal
+function updateProjectDropdownOptions() {
+  const select = elements.entryProjectSelect;
+  if (!select) return;
+
+  const activeFunds = (state.projects || []).filter((p) => p.status === 'active');
+  select.innerHTML = '<option value="">-- 无关联 (日常生活预算) --</option>' +
+    activeFunds.map((f) => `<option value="${f.id}">${escapeHtml(f.title)} (${f.mode === 'budget_deduct' ? '从本月预算扣除' : '额外专项'})</option>`).join('');
+}
+
+// Add a Dynamic Friend Row in Split Bill Drawer
+function addSplitFriendRow(defaultName = '', defaultAmount = '') {
+  const list = elements.splitFriendsList;
+  if (!list) return;
+
+  const row = document.createElement('div');
+  row.className = 'split-friend-row';
+  row.innerHTML = `
+    <input type="text" placeholder="${t('friend_name_placeholder')}" value="${escapeHtml(defaultName)}" class="clean-form-input friend-name-input" style="flex: 2;" required />
+    <div style="display: flex; align-items: center; gap: 4px; flex: 1.5;">
+      <span class="currency-sym">RM</span>
+      <input type="number" step="0.01" min="0" placeholder="0.00" value="${defaultAmount}" class="clean-form-input friend-amount-input" required />
+    </div>
+    <button type="button" class="btn-friend-delete" title="Remove">&times;</button>
+  `;
+
+  row.querySelector('.btn-friend-delete').addEventListener('click', () => {
+    row.remove();
+  });
+
+  list.appendChild(row);
+}
+
+// Setup Event Listeners for the Projects & Claims Module
+function setupProjectsModuleEventListeners() {
+  // 1. Projects Page Segmented Switch
+  elements.tabSinkingFundsBtn?.addEventListener('click', () => {
+    triggerHaptic(10);
+    elements.tabSinkingFundsBtn.classList.add('active');
+    elements.tabClaimsBtn?.classList.remove('active');
+    elements.sinkingFundsView?.classList.remove('hidden');
+    elements.claimsView?.classList.add('hidden');
+    renderSinkingFunds();
+  });
+
+  elements.tabClaimsBtn?.addEventListener('click', () => {
+    triggerHaptic(10);
+    elements.tabClaimsBtn.classList.add('active');
+    elements.tabSinkingFundsBtn?.classList.remove('active');
+    elements.claimsView?.classList.remove('hidden');
+    elements.sinkingFundsView?.classList.add('hidden');
+    renderClaims();
+  });
+
+  // 2. New Project Modal Triggers
+  elements.openNewProjectBtn?.addEventListener('click', openNewProjectModal);
+  elements.closeNewProjectModalBtn?.addEventListener('click', closeNewProjectModal);
+  elements.cancelNewProjectBtn?.addEventListener('click', closeNewProjectModal);
+  elements.saveNewProjectBtn?.addEventListener('click', saveNewProject);
+
+  elements.btnModeBudgetDeduct?.addEventListener('click', () => {
+    triggerHaptic(8);
+    elements.btnModeBudgetDeduct.classList.add('active');
+    elements.btnModeExtraFund?.classList.remove('active');
+  });
+
+  elements.btnModeExtraFund?.addEventListener('click', () => {
+    triggerHaptic(8);
+    elements.btnModeExtraFund.classList.add('active');
+    elements.btnModeBudgetDeduct?.classList.remove('active');
+  });
+
+  // 3. Budget Top-up Triggers
+  elements.quickTopupBudgetBtn?.addEventListener('click', openTopupBudgetModal);
+  elements.closeTopupBudgetModalBtn?.addEventListener('click', closeTopupBudgetModal);
+  elements.cancelTopupBudgetBtn?.addEventListener('click', closeTopupBudgetModal);
+  elements.saveTopupBudgetBtn?.addEventListener('click', saveBudgetTopup);
+
+  // 4. Safe Confirmation Modal Triggers
+  elements.closeConfirmModalBtn?.addEventListener('click', closeConfirmModal);
+  elements.cancelConfirmBtn?.addEventListener('click', closeConfirmModal);
+  elements.proceedConfirmBtn?.addEventListener('click', async () => {
+    if (typeof currentConfirmCallback === 'function') {
+      const cb = currentConfirmCallback;
+      currentConfirmCallback = null;
+      await cb();
+    }
+    closeConfirmModal();
+  });
+
+  // 5. Create Transaction Advanced Toggles
+  elements.toggleFundLinkBtn?.addEventListener('click', () => {
+    triggerHaptic(10);
+    const isOpen = !elements.sinkingFundDrawer?.classList.contains('hidden');
+    elements.sinkingFundDrawer?.classList.toggle('hidden', isOpen);
+    elements.toggleFundLinkBtn?.classList.toggle('active', !isOpen);
+  });
+
+  elements.toggleSplitBillBtn?.addEventListener('click', () => {
+    triggerHaptic(10);
+    const isOpen = !elements.splitBillDrawer?.classList.contains('hidden');
+    elements.splitBillDrawer?.classList.toggle('hidden', isOpen);
+    elements.toggleSplitBillBtn?.classList.toggle('active', !isOpen);
+
+    if (!isOpen && elements.splitFriendsList && elements.splitFriendsList.children.length === 0) {
+      addSplitFriendRow();
+    }
+  });
+
+  elements.addFriendRowBtn?.addEventListener('click', () => {
+    triggerHaptic(8);
+    addSplitFriendRow();
+  });
+
+  elements.openNewClaimBtn?.addEventListener('click', openCreateModalWithSplit);
 }
 
 // Start Application

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ledger-cache-v1.3.3';
+const CACHE_NAME = 'ledger-cache-v1.3.8';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

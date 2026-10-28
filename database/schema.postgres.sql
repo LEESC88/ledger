@@ -93,3 +93,60 @@ TO authenticated
 USING ((select auth.uid())::text = user_id)
 WITH CHECK ((select auth.uid())::text = user_id);
 
+
+-- ============================================================================
+-- Projects & Sinking Funds Table
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS projects (
+  id VARCHAR(50) PRIMARY KEY,
+  user_id VARCHAR(100),
+  title VARCHAR(100) NOT NULL,
+  icon VARCHAR(20) DEFAULT '🎯',
+  target_amount DECIMAL(10, 2) NOT NULL,
+  spent_amount DECIMAL(10, 2) DEFAULT 0.00,
+  mode VARCHAR(30) DEFAULT 'budget_deduct', -- 'budget_deduct' | 'extra'
+  month VARCHAR(10) NOT NULL,
+  status VARCHAR(20) DEFAULT 'active',      -- 'active' | 'settled'
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id);
+CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
+
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage their own projects" ON projects;
+CREATE POLICY "Users can manage their own projects"
+ON projects
+FOR ALL
+TO authenticated
+USING ((select auth.uid())::text = user_id)
+WITH CHECK ((select auth.uid())::text = user_id);
+
+-- ============================================================================
+-- Claims & Split Bills Table
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS claims (
+  id VARCHAR(50) PRIMARY KEY,
+  user_id VARCHAR(100),
+  title VARCHAR(100) NOT NULL,
+  total_amount DECIMAL(10, 2) NOT NULL,
+  my_share DECIMAL(10, 2) NOT NULL,
+  friends JSONB NOT NULL DEFAULT '[]'::jsonb,
+  status VARCHAR(20) DEFAULT 'active',      -- 'active' | 'settled'
+  date VARCHAR(10) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_claims_user_id ON claims(user_id);
+CREATE INDEX IF NOT EXISTS idx_claims_status ON claims(status);
+
+ALTER TABLE claims ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage their own claims" ON claims;
+CREATE POLICY "Users can manage their own claims"
+ON claims
+FOR ALL
+TO authenticated
+USING ((select auth.uid())::text = user_id)
+WITH CHECK ((select auth.uid())::text = user_id);

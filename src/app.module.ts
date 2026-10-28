@@ -9,6 +9,10 @@ import { Record } from './records/entities/record.entity.js';
 import { RecordsModule } from './records/records.module.js';
 import { Budget } from './budgets/entities/budget.entity.js';
 import { BudgetsModule } from './budgets/budgets.module.js';
+import { Project } from './projects/entities/project.entity.js';
+import { ProjectsModule } from './projects/projects.module.js';
+import { Claim } from './claims/entities/claim.entity.js';
+import { ClaimsModule } from './claims/claims.module.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(__dirname, '..');
@@ -39,13 +43,13 @@ const dbPath =
             type: 'postgres',
             url: process.env.DATABASE_URL,
             ssl: { rejectUnauthorized: false }, // Crucial for Supabase Cloud SSL
-            entities: [Record, Budget],
+            entities: [Record, Budget, Project, Claim],
             synchronize: false,
           }
         : {
             type: 'better-sqlite3',
             database: dbPath,
-            entities: [Record, Budget],
+            entities: [Record, Budget, Project, Claim],
             synchronize: false,
           },
     ),
@@ -58,6 +62,8 @@ const dbPath =
     // 4. Feature modules
     RecordsModule,
     BudgetsModule,
+    ProjectsModule,
+    ClaimsModule,
   ],
   controllers: [],
   providers: [],

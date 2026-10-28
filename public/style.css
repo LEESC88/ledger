@@ -811,6 +811,11 @@ body {
 .table-container {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
+  touch-action: pan-y;
+  contain: paint;
   max-height: calc(100dvh - 300px);
   min-height: 240px;
   border: 1px solid var(--border-card);
@@ -1384,7 +1389,8 @@ body {
   background: var(--bg-input);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-full);
-  overflow: hidden;
+  position: relative !important;
+  overflow: hidden !important;
 }
 
 .budget-bar-fill {
@@ -2203,6 +2209,8 @@ body {
     border: 1px solid var(--border-card);
     border-radius: var(--radius-md);
     align-items: center;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 68px;
   }
 
   .ledger-table tbody tr:not(.timeline-date-row):last-child {
@@ -2218,6 +2226,8 @@ body {
     margin: 14px 0 8px 0;
     background: transparent;
     border: none;
+    transform: translateZ(0);
+    will-change: transform;
   }
 
   .ledger-table tbody tr.timeline-date-row:first-child {
@@ -2229,11 +2239,9 @@ body {
     width: 100% !important;
     padding: 7px 10px !important;
     background: var(--bg-surface);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border-card);
     border-radius: var(--radius-md);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   }
 
   .ledger-table td {
@@ -2774,4 +2782,941 @@ button:active:not(:disabled),
 .preset-pill:active {
   transform: scale(0.96);
   transition: transform 60ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ==========================================================================
+   11. PROJECTS & CLAIMS MODULE (Sinking Funds & Split Bills)
+   ========================================================================== */
+
+.projects-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 24px;
+}
+
+.projects-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.projects-main-heading {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.projects-sub-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 2px 0 0 0;
+}
+
+.btn-primary-capsule {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--brand-cyan);
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+  transition: all 0.15s ease;
+}
+
+.btn-primary-capsule:hover {
+  background: var(--brand-cyan-hover, #0f766e);
+  transform: translateY(-1px);
+}
+
+.projects-tab-switch {
+  margin-top: 4px;
+}
+
+.projects-card-grid,
+.claims-card-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Sinking Fund Card */
+.project-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.project-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.project-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.project-icon-badge {
+  font-size: 1.4rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(13, 148, 136, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-name-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.project-mode-pill {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+.project-mode-pill.mode-budget {
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--brand-cyan);
+}
+
+.project-mode-pill.mode-extra {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.project-math-equation {
+  font-size: 0.85rem;
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+/* Sinking Fund Dual Progress Bar */
+.project-progress-track {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-hover);
+  border-radius: 9999px;
+  position: relative;
+  overflow: hidden;
+}
+
+.project-progress-spent {
+  height: 100%;
+  background: var(--brand-cyan);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.project-card-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.project-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-card-action {
+  flex: 1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-card);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.btn-card-action:hover {
+  background: var(--bg-hover);
+}
+
+.btn-card-action.btn-action-settle {
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--brand-cyan);
+  border-color: rgba(13, 148, 136, 0.2);
+}
+
+.btn-card-action.btn-action-delete {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Claims & Split Bills */
+.claims-summary-card {
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.12), rgba(20, 184, 166, 0.05));
+  border: 1px solid rgba(13, 148, 136, 0.2);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.claims-summary-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.claims-summary-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--brand-cyan);
+}
+
+.claims-summary-amount {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-mono, monospace);
+}
+
+.btn-claim-action {
+  background: var(--brand-cyan);
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.claim-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.claim-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.claim-title-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.claim-total-badge {
+  font-size: 0.85rem;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  color: var(--brand-cyan);
+}
+
+.claim-friend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.claim-friend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--bg-hover);
+  font-size: 0.85rem;
+}
+
+.claim-friend-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-mark-paid {
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid var(--brand-cyan);
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--brand-cyan);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-mark-paid.paid {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+/* Striped Locked Bar in Monthly Budget */
+.btn-budget-topup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--brand-cyan);
+  border: 1px solid rgba(13, 148, 136, 0.2);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+.budget-bar-locked {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  max-width: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(245, 158, 11, 0.25),
+    rgba(245, 158, 11, 0.25) 6px,
+    rgba(245, 158, 11, 0.45) 6px,
+    rgba(245, 158, 11, 0.45) 12px
+  );
+  border-left: 2px dashed #f59e0b;
+  border-radius: 0 var(--radius-full) var(--radius-full) 0;
+  transition: width 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.budget-formula-row {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono, monospace);
+  font-weight: 500;
+}
+
+/* Timeline Source Badges */
+.badge-source-fund {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--brand-cyan);
+}
+
+.badge-source-claim {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+/* Create Entry Advanced Toggles & Drawers */
+.entry-advanced-toggles {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0 10px 0;
+}
+
+.pill-toggle-btn {
+  flex: 1;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px dashed var(--border-card);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pill-toggle-btn.active {
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--brand-cyan);
+  border: 1px solid var(--brand-cyan);
+}
+
+.entry-sub-drawer {
+  background: var(--bg-hover);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.split-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.split-my-share-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 140px;
+}
+
+.split-friends-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.btn-xs-action {
+  background: transparent;
+  border: 1px solid var(--brand-cyan);
+  color: var(--brand-cyan);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.split-friend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.btn-friend-delete {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+
+/* Web & Desktop Modal Dialog Scroll Adaptation */
+.modal-overlay {
+  overflow-y: auto !important;
+  padding: 16px !important;
+}
+
+.create-sheet-dialog {
+  max-width: 480px !important;
+  max-height: calc(100vh - 40px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  padding: 20px 20px 16px 20px !important;
+}
+
+.create-sheet-form {
+  overflow-y: auto !important;
+  max-height: calc(88vh - 120px) !important;
+  padding-right: 6px !important;
+  padding-bottom: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  overscroll-behavior: contain !important;
+}
+
+.create-sheet-form::-webkit-scrollbar {
+  width: 5px;
+}
+.create-sheet-form::-webkit-scrollbar-thumb {
+  background: var(--border-card);
+  border-radius: 9999px;
+}
+
+/* Zero-flash session state */
+html.has-auth-session #loginLandingView {
+  display: none !important;
+}
+html.has-auth-session #appLayout {
+  display: flex !important;
+}
+
+/* Projects Tab Segmented Control & Buttons */
+.projects-tab-switch {
+  display: flex !important;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-input) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 4px !important;
+  gap: 6px !important;
+  margin-bottom: 16px !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.projects-tab-switch .segment-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.projects-tab-switch .segment-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.projects-tab-switch .segment-btn.active {
+  background: var(--bg-surface) !important;
+  color: var(--brand-cyan) !important;
+  font-weight: 700 !important;
+  border: 1px solid var(--border-card) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Funding Mode Toggle in Modal */
+.project-mode-switch {
+  display: flex !important;
+  background: var(--bg-input) !important;
+  border: 1.5px solid var(--border-input) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 4px !important;
+  gap: 6px !important;
+}
+
+.project-mode-switch .segment-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.project-mode-switch .segment-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.project-mode-switch .segment-btn.active[data-mode="budget_deduct"] {
+  background: var(--bg-surface) !important;
+  color: var(--brand-cyan) !important;
+  font-weight: 700 !important;
+  border-color: var(--brand-cyan) !important;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.15) !important;
+}
+
+.project-mode-switch .segment-btn.active[data-mode="extra"] {
+  background: var(--bg-surface) !important;
+  color: #7c3aed !important;
+  font-weight: 700 !important;
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.15) !important;
+}
+
+/* Desktop Self-Contained Ledger Scroll Container */
+@media (min-width: 641px) {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .app-layout {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    padding-bottom: 84px;
+  }
+
+  .pages-viewport {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-page#pageLedger {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .column-panel.column-ledger {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 12px;
+  }
+
+  .table-container {
+    flex: 1;
+    min-height: 0;
+    max-height: none !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Other pages can scroll smoothly */
+  .app-page:not(#pageLedger) {
+    overflow-y: auto;
+    max-height: 100%;
+    padding-right: 2px;
+  }
+}
+
+/* Sleek Scrollbar for Table Container */
+.table-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.table-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.table-container::-webkit-scrollbar-thumb {
+  background: var(--border-card);
+  border-radius: 9999px;
+}
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+.sinking-tab-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--border-card);
+}
+
+.sinking-tab-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* ==========================================================================
+   Icon & Top-Up List Enhancements (Line-Art Consistency)
+   ========================================================================== */
+.cat-grid-icon,
+.cat-chip-icon,
+.account-chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+.cat-grid-icon svg,
+.cat-chip-icon svg,
+.account-chip-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.cat-grid-btn.active .cat-grid-icon,
+.account-chip-btn.active .account-chip-icon {
+  color: var(--brand-cyan);
+}
+
+.empty-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--brand-cyan-subtle);
+  color: var(--brand-cyan);
+  margin-bottom: 12px;
+}
+.empty-icon-wrap svg {
+  width: 24px;
+  height: 24px;
+}
+
+.badge-source-fund,
+.badge-source-claim {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.badge-source-fund svg,
+.badge-source-claim svg {
+  width: 12px;
+  height: 12px;
+  vertical-align: middle;
+}
+
+.timeline-calendar-icon svg {
+  width: 13px;
+  height: 13px;
+  vertical-align: middle;
+}
+
+.streak-fire svg {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  color: #f97316;
+}
+
+.btn-del-topup {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.btn-del-topup:hover {
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.topup-history-section {
+  margin-top: 12px;
+}
+
+.topup-history-item {
+  transition: background-color 0.15s ease;
+}
+
+.topup-history-item:hover {
+  background: var(--bg-hover) !important;
+}
+
+/* ==========================================================================
+   Avatar Lightbox Preview (Social Media Style Full View)
+   ========================================================================== */
+.avatar-lightbox-modal {
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: fadeInModal 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.avatar-lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  cursor: zoom-out;
+}
+
+.avatar-lightbox-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 90vw;
+  animation: zoomInAvatar 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes zoomInAvatar {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.avatar-lightbox-close {
+  position: absolute;
+  top: -44px;
+  right: -10px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-size: 1.5rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.avatar-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.08);
+}
+
+.avatar-lightbox-frame {
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 4px rgba(255, 255, 255, 0.25);
+  background: var(--bg-surface);
+}
+
+.avatar-lightbox-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-lightbox-meta {
+  margin-top: 18px;
+  text-align: center;
+}
+
+.avatar-lightbox-name {
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.avatar-lightbox-email {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  margin: 4px 0 0 0;
+  font-family: var(--font-mono, monospace);
+}
+
+/* User avatar clickable cursor */
+.user-avatar,
+.account-modal-avatar,
+.dropdown-avatar {
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.user-avatar:hover,
+.account-modal-avatar:hover {
+  transform: scale(1.05);
+  opacity: 0.92;
+}
+
+/* ==========================================================================
+   Account Spending Sources Header & Month Selector
+   ========================================================================== */
+.accounts-spending-right-cluster {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.spending-month-select {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-input);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.spending-month-select:hover {
+  border-color: var(--brand-cyan);
+}
+
+.wallet-spending-amount {
+  font-family: var(--font-mono, monospace);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
 }
