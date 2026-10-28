@@ -59,17 +59,37 @@ CREATE INDEX IF NOT EXISTS idx_budgets_user_month ON budgets(user_id, month);
 
 -- ============================================================================
 -- Row Level Security (RLS) Policies for Direct Supabase BaaS Client Access
+-- Strict per-user isolation: users can only read, insert, update, or delete
+-- their own records, budgets, and accounts.
 -- ============================================================================
 ALTER TABLE records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "allow_all_records" ON records;
-CREATE POLICY "allow_all_records" ON records FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Users can manage their own records" ON records;
+CREATE POLICY "Users can manage their own records"
+ON records
+FOR ALL
+TO authenticated
+USING ((select auth.uid())::text = user_id)
+WITH CHECK ((select auth.uid())::text = user_id);
 
 DROP POLICY IF EXISTS "allow_all_budgets" ON budgets;
-CREATE POLICY "allow_all_budgets" ON budgets FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Users can manage their own budgets" ON budgets;
+CREATE POLICY "Users can manage their own budgets"
+ON budgets
+FOR ALL
+TO authenticated
+USING ((select auth.uid())::text = user_id)
+WITH CHECK ((select auth.uid())::text = user_id);
 
 DROP POLICY IF EXISTS "allow_all_accounts" ON accounts;
-CREATE POLICY "allow_all_accounts" ON accounts FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Users can manage their own accounts" ON accounts;
+CREATE POLICY "Users can manage their own accounts"
+ON accounts
+FOR ALL
+TO authenticated
+USING ((select auth.uid())::text = user_id)
+WITH CHECK ((select auth.uid())::text = user_id);
 
