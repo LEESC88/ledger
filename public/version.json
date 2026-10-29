@@ -1,5 +1,5 @@
 {
-  "version": "1.3.8",
+  "version": "1.3.9",
   "releaseDate": "2026-10-29",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk",
   "notes": "Added avatar lightbox enlarged preview, synchronized continuous streak days with active duration, repurposed accounts center into monthly spending breakdown with historical month filter, enabled custom file path picker for CSV exports with professional Excel-friendly formatted financial tables, added cloud synchronization for sinking fund pools and split bill claims, fixed mobile transaction scroll smoothness, and added modal back-button/escape navigation guards."
