@@ -183,10 +183,10 @@
       years_5: '5 Years',
       records_found: 'Matching records:',
       before_date: 'before',
-      download_archive_btn: '1. Backup CSV',
-      btn_download_csv: '1. Download CSV',
-      purge_btn: '2. Purge Old',
-      btn_purge_records: '2. Delete Old Records',
+      download_archive_btn: 'Backup CSV',
+      btn_download_csv: 'Download CSV',
+      purge_btn: 'Purge Old',
+      btn_purge_records: 'Delete Old Records',
 
       // 10. In-App Updates & System
       app_version_label: 'Application Version',
@@ -423,10 +423,10 @@
       years_5: '5 年前',
       records_found: '符合条件笔数:',
       before_date: '早于',
-      download_archive_btn: '1. 导出备份 CSV',
-      btn_download_csv: '1. 下载备份 CSV',
-      purge_btn: '2. 清理历史记录',
-      btn_purge_records: '2. 清理历史记录',
+      download_archive_btn: '导出备份 CSV',
+      btn_download_csv: '下载备份 CSV',
+      purge_btn: '清理历史记录',
+      btn_purge_records: '清理历史记录',
 
       // 10. 在线更新与系统
       app_version_label: '应用版本信息',

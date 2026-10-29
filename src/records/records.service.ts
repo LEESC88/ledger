@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Record } from './entities/record.entity.js';
@@ -23,6 +23,15 @@ export class RecordsService {
     createRecordDto: CreateRecordDto,
     userId?: string,
   ): Promise<Record> {
+    if (userId) {
+      const userCount = await this.recordRepository.count({ where: { userId } });
+      if (userCount >= 50000) {
+        throw new BadRequestException(
+          'Single account record storage limit (50,000) reached. Please backup and purge older records.',
+        );
+      }
+    }
+
     const newRecord = this.recordRepository.create({
       ...createRecordDto,
       userId,
@@ -138,5 +147,24 @@ export class RecordsService {
 
     const result = await qb.execute();
     return { purgedCount: result.affected ?? 0, cutoffDate: cutoffDateStr };
+  }
+
+  /**
+   * Evaluates storage capacity metrics and quota health for multi-user safety.
+   */
+  async getStorageStatus(userId?: string) {
+    const totalRecords = await this.recordRepository.count(
+      userId ? { where: { userId } } : {},
+    );
+    const estimatedBytes = totalRecords * 200; // ~200 bytes per record
+    return {
+      totalRecords,
+      estimatedBytes,
+      estimatedKb: Number((estimatedBytes / 1024).toFixed(2)),
+      estimatedMb: Number((estimatedBytes / (1024 * 1024)).toFixed(2)),
+      quotaLimit: 50000,
+      isHealthy: totalRecords < 45000,
+      thresholdPct: Number(((totalRecords / 50000) * 100).toFixed(1)),
+    };
   }
 }

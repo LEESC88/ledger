@@ -6,7 +6,7 @@
  */
 
 // Current Client Release Version
-const APP_VERSION = '1.4.1';
+const APP_VERSION = '1.4.2';
 
 // Default BaaS Cloud Configuration (Decoded from safe payload, overridable by window.__ENV__)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -232,6 +232,10 @@ function getAccountDisplayLabel(name) {
   return meta.name;
 }
 
+function getAccountDisplayName(name) {
+  return getAccountDisplayLabel(name);
+}
+
 // Supabase Client Instance
 let supabaseClient = null;
 
@@ -286,6 +290,7 @@ const elements = {
   closeModalBtn: document.getElementById('closeModalBtn'),
   retentionYearsSelect: document.getElementById('retentionYearsSelect'),
   retentionMatchCount: document.getElementById('retentionMatchCount'),
+  retentionCutoffPrefix: document.getElementById('retentionCutoffPrefix'),
   retentionCutoffDate: document.getElementById('retentionCutoffDate'),
   downloadArchiveBtn: document.getElementById('downloadArchiveBtn'),
   purgeOldRecordsBtn: document.getElementById('purgeOldRecordsBtn'),
@@ -559,6 +564,8 @@ function setAppLanguage(lang) {
   updateAccountModalData();
   renderAccountsCenter();
   renderStreakAndBadges();
+  updateRetentionDropdownLabels();
+  evaluateRetentionEligible();
   if (state.summary) {
     updateSummaryStatusBadge(state.summary.netBalance);
     renderCategoryChart(state.summary.categoryBreakdown);
@@ -1957,11 +1964,13 @@ async function handleRecordSubmit(e) {
 
         // Sync updated spent_amount to Supabase Cloud
         if (supabaseClient && state.user?.id) {
-          supabaseClient
-            .from('projects')
-            .update({ spent_amount: fund.spent_amount })
-            .eq('id', fund.id)
-            .catch(() => {});
+          try {
+            await supabaseClient
+              .from('projects')
+              .update({ spent_amount: fund.spent_amount })
+              .eq('id', fund.id)
+              .eq('user_id', state.user.id);
+          } catch (e) {}
         }
 
         // Sync updated spent_amount to NestJS backend API
@@ -2010,19 +2019,20 @@ async function handleRecordSubmit(e) {
 
         // Sync claim to Supabase Cloud & backend API
         if (supabaseClient && state.user?.id) {
-          supabaseClient
-            .from('claims')
-            .insert({
-              id: claim.id,
-              user_id: state.user.id,
-              title: claim.title,
-              total_amount: claim.total_amount,
-              my_share: claim.my_share,
-              friends: claim.friends,
-              status: claim.status,
-              date: claim.date,
-            })
-            .catch(() => {});
+          try {
+            await supabaseClient
+              .from('claims')
+              .upsert({
+                id: claim.id,
+                user_id: state.user.id,
+                title: claim.title,
+                total_amount: claim.total_amount,
+                my_share: claim.my_share,
+                friends: claim.friends,
+                status: claim.status,
+                date: claim.date,
+              });
+          } catch (e) {}
         }
 
         fetch('/api/claims', {
@@ -2184,11 +2194,13 @@ window.handleDelete = function (id) {
 
           // Sync rolled back spent_amount to Supabase Cloud
           if (supabaseClient && state.user?.id) {
-            supabaseClient
-              .from('projects')
-              .update({ spent_amount: linkedFund.spent_amount })
-              .eq('id', linkedFund.id)
-              .catch(() => {});
+            try {
+              await supabaseClient
+                .from('projects')
+                .update({ spent_amount: linkedFund.spent_amount })
+                .eq('id', linkedFund.id)
+                .eq('user_id', state.user.id);
+            } catch (e) {}
           }
 
           // Sync to NestJS backend
@@ -2239,7 +2251,12 @@ window.handleDelete = function (id) {
         }
 
         showToast(state.lang === 'zh' ? '已删除账单' : 'Transaction deleted');
-        await Promise.all([loadRecords(), loadSummary()]);
+        await Promise.all([
+          loadRecords(),
+          loadSummary(),
+          fetchProjectsFromBackend(),
+          fetchClaimsFromBackend(),
+        ]);
       } catch (err) {
         showToast(err.message, true);
       }
@@ -2921,24 +2938,83 @@ function getRetentionCutoffDate(years) {
   return date.toISOString().split('T')[0];
 }
 
+function updateRetentionDropdownLabels() {
+  if (!elements.retentionYearsSelect) return;
+  const isZh = state.lang === 'zh';
+  const currentYear = new Date().getFullYear();
+  const currentVal = elements.retentionYearsSelect.value || 'current_year';
+
+  elements.retentionYearsSelect.innerHTML = `
+    <option value="current_year">${isZh ? `📅 本年度账单 (${currentYear}年)` : `📅 Current Year (${currentYear})`}</option>
+    <option value="1">${isZh ? '⏳ 1 年前历史数据 (> 1年)' : '> 1 Year (365 Days)'}</option>
+    <option value="2">${isZh ? '⏳ 2 年前历史数据 (> 2年)' : '> 2 Years (730 Days)'}</option>
+    <option value="3">${isZh ? '⏳ 3 年前历史数据 (> 3年推荐)' : '> 3 Years (1095 Days)'}</option>
+    <option value="5">${isZh ? '⏳ 5 年前历史数据 (> 5年)' : '> 5 Years (1825 Days)'}</option>
+  `;
+  elements.retentionYearsSelect.value = currentVal;
+}
+
 function evaluateRetentionEligible() {
   if (!elements.retentionYearsSelect) return;
-  const years = parseInt(elements.retentionYearsSelect.value) || 3;
-  const cutoffDate = getRetentionCutoffDate(years);
-  if (elements.retentionCutoffDate)
-    elements.retentionCutoffDate.textContent = cutoffDate;
+  const isZh = state.lang === 'zh';
+  const val = elements.retentionYearsSelect.value;
+  const currentYear = new Date().getFullYear();
 
-  const matchingRecords = state.records.filter((r) => r.date < cutoffDate);
-  if (elements.retentionMatchCount)
+  let matchingRecords = [];
+  const isCurrentYear = val === 'current_year';
+
+  if (isCurrentYear) {
+    matchingRecords = (state.records || []).filter(
+      (r) => r.date && r.date.startsWith(String(currentYear)),
+    );
+    if (elements.retentionCutoffPrefix) {
+      elements.retentionCutoffPrefix.textContent = isZh ? '范围：' : 'Range: ';
+    }
+    if (elements.retentionCutoffDate) {
+      elements.retentionCutoffDate.textContent = isZh
+        ? `${currentYear}年度 (1月1日 - 至今)`
+        : `Year ${currentYear} (YTD)`;
+    }
+  } else {
+    const years = parseInt(val) || 3;
+    const cutoffDate = getRetentionCutoffDate(years);
+    if (elements.retentionCutoffPrefix) {
+      elements.retentionCutoffPrefix.textContent = isZh ? '早于：' : 'before ';
+    }
+    if (elements.retentionCutoffDate) {
+      elements.retentionCutoffDate.textContent = cutoffDate;
+    }
+    matchingRecords = (state.records || []).filter((r) => r.date < cutoffDate);
+  }
+
+  if (elements.retentionMatchCount) {
     elements.retentionMatchCount.textContent = matchingRecords.length;
+  }
 
-  if (elements.downloadArchiveBtn)
+  if (elements.downloadArchiveBtn) {
     elements.downloadArchiveBtn.disabled = matchingRecords.length === 0;
-  if (elements.purgeOldRecordsBtn)
-    elements.purgeOldRecordsBtn.disabled = matchingRecords.length === 0;
+  }
+
+  if (elements.purgeOldRecordsBtn) {
+    if (isCurrentYear) {
+      elements.purgeOldRecordsBtn.disabled = true;
+      elements.purgeOldRecordsBtn.style.opacity = '0.35';
+      elements.purgeOldRecordsBtn.style.cursor = 'not-allowed';
+      elements.purgeOldRecordsBtn.title = isZh
+        ? '本年度当前账单受安全保护，不可清理'
+        : 'Current year records are protected from purging';
+    } else {
+      const isDisabled = matchingRecords.length === 0;
+      elements.purgeOldRecordsBtn.disabled = isDisabled;
+      elements.purgeOldRecordsBtn.style.opacity = isDisabled ? '0.35' : '1';
+      elements.purgeOldRecordsBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+      elements.purgeOldRecordsBtn.title = '';
+    }
+  }
 }
 
 function openRetentionModal() {
+  updateRetentionDropdownLabels();
   evaluateRetentionEligible();
   elements.retentionModal?.classList.remove('hidden');
   pushModalHistoryState();
@@ -2950,21 +3026,40 @@ function closeRetentionModal(fromPopState = false) {
 }
 
 async function downLoadArchiveCSV() {
-  const years = parseInt(elements.retentionYearsSelect.value) || 3;
-  const cutoffDate = getRetentionCutoffDate(years);
-  const matchingRecords = state.records.filter((r) => r.date < cutoffDate);
+  const isZh = state.lang === 'zh';
+  const val = elements.retentionYearsSelect?.value || '3';
+  const currentYear = new Date().getFullYear();
+
+  let matchingRecords = [];
+  let defaultFileName = '';
+  let fileDesc = '';
+
+  if (val === 'current_year') {
+    matchingRecords = (state.records || []).filter(
+      (r) => r.date && r.date.startsWith(String(currentYear)),
+    );
+    defaultFileName = `ledger_export_year_${currentYear}_${getLocalDateString()}.csv`;
+    fileDesc = isZh ? '本年度账单 CSV (*.csv)' : 'Current Year CSV (*.csv)';
+  } else {
+    const years = parseInt(val) || 3;
+    const cutoffDate = getRetentionCutoffDate(years);
+    matchingRecords = (state.records || []).filter((r) => r.date < cutoffDate);
+    defaultFileName = `ledger_archive_older_than_${years}y_${cutoffDate}.csv`;
+    fileDesc = isZh ? '归档账单 CSV (*.csv)' : 'Archive Records CSV (*.csv)';
+  }
 
   if (matchingRecords.length === 0) {
     showToast(
-      state.lang === 'zh'
-        ? '没有符合归档年限的历史账单'
+      isZh
+        ? (val === 'current_year'
+            ? '本年度暂无可导出的账单记录'
+            : '没有符合归档年限的历史账单')
         : 'No records available for archiving',
       true,
     );
     return;
   }
 
-  const isZh = state.lang === 'zh';
   const headers = isZh
     ? [
         '序号',
@@ -3005,28 +3100,42 @@ async function downLoadArchiveCSV() {
     '\uFEFF' +
     [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const defaultFileName = `ledger_archive_older_than_${years}y_${cutoffDate}.csv`;
 
   const saveRes = await saveBlobWithPicker(
     blob,
     defaultFileName,
-    isZh ? '归档账单 CSV (*.csv)' : 'Archive Records CSV (*.csv)',
+    fileDesc,
   );
 
   if (saveRes.canceled) {
-    showToast(isZh ? '已取消归档导出' : 'Archive export canceled');
+    showToast(isZh ? '已取消导出' : 'Export canceled');
     return;
   }
 
   showToast(
     isZh
-      ? `已成功归档导出 ${matchingRecords.length} 笔历史账单`
-      : `Downloaded ${matchingRecords.length} archived transactions`,
+      ? (val === 'current_year'
+          ? `已成功导出本年度共 ${matchingRecords.length} 笔账单`
+          : `已成功归档导出 ${matchingRecords.length} 笔历史账单`)
+      : `Downloaded ${matchingRecords.length} records`,
   );
 }
 
 function purgeOldRecords() {
-  const years = parseInt(elements.retentionYearsSelect.value) || 3;
+  const isZh = state.lang === 'zh';
+  const val = elements.retentionYearsSelect?.value || '3';
+
+  if (val === 'current_year') {
+    showToast(
+      isZh
+        ? '本年度在用账单受安全保护，不可清理'
+        : 'Current year records are protected from purging',
+      true,
+    );
+    return;
+  }
+
+  const years = parseInt(val) || 3;
   const cutoffDate = getRetentionCutoffDate(years);
 
   showConfirmModal({
@@ -3066,7 +3175,12 @@ function purgeOldRecords() {
             : `Purged records older than ${years} years`,
         );
         closeRetentionModal();
-        await Promise.all([loadRecords(), loadSummary()]);
+        await Promise.all([
+          loadRecords(),
+          loadSummary(),
+          fetchProjectsFromBackend(),
+          fetchClaimsFromBackend(),
+        ]);
       } catch (err) {
         showToast(err.message, true);
       }
@@ -3875,7 +3989,12 @@ window.__handleNativeOAuthCallback = async function (payloadStr) {
         showToast(
           `Welcome, ${state.user.user_metadata?.full_name || state.user.email}!`,
         );
-        await Promise.all([loadRecords(), loadSummary()]);
+        await Promise.all([
+          loadRecords(),
+          loadSummary(),
+          fetchProjectsFromBackend(),
+          fetchClaimsFromBackend(),
+        ]);
       }
     }
   } catch (err) {
@@ -3986,6 +4105,18 @@ function updateAuthUI(user) {
       meta.theme !== (localStorage.getItem('ledger_theme') || 'system')
     ) {
       setAppTheme(meta.theme);
+    }
+    if (meta.ledger_budget_topups && typeof meta.ledger_budget_topups === 'object') {
+      loadBudgetTopUps();
+      state.budgetTopUps = {
+        ...meta.ledger_budget_topups,
+        ...(state.budgetTopUps || {}),
+      };
+      localStorage.setItem(
+        getBudgetTopUpsStorageKey(),
+        JSON.stringify(state.budgetTopUps),
+      );
+      renderBudgetTracker();
     }
 
     const displayName = getUserDisplayName(user);
@@ -4394,6 +4525,8 @@ async function init() {
     loadSummary();
     loadRecords();
     loadAccounts();
+    fetchProjectsFromBackend();
+    fetchClaimsFromBackend();
     showToast(state.lang === 'zh' ? '数据已刷新' : 'Ledger data synced');
   });
 
@@ -4662,9 +4795,19 @@ function getProjectsStorageKey() {
   return `ledger_projects_${userKey}`;
 }
 
+function getDeletedProjectsStorageKey() {
+  const userKey = state.user?.id || 'guest';
+  return `ledger_deleted_projects_${userKey}`;
+}
+
 function getClaimsStorageKey() {
   const userKey = state.user?.id || 'guest';
   return `ledger_claims_${userKey}`;
+}
+
+function getDeletedClaimsStorageKey() {
+  const userKey = state.user?.id || 'guest';
+  return `ledger_deleted_claims_${userKey}`;
 }
 
 function getBudgetTopUpsStorageKey() {
@@ -4672,36 +4815,88 @@ function getBudgetTopUpsStorageKey() {
   return `ledger_budget_topups_${userKey}`;
 }
 
+function getDeletedIdsSet(storageKey) {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    const arr = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch (e) {
+    return new Set();
+  }
+}
+
+function addDeletedId(storageKey, id) {
+  if (!id) return;
+  try {
+    const set = getDeletedIdsSet(storageKey);
+    set.add(String(id));
+    localStorage.setItem(storageKey, JSON.stringify(Array.from(set)));
+  } catch (e) {}
+}
+
 function loadProjects() {
   try {
     const raw = localStorage.getItem(getProjectsStorageKey());
-    state.projects = raw ? JSON.parse(raw) : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    const deleted = getDeletedIdsSet(getDeletedProjectsStorageKey());
+    state.projects = (Array.isArray(parsed) ? parsed : []).filter(
+      (p) => p && p.id && !deleted.has(String(p.id)),
+    );
   } catch (e) {
     state.projects = [];
   }
 }
 
-function saveProjects(projects) {
-  state.projects = projects;
+function saveProjects(projects, syncCloudMeta = true) {
+  const deleted = getDeletedIdsSet(getDeletedProjectsStorageKey());
+  const clean = (Array.isArray(projects) ? projects : []).filter(
+    (p) => p && p.id && !deleted.has(String(p.id)),
+  );
+  state.projects = clean;
   try {
-    localStorage.setItem(getProjectsStorageKey(), JSON.stringify(projects));
+    localStorage.setItem(getProjectsStorageKey(), JSON.stringify(clean));
   } catch (e) {}
+  if (syncCloudMeta && state.user?.id) {
+    syncUserProfileToCloud({
+      ledger_projects: clean.map((p) => ({
+        id: p.id,
+        title: p.title,
+        target_amount: p.target_amount,
+        spent_amount: p.spent_amount,
+        mode: p.mode,
+        month: p.month,
+        status: p.status,
+        created_at: p.created_at,
+      })),
+    });
+  }
 }
 
 function loadClaims() {
   try {
     const raw = localStorage.getItem(getClaimsStorageKey());
-    state.claims = raw ? JSON.parse(raw) : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    const deleted = getDeletedIdsSet(getDeletedClaimsStorageKey());
+    state.claims = (Array.isArray(parsed) ? parsed : []).filter(
+      (c) => c && c.id && !deleted.has(String(c.id)),
+    );
   } catch (e) {
     state.claims = [];
   }
 }
 
-function saveClaims(claims) {
-  state.claims = claims;
+function saveClaims(claims, syncCloudMeta = true) {
+  const deleted = getDeletedIdsSet(getDeletedClaimsStorageKey());
+  const clean = (Array.isArray(claims) ? claims : []).filter(
+    (c) => c && c.id && !deleted.has(String(c.id)),
+  );
+  state.claims = clean;
   try {
-    localStorage.setItem(getClaimsStorageKey(), JSON.stringify(claims));
+    localStorage.setItem(getClaimsStorageKey(), JSON.stringify(clean));
   } catch (e) {}
+  if (syncCloudMeta && state.user?.id) {
+    syncUserProfileToCloud({ ledger_claims: clean });
+  }
 }
 
 function loadBudgetTopUps() {
@@ -4713,11 +4908,17 @@ function loadBudgetTopUps() {
   }
 }
 
-function saveBudgetTopUps(topups) {
-  state.budgetTopUps = topups;
+function saveBudgetTopUps(topups, syncCloudMeta = true) {
+  state.budgetTopUps = topups || {};
   try {
-    localStorage.setItem(getBudgetTopUpsStorageKey(), JSON.stringify(topups));
+    localStorage.setItem(
+      getBudgetTopUpsStorageKey(),
+      JSON.stringify(state.budgetTopUps),
+    );
   } catch (e) {}
+  if (syncCloudMeta && state.user?.id) {
+    syncUserProfileToCloud({ ledger_budget_topups: state.budgetTopUps });
+  }
 }
 
 function getBudgetTopUpTotal(month) {
@@ -4771,8 +4972,73 @@ function formatRecordCleanNote(note) {
   );
 }
 
+function normalizeProjectItem(d) {
+  if (!d || !d.id) return null;
+  return {
+    id: String(d.id),
+    title: d.title || '',
+    icon: SVG_ICONS.target,
+    target_amount: parseFloat(d.target_amount ?? d.targetAmount) || 0,
+    spent_amount: parseFloat(d.spent_amount ?? d.spentAmount) || 0,
+    mode: d.mode || 'budget_deduct',
+    month: d.month || getCurrentMonthKey(),
+    status: d.status || 'active',
+    created_at: d.created_at || d.createdAt || new Date().toISOString(),
+  };
+}
+
+function normalizeClaimItem(c) {
+  if (!c || !c.id) return null;
+  let friends = [];
+  if (Array.isArray(c.friends)) {
+    friends = c.friends;
+  } else if (typeof c.friends === 'string') {
+    try {
+      friends = JSON.parse(c.friends);
+    } catch (e) {
+      friends = [];
+    }
+  }
+  return {
+    id: String(c.id),
+    title: c.title || '',
+    total_amount: parseFloat(c.total_amount ?? c.totalAmount) || 0,
+    my_share: parseFloat(c.my_share ?? c.myShare) || 0,
+    friends: friends,
+    status: c.status || 'active',
+    date: c.date || getLocalDateString(),
+    created_at: c.created_at || c.createdAt || new Date().toISOString(),
+  };
+}
+
 async function fetchProjectsFromBackend() {
+  loadProjects();
+  const deleted = getDeletedIdsSet(getDeletedProjectsStorageKey());
+  const mergedMap = new Map();
+
+  // 1. Seed from user_metadata cloud backup if present
+  const metaProjects = state.user?.user_metadata?.ledger_projects;
+  if (Array.isArray(metaProjects)) {
+    metaProjects.forEach((item) => {
+      const norm = normalizeProjectItem(item);
+      if (norm && !deleted.has(norm.id)) {
+        mergedMap.set(norm.id, norm);
+      }
+    });
+  }
+
+  // 2. Seed from current local state
+  (state.projects || []).forEach((item) => {
+    const norm = normalizeProjectItem(item);
+    if (norm && !deleted.has(norm.id)) {
+      mergedMap.set(norm.id, norm);
+    }
+  });
+
   const userId = state.user?.id;
+  const supabaseIds = new Set();
+
+  // 3. Fetch from Supabase Cloud Table
   if (supabaseClient && userId) {
     try {
       const { data, error } = await supabaseClient
@@ -4781,26 +5047,19 @@ async function fetchProjectsFromBackend() {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (!error && Array.isArray(data)) {
-        state.projects = data.map((d) => ({
-          id: d.id,
-          title: d.title,
-          icon: d.icon || SVG_ICONS.target,
-          target_amount: parseFloat(d.target_amount) || 0,
-          spent_amount: parseFloat(d.spent_amount) || 0,
-          mode: d.mode,
-          month: d.month,
-          status: d.status,
-          created_at: d.created_at,
-        }));
-        saveProjects(state.projects);
-        renderSinkingFunds();
-        renderBudgetTracker();
-        updateProjectDropdownOptions();
-        return;
+        data.forEach((d) => {
+          const norm = normalizeProjectItem(d);
+          if (norm && !deleted.has(norm.id)) {
+            supabaseIds.add(norm.id);
+            mergedMap.set(norm.id, norm);
+          }
+        });
       }
     } catch (e) {}
   }
 
+  // 4. Fetch from NestJS Backend API
+  const backendIds = new Set();
   try {
     const res = await fetch('/api/projects', {
       headers: getAuthHeaders(),
@@ -4808,28 +5067,89 @@ async function fetchProjectsFromBackend() {
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data)) {
-        state.projects = data.map((d) => ({
-          id: d.id,
-          title: d.title,
-          icon: d.icon || SVG_ICONS.target,
-          target_amount: d.targetAmount,
-          spent_amount: d.spentAmount || 0,
-          mode: d.mode,
-          month: d.month,
-          status: d.status,
-          created_at: d.createdAt,
-        }));
-        saveProjects(state.projects);
-        renderSinkingFunds();
-        renderBudgetTracker();
-        updateProjectDropdownOptions();
+        data.forEach((d) => {
+          const norm = normalizeProjectItem(d);
+          if (norm && !deleted.has(norm.id)) {
+            backendIds.add(norm.id);
+            if (!mergedMap.has(norm.id)) {
+              mergedMap.set(norm.id, norm);
+            }
+          }
+        });
       }
     }
   } catch (e) {}
+
+  const finalProjects = Array.from(mergedMap.values()).sort((a, b) =>
+    String(b.created_at || '').localeCompare(String(a.created_at || '')),
+  );
+
+  saveProjects(finalProjects, false);
+  renderSinkingFunds();
+  renderBudgetTracker();
+  updateProjectDropdownOptions();
+
+  // Backfill any unsynced local projects to Supabase Cloud & Backend API
+  for (const proj of finalProjects) {
+    if (supabaseClient && userId && !supabaseIds.has(proj.id)) {
+      try {
+        await supabaseClient.from('projects').upsert({
+          id: proj.id,
+          user_id: userId,
+          title: proj.title,
+          icon: 'target',
+          target_amount: proj.target_amount,
+          spent_amount: proj.spent_amount,
+          mode: proj.mode,
+          month: proj.month,
+          status: proj.status,
+        });
+      } catch (e) {}
+    }
+    if (!backendIds.has(proj.id)) {
+      fetch('/api/projects', {
+        method: 'POST',
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          id: proj.id,
+          title: proj.title,
+          targetAmount: proj.target_amount,
+          mode: proj.mode,
+          month: proj.month,
+        }),
+      }).catch(() => {});
+    }
+  }
 }
 
 async function fetchClaimsFromBackend() {
+  loadClaims();
+  const deleted = getDeletedIdsSet(getDeletedClaimsStorageKey());
+  const mergedMap = new Map();
+
+  // 1. Seed from user_metadata cloud backup if present
+  const metaClaims = state.user?.user_metadata?.ledger_claims;
+  if (Array.isArray(metaClaims)) {
+    metaClaims.forEach((item) => {
+      const norm = normalizeClaimItem(item);
+      if (norm && !deleted.has(norm.id)) {
+        mergedMap.set(norm.id, norm);
+      }
+    });
+  }
+
+  // 2. Seed from current local state
+  (state.claims || []).forEach((item) => {
+    const norm = normalizeClaimItem(item);
+    if (norm && !deleted.has(norm.id)) {
+      mergedMap.set(norm.id, norm);
+    }
+  });
+
   const userId = state.user?.id;
+  const supabaseIds = new Set();
+
+  // 3. Fetch from Supabase Cloud Table
   if (supabaseClient && userId) {
     try {
       const { data, error } = await supabaseClient
@@ -4838,27 +5158,19 @@ async function fetchClaimsFromBackend() {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (!error && Array.isArray(data)) {
-        state.claims = data.map((c) => ({
-          id: c.id,
-          title: c.title,
-          total_amount: parseFloat(c.total_amount) || 0,
-          my_share: parseFloat(c.my_share) || 0,
-          friends: Array.isArray(c.friends)
-            ? c.friends
-            : typeof c.friends === 'string'
-              ? JSON.parse(c.friends)
-              : [],
-          status: c.status,
-          date: c.date,
-          created_at: c.created_at,
-        }));
-        saveClaims(state.claims);
-        renderClaims();
-        return;
+        data.forEach((c) => {
+          const norm = normalizeClaimItem(c);
+          if (norm && !deleted.has(norm.id)) {
+            supabaseIds.add(norm.id);
+            mergedMap.set(norm.id, norm);
+          }
+        });
       }
     } catch (e) {}
   }
 
+  // 4. Fetch from NestJS Backend API
+  const backendIds = new Set();
   try {
     const res = await fetch('/api/claims', {
       headers: getAuthHeaders(),
@@ -4866,21 +5178,57 @@ async function fetchClaimsFromBackend() {
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data)) {
-        state.claims = data.map((c) => ({
-          id: c.id,
-          title: c.title,
-          total_amount: c.totalAmount,
-          my_share: c.myShare,
-          friends: c.friends || [],
-          status: c.status,
-          date: c.date,
-          created_at: c.createdAt,
-        }));
-        saveClaims(state.claims);
-        renderClaims();
+        data.forEach((c) => {
+          const norm = normalizeClaimItem(c);
+          if (norm && !deleted.has(norm.id)) {
+            backendIds.add(norm.id);
+            if (!mergedMap.has(norm.id)) {
+              mergedMap.set(norm.id, norm);
+            }
+          }
+        });
       }
     }
   } catch (e) {}
+
+  const finalClaims = Array.from(mergedMap.values()).sort((a, b) =>
+    String(b.created_at || '').localeCompare(String(a.created_at || '')),
+  );
+
+  saveClaims(finalClaims, false);
+  renderClaims();
+
+  // Backfill any unsynced local claims to Supabase Cloud & Backend API
+  for (const claim of finalClaims) {
+    if (supabaseClient && userId && !supabaseIds.has(claim.id)) {
+      try {
+        await supabaseClient.from('claims').upsert({
+          id: claim.id,
+          user_id: userId,
+          title: claim.title,
+          total_amount: claim.total_amount,
+          my_share: claim.my_share,
+          friends: claim.friends,
+          status: claim.status,
+          date: claim.date,
+        });
+      } catch (e) {}
+    }
+    if (!backendIds.has(claim.id)) {
+      fetch('/api/claims', {
+        method: 'POST',
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          id: claim.id,
+          title: claim.title,
+          totalAmount: claim.total_amount,
+          myShare: claim.my_share,
+          friends: claim.friends,
+          date: claim.date,
+        }),
+      }).catch(() => {});
+    }
+  }
 }
 
 function renderProjectsView() {
@@ -5124,7 +5472,7 @@ function closeNewProjectModal() {
   popModalHistoryIfCleared();
 }
 
-function saveNewProject() {
+async function saveNewProject() {
   const title = (elements.projectInputTitle?.value || '').trim();
   const amount = parseFloat(elements.projectInputAmount?.value) || 0;
   const isBudget = elements.btnModeBudgetDeduct?.classList.contains('active');
@@ -5163,12 +5511,20 @@ function saveNewProject() {
   saveProjects(list);
   renderSinkingFunds();
   renderBudgetTracker();
+  updateProjectDropdownOptions();
+
+  triggerHaptic(15);
+  closeNewProjectModal();
+  showToast(
+    state.lang === 'zh'
+      ? `专款【${title}】建立成功`
+      : `Project ${title} created!`,
+  );
 
   // Sync to Supabase Cloud
   if (supabaseClient && state.user?.id) {
-    supabaseClient
-      .from('projects')
-      .insert({
+    try {
+      await supabaseClient.from('projects').upsert({
         id: newProject.id,
         user_id: state.user.id,
         title: newProject.title,
@@ -5178,30 +5534,24 @@ function saveNewProject() {
         mode: newProject.mode,
         month: newProject.month,
         status: newProject.status,
-      })
-      .catch(() => {});
+      });
+    } catch (e) {}
   }
 
   // Sync to backend API
-  fetch('/api/projects', {
-    method: 'POST',
-    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({
-      id: newProject.id,
-      title: newProject.title,
-      targetAmount: newProject.target_amount,
-      mode: newProject.mode,
-      month: newProject.month,
-    }),
-  }).catch(() => {});
-
-  triggerHaptic(15);
-  closeNewProjectModal();
-  showToast(
-    state.lang === 'zh'
-      ? `专款【${title}】建立成功`
-      : `Project ${title} created!`,
-  );
+  try {
+    await fetch('/api/projects', {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        id: newProject.id,
+        title: newProject.title,
+        targetAmount: newProject.target_amount,
+        mode: newProject.mode,
+        month: newProject.month,
+      }),
+    });
+  } catch (e) {}
 }
 
 // Release Remaining Sinking Fund to Budget
@@ -5229,18 +5579,20 @@ function releaseFundRemainingToBudget(fundId) {
       saveProjects(state.projects);
       renderSinkingFunds();
       renderBudgetTracker();
+      updateProjectDropdownOptions();
 
       if (supabaseClient && state.user?.id) {
-        supabaseClient
-          .from('projects')
-          .update({
-            target_amount: spent,
-            status: 'settled',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', fundId)
-          .eq('user_id', state.user.id)
-          .catch(() => {});
+        try {
+          await supabaseClient
+            .from('projects')
+            .update({
+              target_amount: spent,
+              status: 'settled',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', fundId)
+            .eq('user_id', state.user.id);
+        } catch (e) {}
       }
 
       try {
@@ -5277,17 +5629,19 @@ function settleFund(fundId) {
       saveProjects(state.projects);
       renderSinkingFunds();
       renderBudgetTracker();
+      updateProjectDropdownOptions();
 
       if (supabaseClient && state.user?.id) {
-        supabaseClient
-          .from('projects')
-          .update({
-            status: 'settled',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', fundId)
-          .eq('user_id', state.user.id)
-          .catch(() => {});
+        try {
+          await supabaseClient
+            .from('projects')
+            .update({
+              status: 'settled',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', fundId)
+            .eq('user_id', state.user.id);
+        } catch (e) {}
       }
 
       try {
@@ -5323,18 +5677,21 @@ function deleteProject(fundId) {
     confirmText: isZh ? '确认撤销' : 'Delete Fund',
     danger: true,
     onConfirm: async () => {
+      addDeletedId(getDeletedProjectsStorageKey(), fundId);
       state.projects = (state.projects || []).filter((p) => p.id !== fundId);
       saveProjects(state.projects);
       renderSinkingFunds();
       renderBudgetTracker();
+      updateProjectDropdownOptions();
 
       if (supabaseClient && state.user?.id) {
-        supabaseClient
-          .from('projects')
-          .delete()
-          .eq('id', fundId)
-          .eq('user_id', state.user.id)
-          .catch(() => {});
+        try {
+          await supabaseClient
+            .from('projects')
+            .delete()
+            .eq('id', fundId)
+            .eq('user_id', state.user.id);
+        } catch (e) {}
       }
 
       try {
@@ -5361,15 +5718,16 @@ async function toggleClaimFriendPaid(claimId, friendIdx) {
   renderClaims();
 
   if (supabaseClient && state.user?.id) {
-    supabaseClient
-      .from('claims')
-      .update({
-        friends: claim.friends,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', claimId)
-      .eq('user_id', state.user.id)
-      .catch(() => {});
+    try {
+      await supabaseClient
+        .from('claims')
+        .update({
+          friends: claim.friends,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', claimId)
+        .eq('user_id', state.user.id);
+    } catch (e) {}
   }
 
   try {
@@ -5413,16 +5771,17 @@ function settleAllClaim(claimId) {
       renderClaims();
 
       if (supabaseClient && state.user?.id) {
-        supabaseClient
-          .from('claims')
-          .update({
-            friends: claim.friends,
-            status: 'settled',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', claimId)
-          .eq('user_id', state.user.id)
-          .catch(() => {});
+        try {
+          await supabaseClient
+            .from('claims')
+            .update({
+              friends: claim.friends,
+              status: 'settled',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', claimId)
+            .eq('user_id', state.user.id);
+        } catch (e) {}
       }
 
       try {
@@ -5451,17 +5810,19 @@ function deleteClaim(claimId) {
     confirmText: isZh ? '确认删除' : 'Delete Claim',
     danger: true,
     onConfirm: async () => {
+      addDeletedId(getDeletedClaimsStorageKey(), claimId);
       state.claims = (state.claims || []).filter((c) => c.id !== claimId);
       saveClaims(state.claims);
       renderClaims();
 
       if (supabaseClient && state.user?.id) {
-        supabaseClient
-          .from('claims')
-          .delete()
-          .eq('id', claimId)
-          .eq('user_id', state.user.id)
-          .catch(() => {});
+        try {
+          await supabaseClient
+            .from('claims')
+            .delete()
+            .eq('id', claimId)
+            .eq('user_id', state.user.id);
+        } catch (e) {}
       }
 
       try {

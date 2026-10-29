@@ -87,6 +87,16 @@ export class RecordsController {
   }
 
   /**
+   * HTTP GET /api/records/storage-status
+   * Reports multi-user storage capacity and quota health metrics.
+   */
+  @Get('storage-status')
+  @ApiOperation({ summary: 'Get multi-user storage metrics and quota health' })
+  async getStorageStatus(@Headers('x-user-id') userId?: string) {
+    return await this.recordsService.getStorageStatus(userId);
+  }
+
+  /**
    * HTTP GET /api/records/archive
    * Retrieves historical records older than the specified retention threshold.
    */

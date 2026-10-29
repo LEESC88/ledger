@@ -1816,9 +1816,10 @@
                 id="retentionYearsSelect"
                 class="header-select select-fullwidth"
               >
+                <option value="current_year" selected>📅 本年度账单 (今年至今)</option>
                 <option value="1">&gt; 1 Year (365 Days)</option>
                 <option value="2">&gt; 2 Years (730 Days)</option>
-                <option value="3" selected>&gt; 3 Years (1095 Days)</option>
+                <option value="3">&gt; 3 Years (1095 Days)</option>
                 <option value="5">&gt; 5 Years (1825 Days)</option>
               </select>
             </div>
@@ -1830,7 +1831,7 @@
               <div class="status-card-stat">
                 <span id="retentionMatchCount" class="stat-highlight">0</span>
                 <span class="stat-desc"
-                  ><span data-i18n="before_date">before</span>
+                  ><span id="retentionCutoffPrefix" data-i18n="before_date">before</span>
                   <strong id="retentionCutoffDate">&mdash;</strong></span
                 >
               </div>
@@ -1839,10 +1840,10 @@
 
           <div class="modal-footer">
             <button id="downloadArchiveBtn" class="btn-modal-secondary">
-              <span data-i18n="download_archive_btn">1. Backup CSV</span>
+              <span data-i18n="download_archive_btn">Backup CSV</span>
             </button>
             <button id="purgeOldRecordsBtn" class="btn-modal-danger">
-              <span data-i18n="purge_btn">2. Purge Old</span>
+              <span data-i18n="purge_btn">Purge Old</span>
             </button>
           </div>
         </div>

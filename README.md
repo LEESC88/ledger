@@ -102,10 +102,16 @@ Built on a **Local-First + Direct Supabase Cloud (PostgreSQL)** architecture, LE
 * **Native Bottom Sheet**: Transaction modal features a physical drag handle with smooth pull-down swipe-to-dismiss gesture.
 * **Tactile Button Press**: Global `:active` scale physics (`0.96`) and smooth 150ms page cross-fade transitions.
 
-#### 6. 🛡️ Enterprise Security & Data Ownership
+#### 6. 🎯 Sinking Funds & 👥 Split Bill Claims
+* **Sinking Funds (专款专用)**: Set dedicated savings targets (e.g., Annual Travel, Car Maintenance, Tech Devices) with dual budgeting modes (`Budget Deduct` vs `Extra Target Fund`). Automatically track spent progress against reserved allocations and release remaining balances back to the active month's budget upon completion.
+* **Split Bill Claims (代垫与报销)**: Itemize multi-person shared expenses and group activities with granular per-friend debt tracking, individual payment status toggling, and one-tap total settlements.
+* **Triple-Layer Cloud Persistence**: Synchronized across Supabase PostgreSQL tables (`projects`, `claims`), Supabase Auth user metadata (`user_metadata`), and NestJS SQLite backend with tombstone-aware conflict resolution to prevent accidental overwrites or data loss upon refresh.
+
+#### 7. 🛡️ Enterprise Security, Data Retention & CSV Export
 * **Native Google OAuth 2.0**: Zero-port deep-link scheme (`com.leesc88.ledger://oauth`) with isolated account data.
 * **Row-Level Security (RLS)**: Data isolation enforced at the PostgreSQL database level.
-* **Historical Data Retention & RFC 4180 CSV Export**: Backup records older than 1, 2, 3, or 5 years and purge obsolete history on demand.
+* **Flexible CSV Export & Native Android Sheet**: Export transactions for the current year or historical thresholds (1, 2, 3, or 5 years) directly via the native Android Share/Save sheet into your phone's File Manager.
+* **Storage Protection**: Built-in 50,000 record capacity limit per user with visual warning badges to prevent cloud database exhaustion.
 
 ---
 
@@ -290,11 +296,25 @@ cd android
 * 支持单手下滑超过 80px 触发阻尼跟手顺滑关闭；
 * 内置金额快捷递增药丸（`+10`、`+20`、`+50`、`+100`、`Reset`）与九宫格大图标分类选择器。
 
-#### 6. 历史归档与数据导出（Retention & RFC 4180 CSV）
-* 随时根据选择的时间阈值（1年、2年、3年推荐、5年前）一键筛选老账目；
-* 支持一键导出标准符合 RFC 4180 规范的 UTF-8 CSV 备份，并可选择从云端安全清空超期记录。
+#### 6. 专款储备（Sinking Funds）与 AA 制代垫报销（Split Bill Claims）
+* **专项储备金（专款专用）**：
+  * 支持为特定目标建立独立储蓄资金池（如汽车保养、年度旅游、数码设备采购）；
+  * 双归集模式：**从当月预算扣除（Budget Deduct）** 或 **额外专款储备（Extra Target Fund）**；
+  * 记账时可直接勾选关联专款，实时扣减储备进度；专款结项时支持一键将剩余款项**回滚释放至当月预算**。
+* **AA 制代垫与报销管理**：
+  * 多人聚餐、活动采购分账明细，精确记录每位好友应付金额及本人分摊；
+  * 支持逐个好友标记「已结清」或一键「全额结清归档」。
+* **三重云端持久化保障**：
+  * **PostgreSQL 云端业务表**（`projects`、`claims` 表）实时读写；
+  * **Supabase Auth 元数据自动备份**（`user_metadata` 跨设备即时同步）；
+  * **NestJS SQLite 本地/服务端双向同步**，搭载墓碑防误删合并（Tombstone-aware Merge）与缺失自动回填，刷新零丢失。
 
-#### 7. 模块化多语言与外观主题
+#### 7. 历史归档、本年数据与 RFC 4180 CSV 导出
+* **全周期与本年度导出**：支持即时导出**「📅 本年度账单」**及 1年、2年、3年、5年前的历史账单；
+* **原生安卓文件管理器直存**：在手机端一键唤起系统分享与保存面板，可自由选择保存到本地任意目录；
+* **容量防爆保护**：内置单用户 50,000 条记录容量限额与预警防护，有效防止云端数据库过载。
+
+#### 8. 模块化多语言与外观主题
 * **独立字典文件（[public/i18n.js](public/i18n.js)）**：116 个中英文键值按 10 个业务模块严谨归类，支持中文与英文一秒无刷新热切换；
 * **三模外观**：纯净高对比浅色（Light）、深邃蓝黑防眩晕深色（Dark）与跟随系统（System）。
 

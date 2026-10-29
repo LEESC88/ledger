@@ -1,6 +1,6 @@
 {
-  "version": "1.4.1",
+  "version": "1.4.2",
   "releaseDate": "2026-10-29",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk",
-  "notes": "Added native Android share and save sheet for CSV exports allowing direct saving to phone file manager, resolved consecutive streak count updating across midnight and upon recording, fixed background app wakeup date auto-refresh, and optimized real-time streak UI synchronization."
+  "notes": "Added current year CSV export option, fixed CSV export click response and removed button prefixes, resolved sinking funds and split bill claims persistence and cloud sync across refresh, enhanced triple-layer persistence with Supabase metadata backup and local database fallback, and added 50k record safety limits."
 }
