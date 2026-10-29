@@ -80,20 +80,90 @@ const SVG_ICONS = {
 
 // Visual Category Metadata (Line Icons, High-Contrast Palette Colors & Bilingual Labels)
 const CATEGORY_META = {
-  'Food & Dining': { icon: SVG_ICONS.dining, en: 'Dining', zh: '餐饮美食', color: '#F97316' },
-  Transportation: { icon: SVG_ICONS.transport, en: 'Transport', zh: '交通出行', color: '#0EA5E9' },
-  Shopping: { icon: SVG_ICONS.shopping, en: 'Shopping', zh: '购物消费', color: '#EC4899' },
-  'Housing & Utilities': { icon: SVG_ICONS.housing, en: 'Housing', zh: '居家水电', color: '#EAB308' },
-  Entertainment: { icon: SVG_ICONS.entertainment, en: 'Leisure', zh: '休闲娱乐', color: '#8B5CF6' },
-  Healthcare: { icon: SVG_ICONS.medical, en: 'Medical', zh: '医疗健康', color: '#EF4444' },
-  Subscriptions: { icon: SVG_ICONS.subscriptions, en: 'Subscript.', zh: '会员订阅', color: '#06B6D4' },
-  'Other Expense': { icon: SVG_ICONS.otherExpense, en: 'Other', zh: '其他支出', color: '#64748B' },
-  Salary: { icon: SVG_ICONS.salary, en: 'Salary', zh: '薪资收入', color: '#10B981' },
-  Freelance: { icon: SVG_ICONS.freelance, en: 'Freelance', zh: '兼职副业', color: '#14B8A6' },
-  'Investment & Dividends': { icon: SVG_ICONS.invest, en: 'Invest', zh: '投资理财', color: '#6366F1' },
-  Bonus: { icon: SVG_ICONS.bonus, en: 'Bonus', zh: '奖金补贴', color: '#F59E0B' },
-  Refund: { icon: SVG_ICONS.refund, en: 'Refund', zh: '退款报销', color: '#3B82F6' },
-  'Other Income': { icon: SVG_ICONS.otherIncome, en: 'Other', zh: '其他收入', color: '#A855F7' },
+  'Food & Dining': {
+    icon: SVG_ICONS.dining,
+    en: 'Dining',
+    zh: '餐饮美食',
+    color: '#F97316',
+  },
+  Transportation: {
+    icon: SVG_ICONS.transport,
+    en: 'Transport',
+    zh: '交通出行',
+    color: '#0EA5E9',
+  },
+  Shopping: {
+    icon: SVG_ICONS.shopping,
+    en: 'Shopping',
+    zh: '购物消费',
+    color: '#EC4899',
+  },
+  'Housing & Utilities': {
+    icon: SVG_ICONS.housing,
+    en: 'Housing',
+    zh: '居家水电',
+    color: '#EAB308',
+  },
+  Entertainment: {
+    icon: SVG_ICONS.entertainment,
+    en: 'Leisure',
+    zh: '休闲娱乐',
+    color: '#8B5CF6',
+  },
+  Healthcare: {
+    icon: SVG_ICONS.medical,
+    en: 'Medical',
+    zh: '医疗健康',
+    color: '#EF4444',
+  },
+  Subscriptions: {
+    icon: SVG_ICONS.subscriptions,
+    en: 'Subscript.',
+    zh: '会员订阅',
+    color: '#06B6D4',
+  },
+  'Other Expense': {
+    icon: SVG_ICONS.otherExpense,
+    en: 'Other',
+    zh: '其他支出',
+    color: '#64748B',
+  },
+  Salary: {
+    icon: SVG_ICONS.salary,
+    en: 'Salary',
+    zh: '薪资收入',
+    color: '#10B981',
+  },
+  Freelance: {
+    icon: SVG_ICONS.freelance,
+    en: 'Freelance',
+    zh: '兼职副业',
+    color: '#14B8A6',
+  },
+  'Investment & Dividends': {
+    icon: SVG_ICONS.invest,
+    en: 'Invest',
+    zh: '投资理财',
+    color: '#6366F1',
+  },
+  Bonus: {
+    icon: SVG_ICONS.bonus,
+    en: 'Bonus',
+    zh: '奖金补贴',
+    color: '#F59E0B',
+  },
+  Refund: {
+    icon: SVG_ICONS.refund,
+    en: 'Refund',
+    zh: '退款报销',
+    color: '#3B82F6',
+  },
+  'Other Income': {
+    icon: SVG_ICONS.otherIncome,
+    en: 'Other',
+    zh: '其他收入',
+    color: '#A855F7',
+  },
 };
 
 // Full Bilingual Dictionary (Loaded dynamically from public/i18n.js)
@@ -130,8 +200,18 @@ let state = {
 const DEFAULT_ACCOUNTS = [
   { name: 'Cash', icon: SVG_ICONS.cash, type: 'cash', zh: '现金 (Cash)' },
   { name: 'eWallet', icon: SVG_ICONS.ewallet, type: 'ewallet', zh: '电子钱包' },
-  { name: 'Bank Card', icon: SVG_ICONS.bank, type: 'bank', zh: '银行卡 (Bank)' },
-  { name: 'Credit Card', icon: SVG_ICONS.credit, type: 'credit', zh: '信用卡 (Credit)' },
+  {
+    name: 'Bank Card',
+    icon: SVG_ICONS.bank,
+    type: 'bank',
+    zh: '银行卡 (Bank)',
+  },
+  {
+    name: 'Credit Card',
+    icon: SVG_ICONS.credit,
+    type: 'credit',
+    zh: '信用卡 (Credit)',
+  },
 ];
 
 function getAccountMeta(name) {
@@ -471,6 +551,10 @@ function setAppLanguage(lang) {
   updateMonthFilterDropdown(state.records);
   renderTable();
   renderBudgetTracker();
+  renderSinkingFunds();
+  renderClaims();
+  renderBudgetTopupHistory();
+  updateProjectDropdownOptions();
   updateSyncStatusUI();
   updateAccountModalData();
   renderAccountsCenter();
@@ -483,11 +567,140 @@ function setAppLanguage(lang) {
 }
 
 /**
+ * Global Modal History Stack & Hardware Back Button / Escape Key Guard
+ */
+let isPoppingModalHistory = false;
+
+function hasAnyOpenModal() {
+  const modalEls = [
+    elements.avatarLightboxModal,
+    elements.confirmActionModal,
+    elements.inAppUpdateModal,
+    elements.topupBudgetModal,
+    elements.newProjectModal,
+    elements.budgetModal,
+    elements.retentionModal,
+    elements.createEntryModal,
+  ];
+  return modalEls.some((el) => el && !el.classList.contains('hidden'));
+}
+
+function pushModalHistoryState() {
+  try {
+    if (!window.history.state?.ledgerModal) {
+      window.history.pushState({ ledgerModal: true }, '');
+    }
+  } catch (e) {}
+}
+
+function popModalHistoryIfCleared(fromPopState = false) {
+  if (fromPopState) return;
+  try {
+    if (!hasAnyOpenModal() && window.history.state?.ledgerModal) {
+      isPoppingModalHistory = true;
+      window.history.back();
+    }
+  } catch (e) {
+    isPoppingModalHistory = false;
+  }
+}
+
+function closeTopmostActiveModal(fromPopState = false) {
+  if (
+    elements.avatarLightboxModal &&
+    !elements.avatarLightboxModal.classList.contains('hidden')
+  ) {
+    closeAvatarLightbox(fromPopState);
+    return true;
+  }
+  if (
+    elements.confirmActionModal &&
+    !elements.confirmActionModal.classList.contains('hidden')
+  ) {
+    closeConfirmModal(fromPopState);
+    return true;
+  }
+  if (
+    elements.inAppUpdateModal &&
+    !elements.inAppUpdateModal.classList.contains('hidden')
+  ) {
+    closeInAppUpdateModal(fromPopState);
+    return true;
+  }
+  if (
+    elements.topupBudgetModal &&
+    !elements.topupBudgetModal.classList.contains('hidden')
+  ) {
+    closeTopupBudgetModal(fromPopState);
+    return true;
+  }
+  if (
+    elements.newProjectModal &&
+    !elements.newProjectModal.classList.contains('hidden')
+  ) {
+    closeNewProjectModal(fromPopState);
+    return true;
+  }
+  if (
+    elements.budgetModal &&
+    !elements.budgetModal.classList.contains('hidden')
+  ) {
+    closeBudgetModal(fromPopState);
+    return true;
+  }
+  if (
+    elements.retentionModal &&
+    !elements.retentionModal.classList.contains('hidden')
+  ) {
+    closeRetentionModal(fromPopState);
+    return true;
+  }
+  if (
+    elements.createEntryModal &&
+    !elements.createEntryModal.classList.contains('hidden')
+  ) {
+    closeCreateModal(fromPopState);
+    return true;
+  }
+  if (
+    elements.profileDropdown &&
+    !elements.profileDropdown.classList.contains('hidden')
+  ) {
+    closeProfileDropdown();
+    return true;
+  }
+  return false;
+}
+
+function initModalBackAndEscapeGuards() {
+  window.addEventListener('popstate', () => {
+    if (isPoppingModalHistory) {
+      isPoppingModalHistory = false;
+      return;
+    }
+    if (hasAnyOpenModal()) {
+      closeTopmostActiveModal(true);
+      if (hasAnyOpenModal()) {
+        pushModalHistoryState();
+      }
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeTopmostActiveModal(false);
+    }
+  });
+}
+
+/**
  * Switch Active Page View (ledger | analytics | settings)
  */
 function switchAppPage(pageName) {
   triggerHaptic(10);
-  const target = ['ledger', 'projects', 'analytics', 'settings'].includes(pageName)
+  const target = ['ledger', 'projects', 'analytics', 'settings'].includes(
+    pageName,
+  )
     ? pageName
     : 'ledger';
   state.activePage = target;
@@ -529,21 +742,23 @@ function openCreateModal() {
   closeProfileDropdown();
   updateProjectDropdownOptions();
   if (elements.inputDate && !elements.inputDate.value) {
-    elements.inputDate.value = new Date().toISOString().split('T')[0];
+    elements.inputDate.value = getLocalDateString();
   }
   renderCategoryGrid(state.currentType);
   renderAccountPicker();
   elements.createEntryModal?.classList.remove('hidden');
+  pushModalHistoryState();
   setTimeout(() => {
     elements.inputAmount?.focus();
   }, 60);
 }
 
-function closeCreateModal() {
+function closeCreateModal(fromPopState = false) {
   elements.createEntryModal?.classList.add('hidden');
   if (elements.createSheetDialog) {
     elements.createSheetDialog.style.transform = '';
   }
+  popModalHistoryIfCleared(fromPopState === true);
 }
 
 /**
@@ -1113,7 +1328,8 @@ function renderBudgetTracker() {
 
   const totalExpense = Number(state.summary?.totalExpense || 0);
   const baseBudget = Number(state.monthlyBudget || 3000);
-  const targetMonth = state.currentMonth === 'all' ? getCurrentMonthKey() : state.currentMonth;
+  const targetMonth =
+    state.currentMonth === 'all' ? getCurrentMonthKey() : state.currentMonth;
   const topUps = getBudgetTopUpTotal(targetMonth);
   const lockedFunds = getLockedSinkingFundAmount(targetMonth);
   const effectiveBudget = Math.max(0, baseBudget + topUps - lockedFunds);
@@ -1123,10 +1339,17 @@ function renderBudgetTracker() {
   if (elements.budgetFormulaRow && elements.budgetFormulaText) {
     if (topUps > 0 || lockedFunds > 0) {
       elements.budgetFormulaRow.classList.remove('hidden');
-      elements.budgetFormulaText.textContent = `${t('budget_base_label')}: ${sym} ${formatNumber(baseBudget)} ` +
-        (topUps > 0 ? `+ ${t('budget_topup_label')}: ${sym} ${formatNumber(topUps)} ` : '') +
-        (lockedFunds > 0 ? `- ${t('budget_locked_label')}: ${sym} ${formatNumber(lockedFunds)} ` : '') +
-        `= 有效日常: ${sym} ${formatNumber(effectiveBudget)}`;
+      const effLabel =
+        state.lang === 'zh' ? '有效日常' : 'Effective Daily';
+      elements.budgetFormulaText.textContent =
+        `${t('budget_base_label')}: ${sym} ${formatNumber(baseBudget)} ` +
+        (topUps > 0
+          ? `+ ${t('budget_topup_label')}: ${sym} ${formatNumber(topUps)} `
+          : '') +
+        (lockedFunds > 0
+          ? `- ${t('budget_locked_label')}: ${sym} ${formatNumber(lockedFunds)} `
+          : '') +
+        `= ${effLabel}: ${sym} ${formatNumber(effectiveBudget)}`;
     } else {
       elements.budgetFormulaRow.classList.add('hidden');
     }
@@ -1135,7 +1358,10 @@ function renderBudgetTracker() {
   // Update Striped Locked Bar in Track
   if (elements.budgetLockedBar) {
     const totalCapacity = baseBudget + topUps;
-    const lockedPct = totalCapacity > 0 ? Math.min(100, Math.round((lockedFunds / totalCapacity) * 100)) : 0;
+    const lockedPct =
+      totalCapacity > 0
+        ? Math.min(100, Math.round((lockedFunds / totalCapacity) * 100))
+        : 0;
     elements.budgetLockedBar.style.width = `${lockedPct}%`;
   }
 
@@ -1144,7 +1370,12 @@ function renderBudgetTracker() {
     const eroded = totalExpense - effectiveBudget;
     if (!state._hasAlertedErosion) {
       state._hasAlertedErosion = true;
-      showToast(`注意：日常消费已超标透支 ${sym} ${formatNumber(eroded)}，侵蚀了专款储备！`, true);
+      showToast(
+        state.lang === 'zh'
+          ? `注意：日常消费已超标透支 ${sym} ${formatNumber(eroded)}，侵蚀了专款储备！`
+          : `Alert: Daily spending exceeded by ${sym} ${formatNumber(eroded)}, eroding sinking funds!`,
+        true,
+      );
     }
   }
 
@@ -1216,11 +1447,13 @@ function openBudgetModal() {
   if (elements.budgetInputAmount)
     elements.budgetInputAmount.value = state.monthlyBudget || 3000;
   elements.budgetModal.classList.remove('hidden');
+  pushModalHistoryState();
   elements.budgetInputAmount?.focus();
 }
 
-function closeBudgetModal() {
+function closeBudgetModal(fromPopState = false) {
   elements.budgetModal?.classList.add('hidden');
+  popModalHistoryIfCleared(fromPopState === true);
 }
 
 function handleSaveBudget() {
@@ -1427,6 +1660,19 @@ function renderRecordRowHtml(record, sym) {
 }
 
 /**
+ * Format a Date object into local 'YYYY-MM-DD' string without UTC timezone offset.
+ *
+ * @param {Date} [d=new Date()] - The Date instance to format
+ * @returns {string} Formatted local date string 'YYYY-MM-DD'
+ */
+function getLocalDateString(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/**
  * Format a YYYY-MM-DD date string into a localized human-readable date
  * e.g., "10月26日 周日" or "Sun, Oct 26"
  */
@@ -1474,75 +1720,23 @@ function formatDisplayDate(dateStr) {
 }
 
 /**
- * ============================================================================
- * ✍️ YOUR TURN TO IMPLEMENT: groupRecordsByDate(records)
- * ============================================================================
- * Task:
  * Transform an array of transaction records into an array of date-grouped
  * objects sorted by date in descending order (newest date first).
  *
  * @param {Array<Object>} records - Array of transaction record objects
- *   Each record contains: { id, date: "YYYY-MM-DD", type: "expense"|"income", amount: number, ... }
- * @returns {Array<Object>} Array of date-grouped objects with structure:
- *   [
- *     {
- *       date: "2026-10-26",
- *       relativeLabel: "Today" | "Yesterday" | "", // or localized "今天" | "昨天" if state.lang === 'zh'
- *       totalExpense: 45.00,
- *       totalIncome: 0.00,
- *       records: [ ...records on this date... ]
- *     },
- *     ...
- *   ]
- *
- * STEP-BY-STEP IMPLEMENTATION HINTS:
- * 1. Check if records is empty or falsy:
- *      if (!records || records.length === 0) return [];
- * 2. Get today's and yesterday's dates in "YYYY-MM-DD" format:
- *      const now = new Date();
- *      const today = now.toISOString().split('T')[0];
- *      now.setDate(now.getDate() - 1);
- *      const yesterday = now.toISOString().split('T')[0];
- * 3. Group records using a Map or Object:
- *      const groupsMap = new Map();
- *      for (const record of records) {
- *        if (!record.date) continue;
- *        if (!groupsMap.has(record.date)) {
- *          let relative = '';
- *          if (record.date === today) {
- *            relative = state.lang === 'zh' ? '今天' : 'Today';
- *          } else if (record.date === yesterday) {
- *            relative = state.lang === 'zh' ? '昨天' : 'Yesterday';
- *          }
- *          groupsMap.set(record.date, {
- *            date: record.date,
- *            relativeLabel: relative,
- *            totalExpense: 0,
- *            totalIncome: 0,
- *            records: []
- *          });
- *        }
- *        const group = groupsMap.get(record.date);
- *        if (record.type === 'expense') {
- *          group.totalExpense += Number(record.amount || 0);
- *        } else if (record.type === 'income') {
- *          group.totalIncome += Number(record.amount || 0);
- *        }
- *        group.records.push(record);
- *      }
- * 4. Sort the groups by date descending:
- *      const sortedGroups = Array.from(groupsMap.values()).sort((a, b) => b.date.localeCompare(a.date));
- * 5. Return sortedGroups.
- * ============================================================================
+ * @returns {Array<Object>} Array of date-grouped objects
  */
 function groupRecordsByDate(records) {
-  // ✍️ YOUR TURN: Write your code below this line:
   if (!records || records.length === 0) return [];
 
   const now = new Date();
-  const today = now.toISOString().split('T')[0];
-  now.setDate(now.getDate() - 1);
-  const yesterday = now.toISOString().split('T')[0];
+  const today = getLocalDateString(now);
+  const yesterdayDate = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - 1,
+  );
+  const yesterday = getLocalDateString(yesterdayDate);
 
   const groupsMap = new Map();
   for (const record of records) {
@@ -1742,17 +1936,37 @@ async function handleRecordSubmit(e) {
 
     // Check Project & Split Bill Associations
     const selectedProjectId = elements.entryProjectSelect?.value;
-    const isSplitActive = elements.toggleSplitBillBtn?.classList.contains('active');
+    const isSplitActive =
+      elements.toggleSplitBillBtn?.classList.contains('active');
 
     let finalAmount = payload.amount;
     let finalNote = payload.note || '';
 
     if (selectedProjectId) {
-      const fund = (state.projects || []).find((p) => p.id === selectedProjectId);
+      const fund = (state.projects || []).find(
+        (p) => p.id === selectedProjectId,
+      );
       if (fund) {
-        fund.spent_amount = (parseFloat(fund.spent_amount) || 0) + payload.amount;
+        fund.spent_amount =
+          (parseFloat(fund.spent_amount) || 0) + payload.amount;
         saveProjects(state.projects);
         finalNote = `[专款: ${fund.title}] ${finalNote}`.trim();
+
+        // Sync updated spent_amount to Supabase Cloud
+        if (supabaseClient && state.user?.id) {
+          supabaseClient
+            .from('projects')
+            .update({ spent_amount: fund.spent_amount })
+            .eq('id', fund.id)
+            .catch(() => {});
+        }
+
+        // Sync updated spent_amount to NestJS backend API
+        fetch(`/api/projects/${fund.id}/spent`, {
+          method: 'PATCH',
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ spentAmount: fund.spent_amount }),
+        }).catch(() => {});
       }
     }
 
@@ -1762,11 +1976,15 @@ async function handleRecordSubmit(e) {
       finalNote = `[AA分摊: 总付 RM ${payload.amount}] ${finalNote}`.trim();
 
       // Collect friend rows
-      const friendRows = elements.splitFriendsList?.querySelectorAll('.split-friend-row') || [];
+      const friendRows =
+        elements.splitFriendsList?.querySelectorAll('.split-friend-row') || [];
       const friends = [];
       friendRows.forEach((row) => {
-        const name = (row.querySelector('.friend-name-input')?.value || '').trim();
-        const amt = parseFloat(row.querySelector('.friend-amount-input')?.value) || 0;
+        const name = (
+          row.querySelector('.friend-name-input')?.value || ''
+        ).trim();
+        const amt =
+          parseFloat(row.querySelector('.friend-amount-input')?.value) || 0;
         if (name && amt > 0) {
           friends.push({ name, amount: amt, paid: false });
         }
@@ -1789,22 +2007,26 @@ async function handleRecordSubmit(e) {
 
         // Sync claim to Supabase Cloud & backend API
         if (supabaseClient && state.user?.id) {
-          supabaseClient.from('claims').insert({
-            id: claim.id,
-            user_id: state.user.id,
-            title: claim.title,
-            total_amount: claim.total_amount,
-            my_share: claim.my_share,
-            friends: claim.friends,
-            status: claim.status,
-            date: claim.date,
-          }).catch(() => {});
+          supabaseClient
+            .from('claims')
+            .insert({
+              id: claim.id,
+              user_id: state.user.id,
+              title: claim.title,
+              total_amount: claim.total_amount,
+              my_share: claim.my_share,
+              friends: claim.friends,
+              status: claim.status,
+              date: claim.date,
+            })
+            .catch(() => {});
         }
 
         fetch('/api/claims', {
           method: 'POST',
           headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({
+            id: claim.id,
             title: claim.title,
             totalAmount: claim.total_amount,
             myShare: claim.my_share,
@@ -1817,6 +2039,9 @@ async function handleRecordSubmit(e) {
 
     payload.amount = finalAmount;
     payload.note = finalNote;
+    if (selectedProjectId) {
+      payload.project_id = selectedProjectId;
+    }
 
     if (supabaseClient && userId) {
       const { error } = await supabaseClient
@@ -1893,58 +2118,116 @@ async function handleRecordSubmit(e) {
 /**
  * Delete Record Action
  */
-window.handleDelete = async function (id) {
+window.handleDelete = function (id) {
   const isDraft = String(id).startsWith('draft-');
-  const confirmMsg =
-    state.lang === 'zh'
-      ? '确定要删除这条账单记录吗？'
-      : 'Are you sure you want to delete this transaction?';
-  if (!confirm(confirmMsg)) {
-    return;
-  }
-  triggerHaptic(12);
+  const recordToDelete = state.records.find((r) => String(r.id) === String(id));
+  const descText = recordToDelete
+    ? `${recordToDelete.date} · ${getCategoryDisplayLabel(recordToDelete.category)} · ${state.currency || 'RM'} ${formatNumber(recordToDelete.amount)}`
+    : '';
 
-  if (isDraft) {
-    let queue = getOfflineQueue();
-    queue = queue.filter((item) => String(item.id) !== String(id));
-    saveOfflineQueue(queue);
+  showConfirmModal({
+    title: state.lang === 'zh' ? '删除账单明细' : 'Delete Transaction',
+    subtitle: descText,
+    desc:
+      state.lang === 'zh'
+        ? '确定要删除这条账单记录吗？若关联了专款预留池，已用金额将自动退回。'
+        : 'Are you sure you want to delete this transaction? Any allocated sinking fund spent amount will be restored.',
+    confirmText: state.lang === 'zh' ? '确认删除' : 'Delete',
+    danger: true,
+    onConfirm: async () => {
+      triggerHaptic(12);
 
-    state.records = state.records.filter((r) => String(r.id) !== String(id));
-    renderTable();
-    calculateLocalSummaryMetrics();
-    showToast(state.lang === 'zh' ? '已删除离线记录' : 'Draft removed');
-    return;
-  }
+      // Rollback linked sinking fund spent amount if applicable
+      if (recordToDelete && recordToDelete.type === 'expense') {
+        let linkedFund = null;
+        if (recordToDelete.project_id) {
+          linkedFund = (state.projects || []).find(
+            (p) => p.id === recordToDelete.project_id,
+          );
+        } else if (
+          recordToDelete.note &&
+          recordToDelete.note.includes('[专款:')
+        ) {
+          const match = recordToDelete.note.match(/\[专款:\s*([^\]]+)\]/);
+          if (match && match[1]) {
+            const title = match[1].trim();
+            linkedFund = (state.projects || []).find((p) => p.title === title);
+          }
+        }
 
-  try {
-    const userId = state.user?.id;
-    let deleted = false;
+        if (linkedFund) {
+          const rollbackAmount = parseFloat(recordToDelete.amount) || 0;
+          linkedFund.spent_amount = Math.max(
+            0,
+            (parseFloat(linkedFund.spent_amount) || 0) - rollbackAmount,
+          );
+          saveProjects(state.projects);
+          renderSinkingFunds();
+          renderBudgetTracker();
 
-    if (supabaseClient && userId) {
-      const { error } = await supabaseClient
-        .from('records')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userId);
+          // Sync rolled back spent_amount to Supabase Cloud
+          if (supabaseClient && state.user?.id) {
+            supabaseClient
+              .from('projects')
+              .update({ spent_amount: linkedFund.spent_amount })
+              .eq('id', linkedFund.id)
+              .catch(() => {});
+          }
 
-      if (error) throw new Error(error.message);
-      deleted = true;
-    }
+          // Sync to NestJS backend
+          fetch(`/api/projects/${linkedFund.id}/spent`, {
+            method: 'PATCH',
+            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ spentAmount: linkedFund.spent_amount }),
+          }).catch(() => {});
+        }
+      }
 
-    if (!deleted) {
-      const res = await fetch(`/api/records/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
+      if (isDraft) {
+        let queue = getOfflineQueue();
+        queue = queue.filter((item) => String(item.id) !== String(id));
+        saveOfflineQueue(queue);
 
-      if (!res.ok) throw new Error('Failed to delete transaction');
-    }
+        state.records = state.records.filter(
+          (r) => String(r.id) !== String(id),
+        );
+        renderTable();
+        calculateLocalSummaryMetrics();
+        showToast(state.lang === 'zh' ? '已删除离线记录' : 'Draft removed');
+        return;
+      }
 
-    showToast(state.lang === 'zh' ? '已删除账单' : 'Transaction deleted');
-    await Promise.all([loadRecords(), loadSummary()]);
-  } catch (err) {
-    showToast(err.message, true);
-  }
+      try {
+        const userId = state.user?.id;
+        let deleted = false;
+
+        if (supabaseClient && userId) {
+          const { error } = await supabaseClient
+            .from('records')
+            .delete()
+            .eq('id', id)
+            .eq('user_id', userId);
+
+          if (error) throw new Error(error.message);
+          deleted = true;
+        }
+
+        if (!deleted) {
+          const res = await fetch(`/api/records/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+          });
+
+          if (!res.ok) throw new Error('Failed to delete transaction');
+        }
+
+        showToast(state.lang === 'zh' ? '已删除账单' : 'Transaction deleted');
+        await Promise.all([loadRecords(), loadSummary()]);
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    },
+  });
 };
 
 /**
@@ -2214,60 +2497,14 @@ function updateDailySpendingTrend() {
 }
 
 /**
- * ============================================================================
- * ✍️ YOUR TURN TO IMPLEMENT: calculateDailySpendingTrend(records, currentMonth)
- * ============================================================================
- * Task:
  * Calculate daily expense totals across all days of the selected month
  * for the "Daily Spending Trend" area/line chart.
  *
  * @param {Array<Object>} records - All transaction records
  * @param {string} currentMonth - Selected month string (e.g. "2026-10" or "all")
- * @returns {Object} Chart data object with structure:
- *   {
- *     labels: ["1", "2", "3", ...], // day of month strings
- *     data: [0, 15.5, 0, 42.0, ...], // sum of expense amount for each day
- *     peakDay: 15, // the day of the month with the highest expense (or null)
- *     peakAmount: 120.00 // the maximum daily expense amount
- *   }
- *
- * STEP-BY-STEP IMPLEMENTATION HINTS:
- * 1. Determine target YYYY-MM:
- *      const targetMonth = (currentMonth && currentMonth !== 'all')
- *        ? currentMonth
- *        : new Date().toISOString().slice(0, 7);
- * 2. Parse year and month numbers:
- *      const [year, month] = targetMonth.split('-').map(Number);
- * 3. Find total days in that month:
- *      const daysInMonth = new Date(year, month, 0).getDate();
- * 4. Initialize labels and dailyTotals arrays:
- *      const labels = Array.from({ length: daysInMonth }, (_, i) => String(i + 1));
- *      const dailyTotals = new Array(daysInMonth).fill(0);
- * 5. Filter expense records that belong to targetMonth:
- *      const monthExpenses = (records || []).filter(
- *        r => r.type === 'expense' && r.date && r.date.startsWith(targetMonth)
- *      );
- * 6. Accumulate daily expense amounts:
- *      for (const record of monthExpenses) {
- *        const dayNum = parseInt(record.date.split('-')[2], 10);
- *        if (dayNum >= 1 && dayNum <= daysInMonth) {
- *          dailyTotals[dayNum - 1] += Number(record.amount || 0);
- *        }
- *      }
- * 7. Find peak day and peak amount:
- *      let peakAmount = 0;
- *      let peakDay = null;
- *      dailyTotals.forEach((val, idx) => {
- *        if (val > peakAmount) {
- *          peakAmount = val;
- *          peakDay = idx + 1;
- *        }
- *      });
- * 8. Return { labels, data: dailyTotals, peakDay, peakAmount }.
- * ============================================================================
+ * @returns {Object} Chart data object { labels, data, peakDay, peakAmount }
  */
 function calculateDailySpendingTrend(records, currentMonth) {
-  // ✍️ YOUR TURN: Write your code below this line:
   const targetMonth =
     currentMonth && currentMonth !== 'all'
       ? currentMonth
@@ -2468,10 +2705,43 @@ async function exportToCSV() {
       : state.currentMonth;
 
   // Professional summary footer block
-  const summaryEmptyRow = ['""', '""', '""', '""', '""', '""', '""', '""', '""', '""'];
+  const summaryEmptyRow = [
+    '""',
+    '""',
+    '""',
+    '""',
+    '""',
+    '""',
+    '""',
+    '""',
+    '""',
+    '""',
+  ];
   const summaryHeaderRow = isZh
-    ? ['""', '""', '""', '"【数据统计汇总】"', '""', '""', '""', '""', '""', '""']
-    : ['""', '""', '""', '"【Summary Metrics】"', '""', '""', '""', '""', '""', '""'];
+    ? [
+        '""',
+        '""',
+        '""',
+        '"【数据统计汇总】"',
+        '""',
+        '""',
+        '""',
+        '""',
+        '""',
+        '""',
+      ]
+    : [
+        '""',
+        '""',
+        '""',
+        '"【Summary Metrics】"',
+        '""',
+        '""',
+        '""',
+        '""',
+        '""',
+        '""',
+      ];
   const summaryExpenseRow = [
     '""',
     '""',
@@ -2593,10 +2863,12 @@ function evaluateRetentionEligible() {
 function openRetentionModal() {
   evaluateRetentionEligible();
   elements.retentionModal?.classList.remove('hidden');
+  pushModalHistoryState();
 }
 
-function closeRetentionModal() {
+function closeRetentionModal(fromPopState = false) {
   elements.retentionModal?.classList.add('hidden');
+  popModalHistoryIfCleared(fromPopState === true);
 }
 
 async function downLoadArchiveCSV() {
@@ -2675,44 +2947,53 @@ async function downLoadArchiveCSV() {
   );
 }
 
-async function purgeOldRecords() {
+function purgeOldRecords() {
   const years = parseInt(elements.retentionYearsSelect.value) || 3;
-  if (
-    !confirm(
+  const cutoffDate = getRetentionCutoffDate(years);
+
+  showConfirmModal({
+    title:
+      state.lang === 'zh'
+        ? '确认永久清理历史记录？'
+        : 'Purge Historical Records?',
+    subtitle: `Before ${cutoffDate}`,
+    desc:
       state.lang === 'zh'
         ? `确定要永久清理早于 ${years} 年前的所有历史记录吗？此操作不可撤销。`
-        : `Permanently delete all records older than ${years} years?`,
-    )
-  ) {
-    return;
-  }
+        : `Permanently delete all records older than ${years} years? This action cannot be undone.`,
+    confirmText: state.lang === 'zh' ? '永久清理' : 'Purge',
+    danger: true,
+    onConfirm: async () => {
+      const userId = state.user?.id;
+      try {
+        if (supabaseClient && userId) {
+          const { error } = await supabaseClient
+            .from('records')
+            .delete()
+            .eq('user_id', userId)
+            .lt('date', cutoffDate);
 
-  const cutoffDate = getRetentionCutoffDate(years);
-  const userId = state.user?.id;
+          if (error) throw new Error(error.message);
+        } else {
+          const res = await fetch(`/api/records/purge?years=${years}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+          });
+          if (!res.ok) throw new Error('Failed to purge old records');
+        }
 
-  try {
-    if (supabaseClient && userId) {
-      const { error } = await supabaseClient
-        .from('records')
-        .delete()
-        .eq('user_id', userId)
-        .lt('date', cutoffDate);
-
-      if (error) throw new Error(error.message);
-    } else {
-      const res = await fetch(`/api/records/purge?years=${years}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) throw new Error('Failed to purge old records');
-    }
-
-    showToast(`Purged records older than ${years} years`);
-    closeRetentionModal();
-    await Promise.all([loadRecords(), loadSummary()]);
-  } catch (err) {
-    showToast(err.message, true);
-  }
+        showToast(
+          state.lang === 'zh'
+            ? `已清理 ${years} 年前的历史记录`
+            : `Purged records older than ${years} years`,
+        );
+        closeRetentionModal();
+        await Promise.all([loadRecords(), loadSummary()]);
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    },
+  });
 }
 
 // ============================================================================
@@ -3036,9 +3317,10 @@ function renderAccountsCenter() {
 
   updateSpendingAccountsMonthOptions();
 
-  const selectedMonth = state.selectedAccountsMonth === 'current'
-    ? getCurrentMonthKey()
-    : state.selectedAccountsMonth;
+  const selectedMonth =
+    state.selectedAccountsMonth === 'current'
+      ? getCurrentMonthKey()
+      : state.selectedAccountsMonth;
 
   // Filter records by selected month and expense type
   const matchingRecords = (state.records || []).filter((r) => {
@@ -3068,15 +3350,17 @@ function renderAccountsCenter() {
       0,
     );
     const txCount = accExpenses.length;
-    const pct = totalPeriodExpense > 0
-      ? Math.round((spentAmount / totalPeriodExpense) * 100)
-      : 0;
+    const pct =
+      totalPeriodExpense > 0
+        ? Math.round((spentAmount / totalPeriodExpense) * 100)
+        : 0;
 
     let subText = '';
     if (spentAmount > 0) {
-      subText = state.lang === 'zh'
-        ? `${txCount} 笔消费 · 占当期 ${pct}%`
-        : `${txCount} record(s) · ${pct}% of total`;
+      subText =
+        state.lang === 'zh'
+          ? `${txCount} 笔消费 · 占当期 ${pct}%`
+          : `${txCount} record(s) · ${pct}% of total`;
     } else {
       subText = state.lang === 'zh' ? '暂无支出' : 'No spending';
     }
@@ -3107,7 +3391,8 @@ function openAvatarLightbox(imgSrc) {
   triggerHaptic(10);
   if (!elements.avatarLightboxModal) return;
 
-  const currentAvatarSrc = imgSrc ||
+  const currentAvatarSrc =
+    imgSrc ||
     elements.accountModalAvatar?.src ||
     elements.userAvatar?.src ||
     '';
@@ -3118,18 +3403,21 @@ function openAvatarLightbox(imgSrc) {
     elements.avatarLightboxImg.src = currentAvatarSrc;
   }
   if (elements.avatarLightboxName) {
-    elements.avatarLightboxName.textContent = getUserDisplayName(state.user) || 'User';
+    elements.avatarLightboxName.textContent =
+      getUserDisplayName(state.user) || 'User';
   }
   if (elements.avatarLightboxEmail) {
     elements.avatarLightboxEmail.textContent = state.user?.email || '';
   }
 
   elements.avatarLightboxModal.classList.remove('hidden');
+  pushModalHistoryState();
 }
 
-function closeAvatarLightbox() {
+function closeAvatarLightbox(fromPopState = false) {
   triggerHaptic(10);
   elements.avatarLightboxModal?.classList.add('hidden');
+  popModalHistoryIfCleared(fromPopState === true);
 }
 
 // ============================================================================
@@ -3254,7 +3542,8 @@ function calculateStreak(records) {
   if (state.user) {
     const firstLoginKey = 'ledger_first_login_' + state.user.id;
     const meta = state.user.user_metadata || {};
-    const firstLogin = meta.first_login_at || localStorage.getItem(firstLoginKey);
+    const firstLogin =
+      meta.first_login_at || localStorage.getItem(firstLoginKey);
     if (firstLogin) {
       const diffMs = Math.max(0, Date.now() - new Date(firstLogin).getTime());
       usageDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
@@ -3266,7 +3555,10 @@ function calculateStreak(records) {
         const val = localStorage.getItem(key);
         if (val) {
           const diffMs = Math.max(0, Date.now() - new Date(val).getTime());
-          usageDays = Math.max(usageDays, Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1);
+          usageDays = Math.max(
+            usageDays,
+            Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1,
+          );
         }
       }
     }
@@ -3310,31 +3602,9 @@ function evaluateBadges(streakDays, totalRecords) {
 }
 
 /**
- * ----------------------------------------------------------------------------
- * Task 3: renderStreakAndBadges()
- * ----------------------------------------------------------------------------
  * Render streak counter and achievement badges to the UI.
- *
- * 💡 Hints:
- * 1. Calculate active streak:
- *    state.streakDays = calculateStreak(state.records);
- * 2. Evaluate unlocked badges:
- *    state.unlockedBadges = evaluateBadges(state.streakDays, state.records.length);
- * 3. Update top header flame pill:
- *    if (elements.streakCountText) {
- *      elements.streakCountText.textContent = `${state.streakDays}d`;
- *    }
- *    if (elements.streakPill) {
- *      if (state.streakDays > 0) {
- *        elements.streakPill.classList.add('streak-active');
- *      } else {
- *        elements.streakPill.classList.remove('streak-active');
- *      }
- *    }
- *
  */
 function renderStreakAndBadges() {
-  // ✍️ YOUR TURN: Write your code below this line:
   state.streakDays = calculateStreak(state.records);
   state.unlockedBadges = evaluateBadges(state.streakDays, state.records.length);
 
@@ -3496,20 +3766,29 @@ async function signInWithGoogle() {
 /**
  * Sign out current authenticated user session
  */
-async function signOutUser() {
-  const confirmMsg =
-    state.lang === 'zh'
-      ? '确定要退出当前登录的 Google 账号吗？'
-      : 'Are you sure you want to sign out of your account?';
-  if (!confirm(confirmMsg)) return;
-
-  if (supabaseClient) {
-    await supabaseClient.auth.signOut().catch(() => {});
-  }
-  state.user = null;
-  switchAppPage('ledger');
-  updateAuthUI(null);
-  showToast(state.lang === 'zh' ? '已安全退出登录' : 'Signed out successfully');
+function signOutUser() {
+  showConfirmModal({
+    title:
+      state.lang === 'zh' ? '确认退出登录？' : 'Sign Out?',
+    subtitle: state.user?.email || '',
+    desc:
+      state.lang === 'zh'
+        ? '确定要退出当前登录的 Google 账号吗？'
+        : 'Are you sure you want to sign out of your account?',
+    confirmText: state.lang === 'zh' ? '退出登录' : 'Sign Out',
+    danger: true,
+    onConfirm: async () => {
+      if (supabaseClient) {
+        await supabaseClient.auth.signOut().catch(() => {});
+      }
+      state.user = null;
+      switchAppPage('ledger');
+      updateAuthUI(null);
+      showToast(
+        state.lang === 'zh' ? '已安全退出登录' : 'Signed out successfully',
+      );
+    },
+  });
 }
 
 /**
@@ -3633,10 +3912,12 @@ function openInAppUpdateModal() {
     elements.cancelInAppUpdateBtn.disabled = false;
   }
   elements.inAppUpdateModal?.classList.remove('hidden');
+  pushModalHistoryState();
 }
 
 function closeInAppUpdateModal() {
   elements.inAppUpdateModal?.classList.add('hidden');
+  popModalHistoryIfCleared();
 }
 
 function showUpdateAvailablePrompt(versionLabel, apkUrl, notes) {
@@ -3857,6 +4138,7 @@ async function init() {
     if (e.target === elements.createEntryModal) closeCreateModal();
   });
   initBottomSheetGestures();
+  initModalBackAndEscapeGuards();
 
   // 3. Transaction form submission
   elements.recordForm?.addEventListener('submit', handleRecordSubmit);
@@ -3879,7 +4161,7 @@ async function init() {
   updateCurrencySymbols();
 
   // 5. Default date to today
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
   if (elements.inputDate) elements.inputDate.value = today;
 
   // 6. Category options & initial entry type
@@ -3959,8 +4241,14 @@ async function init() {
     e.stopPropagation();
     openAvatarLightbox(elements.dropdownAvatar.src);
   });
-  elements.closeAvatarLightboxBtn?.addEventListener('click', closeAvatarLightbox);
-  elements.avatarLightboxBackdrop?.addEventListener('click', closeAvatarLightbox);
+  elements.closeAvatarLightboxBtn?.addEventListener(
+    'click',
+    closeAvatarLightbox,
+  );
+  elements.avatarLightboxBackdrop?.addEventListener(
+    'click',
+    closeAvatarLightbox,
+  );
 
   // 11. Export CSV & Retention Modal
   elements.exportCsvBtn?.addEventListener('click', exportToCSV);
@@ -4104,6 +4392,8 @@ async function init() {
   loadRecords();
   loadAccounts();
   renderAccountPicker();
+  fetchProjectsFromBackend();
+  fetchClaimsFromBackend();
 
   // Network & Cloud Sync Listeners
   window.addEventListener('online', () => {
@@ -4147,7 +4437,12 @@ async function init() {
         state.user = session?.user || null;
         updateAuthUI(state.user);
         if (event === 'SIGNED_IN' && state.user) {
-          await Promise.all([loadRecords(), loadSummary()]);
+          await Promise.all([
+            loadRecords(),
+            loadSummary(),
+            fetchProjectsFromBackend(),
+            fetchClaimsFromBackend(),
+          ]);
         }
       });
 
@@ -4155,7 +4450,12 @@ async function init() {
       if (data?.session?.user) {
         state.user = data.session.user;
         updateAuthUI(state.user);
-        await Promise.all([loadRecords(), loadSummary()]);
+        await Promise.all([
+          loadRecords(),
+          loadSummary(),
+          fetchProjectsFromBackend(),
+          fetchClaimsFromBackend(),
+        ]);
       } else {
         updateAuthUI(null);
       }
@@ -4166,7 +4466,6 @@ async function init() {
     updateAuthUI(null);
   }
 }
-
 
 // ============================================================================
 // 13. PROJECTS, SINKING FUNDS & SPLIT BILL CLAIMS MODULE
@@ -4268,11 +4567,17 @@ function renderRecordSourceBadgeHtml(record) {
   }
   if (note.includes('[🎯') || note.includes('[专款:')) {
     const m = note.match(/\[(?:🎯|专款:)\s*([^\]]+)\]/);
-    if (m) return `<span class="badge-source-fund">${SVG_ICONS.target} ${escapeHtml(m[1])}</span> `;
+    if (m)
+      return `<span class="badge-source-fund">${SVG_ICONS.target} ${escapeHtml(m[1])}</span> `;
   }
-  if (note.includes('[👥') || note.includes('[AA分摊:') || note.includes('[代垫:')) {
+  if (
+    note.includes('[👥') ||
+    note.includes('[AA分摊:') ||
+    note.includes('[代垫:')
+  ) {
     const m = note.match(/\[(?:👥|AA分摊:|代垫:)\s*([^\]]+)\]/);
-    if (m) return `<span class="badge-source-claim">${SVG_ICONS.users} ${escapeHtml(m[1])}</span> `;
+    if (m)
+      return `<span class="badge-source-claim">${SVG_ICONS.users} ${escapeHtml(m[1])}</span> `;
   }
   return '';
 }
@@ -4280,7 +4585,9 @@ function renderRecordSourceBadgeHtml(record) {
 function formatRecordCleanNote(note) {
   if (!note) return '—';
   // Strip out bracket tags for cleaner secondary subtitle
-  return note.replace(/\[(?:🎯|👥|专款:|AA分摊:|代垫:)[^\]]+\]/g, '').trim() || '—';
+  return (
+    note.replace(/\[(?:🎯|👥|专款:|AA分摊:|代垫:)[^\]]+\]/g, '').trim() || '—'
+  );
 }
 
 async function fetchProjectsFromBackend() {
@@ -4307,6 +4614,7 @@ async function fetchProjectsFromBackend() {
         saveProjects(state.projects);
         renderSinkingFunds();
         renderBudgetTracker();
+        updateProjectDropdownOptions();
         return;
       }
     } catch (e) {}
@@ -4333,6 +4641,7 @@ async function fetchProjectsFromBackend() {
         saveProjects(state.projects);
         renderSinkingFunds();
         renderBudgetTracker();
+        updateProjectDropdownOptions();
       }
     }
   } catch (e) {}
@@ -4355,7 +4664,9 @@ async function fetchClaimsFromBackend() {
           my_share: parseFloat(c.my_share) || 0,
           friends: Array.isArray(c.friends)
             ? c.friends
-            : (typeof c.friends === 'string' ? JSON.parse(c.friends) : []),
+            : typeof c.friends === 'string'
+              ? JSON.parse(c.friends)
+              : [],
           status: c.status,
           date: c.date,
           created_at: c.created_at,
@@ -4408,8 +4719,12 @@ function renderSinkingFunds() {
   if (!container) return;
 
   const sym = state.currency || 'RM';
-  const activeFunds = (state.projects || []).filter((p) => p.status === 'active');
-  const settledFunds = (state.projects || []).filter((p) => p.status === 'settled');
+  const activeFunds = (state.projects || []).filter(
+    (p) => p.status === 'active',
+  );
+  const settledFunds = (state.projects || []).filter(
+    (p) => p.status === 'settled',
+  );
 
   if (state.projects.length === 0) {
     container.innerHTML = `
@@ -4424,42 +4739,51 @@ function renderSinkingFunds() {
   }
 
   const allFunds = [...activeFunds, ...settledFunds];
-  container.innerHTML = allFunds.map((fund) => {
-    const target = parseFloat(fund.target_amount) || 0;
-    const spent = parseFloat(fund.spent_amount) || 0;
-    const remaining = Math.max(0, target - spent);
-    const pct = target > 0 ? Math.min(100, Math.round((spent / target) * 100)) : 0;
-    const isSettled = fund.status === 'settled';
-    const isBudgetMode = fund.mode === 'budget_deduct';
+  container.innerHTML = allFunds
+    .map((fund) => {
+      const target = parseFloat(fund.target_amount) || 0;
+      const spent = parseFloat(fund.spent_amount) || 0;
+      const remaining = Math.max(0, target - spent);
+      const pct =
+        target > 0 ? Math.min(100, Math.round((spent / target) * 100)) : 0;
+      const isSettled = fund.status === 'settled';
+      const isBudgetMode = fund.mode === 'budget_deduct';
 
-    const modePill = isBudgetMode
-      ? `<span class="project-mode-pill mode-budget">${t('fund_mode_budget')}</span>`
-      : `<span class="project-mode-pill mode-extra">${t('fund_mode_extra')}</span>`;
+      const modePill = isBudgetMode
+        ? `<span class="project-mode-pill mode-budget">${t('fund_mode_budget')}</span>`
+        : `<span class="project-mode-pill mode-extra">${t('fund_mode_extra')}</span>`;
 
-    const statusPill = isSettled
-      ? `<span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(34, 197, 94, 0.1); color: #16a34a; font-weight: 600;">${t('fund_settled')}</span>`
-      : `<span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(13, 148, 136, 0.1); color: var(--brand-cyan); font-weight: 600;">${t('fund_status_active')}</span>`;
+      const statusPill = isSettled
+        ? `<span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(34, 197, 94, 0.1); color: #16a34a; font-weight: 600;">${t('fund_settled')}</span>`
+        : `<span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(13, 148, 136, 0.1); color: var(--brand-cyan); font-weight: 600;">${t('fund_status_active')}</span>`;
 
-    // Equation breakdown
-    let equationText = '';
-    if (spent > 0) {
-      equationText = `${t('fund_target')} ${sym} ${formatNumber(target)} - ${t('fund_spent')} ${sym} ${formatNumber(spent)} = 待结算 ${sym} ${formatNumber(remaining)}`;
-    } else if (isBudgetMode) {
-      const base = Number(state.monthlyBudget || 3000);
-      equationText = `日常可用 ${sym} ${formatNumber(base - target)} + 专款 ${sym} ${formatNumber(target)} = 总基准 ${sym} ${formatNumber(base)}`;
-    } else {
-      equationText = `预定储备 ${sym} ${formatNumber(target)} (不占用日常预算)`;
-    }
+      // Equation breakdown
+      const isZh = state.lang === 'zh';
+      let equationText = '';
+      if (spent > 0) {
+        const remLabel = isZh ? '待结算' : 'Remaining';
+        equationText = `${t('fund_target')} ${sym} ${formatNumber(target)} - ${t('fund_spent')} ${sym} ${formatNumber(spent)} = ${remLabel} ${sym} ${formatNumber(remaining)}`;
+      } else if (isBudgetMode) {
+        const base = Number(state.monthlyBudget || 3000);
+        equationText = isZh
+          ? `日常可用 ${sym} ${formatNumber(base - target)} + 专款 ${sym} ${formatNumber(target)} = 总基准 ${sym} ${formatNumber(base)}`
+          : `Daily Avail ${sym} ${formatNumber(base - target)} + Fund ${sym} ${formatNumber(target)} = Base ${sym} ${formatNumber(base)}`;
+      } else {
+        equationText = isZh
+          ? `预定储备 ${sym} ${formatNumber(target)} (不占用日常预算)`
+          : `Reserved ${sym} ${formatNumber(target)} (Outside monthly budget)`;
+      }
 
-    const releaseBtn = (!isSettled && remaining > 0 && isBudgetMode)
-      ? `<button type="button" class="btn-card-action" onclick="releaseFundRemainingToBudget('${fund.id}')">${t('btn_release_to_budget')}</button>`
-      : '';
+      const releaseBtn =
+        !isSettled && remaining > 0 && isBudgetMode
+          ? `<button type="button" class="btn-card-action" onclick="releaseFundRemainingToBudget('${fund.id}')">${t('btn_release_to_budget')}</button>`
+          : '';
 
-    const settleBtn = !isSettled
-      ? `<button type="button" class="btn-card-action btn-action-settle" onclick="settleFund('${fund.id}')">${t('btn_settle_fund')}</button>`
-      : '';
+      const settleBtn = !isSettled
+        ? `<button type="button" class="btn-card-action btn-action-settle" onclick="settleFund('${fund.id}')">${t('btn_settle_fund')}</button>`
+        : '';
 
-    return `
+      return `
       <div class="project-card" data-fund-id="${fund.id}">
         <div class="project-card-header">
           <div class="project-title-group">
@@ -4495,7 +4819,8 @@ function renderSinkingFunds() {
         </div>
       </div>
     `;
-  }).join('');
+    })
+    .join('');
 }
 
 function renderClaims() {
@@ -4509,7 +4834,7 @@ function renderClaims() {
   let totalPending = 0;
   claims.forEach((claim) => {
     (claim.friends || []).forEach((f) => {
-      if (!f.paid) totalPending += (parseFloat(f.amount) || 0);
+      if (!f.paid) totalPending += parseFloat(f.amount) || 0;
     });
   });
 
@@ -4529,19 +4854,22 @@ function renderClaims() {
     return;
   }
 
-  container.innerHTML = claims.map((claim) => {
-    const totalAmount = parseFloat(claim.total_amount) || 0;
-    const myShare = parseFloat(claim.my_share) || 0;
-    const friends = claim.friends || [];
-    const allPaid = friends.length > 0 && friends.every((f) => f.paid);
+  container.innerHTML = claims
+    .map((claim) => {
+      const totalAmount = parseFloat(claim.total_amount) || 0;
+      const myShare = parseFloat(claim.my_share) || 0;
+      const friends = claim.friends || [];
+      const allPaid = friends.length > 0 && friends.every((f) => f.paid);
 
-    const friendsHtml = friends.map((f, idx) => {
-      const isPaid = f.paid;
-      const statusBtn = isPaid
-        ? `<button type="button" class="btn-mark-paid paid" onclick="toggleClaimFriendPaid('${claim.id}', ${idx})">已收回</button>`
-        : `<button type="button" class="btn-mark-paid" onclick="toggleClaimFriendPaid('${claim.id}', ${idx})">点我收款</button>`;
+      const isZh = state.lang === 'zh';
+      const friendsHtml = friends
+        .map((f, idx) => {
+          const isPaid = f.paid;
+          const statusBtn = isPaid
+            ? `<button type="button" class="btn-mark-paid paid" onclick="toggleClaimFriendPaid('${claim.id}', ${idx})">${isZh ? '已收回' : 'Paid'}</button>`
+            : `<button type="button" class="btn-mark-paid" onclick="toggleClaimFriendPaid('${claim.id}', ${idx})">${isZh ? '点我收款' : 'Mark Paid'}</button>`;
 
-      return `
+          return `
         <div class="claim-friend-row">
           <div class="claim-friend-info">
             <span class="claim-friend-avatar" style="display: inline-flex; align-items: center; color: var(--text-secondary);">${SVG_ICONS.users}</span>
@@ -4553,21 +4881,22 @@ function renderClaims() {
           </div>
         </div>
       `;
-    }).join('');
+        })
+        .join('');
 
-    const settleAllBtn = !allPaid
-      ? `<button type="button" class="btn-card-action btn-action-settle" onclick="settleAllClaim('${claim.id}')">${t('btn_all_settled')}</button>`
-      : `<span style="font-size: 0.78rem; font-weight: 700; color: #16a34a; background: rgba(34, 197, 94, 0.1); padding: 4px 10px; border-radius: 9999px;">全员结清归档</span>`;
+      const settleAllBtn = !allPaid
+        ? `<button type="button" class="btn-card-action btn-action-settle" onclick="settleAllClaim('${claim.id}')">${t('btn_all_settled')}</button>`
+        : `<span style="font-size: 0.78rem; font-weight: 700; color: #16a34a; background: rgba(34, 197, 94, 0.1); padding: 4px 10px; border-radius: 9999px;">${isZh ? '全员结清归档' : 'All Settled'}</span>`;
 
-    return `
+      return `
       <div class="claim-card" data-claim-id="${claim.id}">
         <div class="claim-card-header">
           <div>
             <h4 class="claim-title-text">${escapeHtml(claim.title)}</h4>
-            <span style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(claim.date || '')} · 我自己消费: ${sym} ${formatNumber(myShare)}</span>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(claim.date || '')} · ${isZh ? '我自己消费' : 'My Share'}: ${sym} ${formatNumber(myShare)}</span>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="claim-total-badge">垫付总额: ${sym} ${formatNumber(totalAmount - myShare)}</span>
+            <span class="claim-total-badge">${isZh ? '垫付总额' : 'Advanced'}: ${sym} ${formatNumber(totalAmount - myShare)}</span>
             <button type="button" class="btn-del" onclick="deleteClaim('${claim.id}')" title="Delete">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             </button>
@@ -4583,13 +4912,17 @@ function renderClaims() {
         </div>
       </div>
     `;
-  }).join('');
+    })
+    .join('');
 }
 
 // Open Transaction Modal specifically in Split mode
 function openCreateModalWithSplit() {
   openCreateModal();
-  if (elements.toggleSplitBillBtn && !elements.toggleSplitBillBtn.classList.contains('active')) {
+  if (
+    elements.toggleSplitBillBtn &&
+    !elements.toggleSplitBillBtn.classList.contains('active')
+  ) {
     elements.toggleSplitBillBtn.click();
   }
 }
@@ -4601,11 +4934,13 @@ function openNewProjectModal() {
   if (elements.projectInputTitle) elements.projectInputTitle.value = '';
   if (elements.projectInputAmount) elements.projectInputAmount.value = '500';
   elements.newProjectModal.classList.remove('hidden');
+  pushModalHistoryState();
 }
 
 function closeNewProjectModal() {
   triggerHaptic(10);
   elements.newProjectModal?.classList.add('hidden');
+  popModalHistoryIfCleared();
 }
 
 function saveNewProject() {
@@ -4613,12 +4948,21 @@ function saveNewProject() {
   const amount = parseFloat(elements.projectInputAmount?.value) || 0;
   const isBudget = elements.btnModeBudgetDeduct?.classList.contains('active');
   const mode = isBudget ? 'budget_deduct' : 'extra';
+  const isZh = state.lang === 'zh';
 
   if (!title) {
-    return showToast('请输入专款名称 (例如：修车保养、年度旅行)', true);
+    return showToast(
+      isZh
+        ? '请输入专款名称 (例如：修车保养、年度旅行)'
+        : 'Please enter a project name (e.g., Car Service, Trip)',
+      true,
+    );
   }
   if (amount <= 0) {
-    return showToast('请输入有效的预留金额', true);
+    return showToast(
+      isZh ? '请输入有效的预留金额' : 'Please enter a valid target amount',
+      true,
+    );
   }
 
   const newProject = {
@@ -4641,17 +4985,20 @@ function saveNewProject() {
 
   // Sync to Supabase Cloud
   if (supabaseClient && state.user?.id) {
-    supabaseClient.from('projects').insert({
-      id: newProject.id,
-      user_id: state.user.id,
-      title: newProject.title,
-      icon: 'target',
-      target_amount: newProject.target_amount,
-      spent_amount: newProject.spent_amount,
-      mode: newProject.mode,
-      month: newProject.month,
-      status: newProject.status,
-    }).catch(() => {});
+    supabaseClient
+      .from('projects')
+      .insert({
+        id: newProject.id,
+        user_id: state.user.id,
+        title: newProject.title,
+        icon: 'target',
+        target_amount: newProject.target_amount,
+        spent_amount: newProject.spent_amount,
+        mode: newProject.mode,
+        month: newProject.month,
+        status: newProject.status,
+      })
+      .catch(() => {});
   }
 
   // Sync to backend API
@@ -4659,6 +5006,7 @@ function saveNewProject() {
     method: 'POST',
     headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
+      id: newProject.id,
       title: newProject.title,
       targetAmount: newProject.target_amount,
       mode: newProject.mode,
@@ -4668,7 +5016,11 @@ function saveNewProject() {
 
   triggerHaptic(15);
   closeNewProjectModal();
-  showToast(state.lang === 'zh' ? `专款【${title}】建立成功` : `Project ${title} created!`);
+  showToast(
+    state.lang === 'zh'
+      ? `专款【${title}】建立成功`
+      : `Project ${title} created!`,
+  );
 }
 
 // Release Remaining Sinking Fund to Budget
@@ -4680,12 +5032,15 @@ function releaseFundRemainingToBudget(fundId) {
   const target = parseFloat(fund.target_amount) || 0;
   const spent = parseFloat(fund.spent_amount) || 0;
   const remaining = Math.max(0, target - spent);
+  const isZh = state.lang === 'zh';
 
   showConfirmModal({
-    title: '确认提前释放结余？',
+    title: isZh ? '确认提前释放结余？' : 'Release Remaining Balance?',
     subtitle: fund.title,
-    desc: `当前专款预留 ${state.currency} ${formatNumber(target)}，实际已用 ${state.currency} ${formatNumber(spent)}。提前释放后，剩余未用的 ${state.currency} ${formatNumber(remaining)} 将立即归还回日常月度预算，专款将标为已结清。`,
-    confirmText: '确认释放并结清',
+    desc: isZh
+      ? `当前专款预留 ${state.currency} ${formatNumber(target)}，实际已用 ${state.currency} ${formatNumber(spent)}。提前释放后，剩余未用的 ${state.currency} ${formatNumber(remaining)} 将立即归还回日常月度预算，专款将标为已结清。`
+      : `Reserved ${state.currency} ${formatNumber(target)}, spent ${state.currency} ${formatNumber(spent)}. The remaining ${state.currency} ${formatNumber(remaining)} will be returned to your monthly daily budget and the fund marked as settled.`,
+    confirmText: isZh ? '确认释放并结清' : 'Release & Settle',
     danger: false,
     onConfirm: async () => {
       fund.target_amount = spent;
@@ -4695,11 +5050,16 @@ function releaseFundRemainingToBudget(fundId) {
       renderBudgetTracker();
 
       if (supabaseClient && state.user?.id) {
-        supabaseClient.from('projects').update({
-          target_amount: spent,
-          status: 'settled',
-          updated_at: new Date().toISOString(),
-        }).eq('id', fundId).eq('user_id', state.user.id).catch(() => {});
+        supabaseClient
+          .from('projects')
+          .update({
+            target_amount: spent,
+            status: 'settled',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', fundId)
+          .eq('user_id', state.user.id)
+          .catch(() => {});
       }
 
       try {
@@ -4708,8 +5068,12 @@ function releaseFundRemainingToBudget(fundId) {
           headers: getAuthHeaders(),
         });
       } catch (e) {}
-      showToast(`结余 ${state.currency} ${formatNumber(remaining)} 已释放回日常预算`);
-    }
+      showToast(
+        isZh
+          ? `结余 ${state.currency} ${formatNumber(remaining)} 已释放回日常预算`
+          : `Released ${state.currency} ${formatNumber(remaining)} back to daily budget`,
+      );
+    },
   });
 }
 
@@ -4717,12 +5081,15 @@ function settleFund(fundId) {
   triggerHaptic(10);
   const fund = (state.projects || []).find((p) => p.id === fundId);
   if (!fund) return;
+  const isZh = state.lang === 'zh';
 
   showConfirmModal({
-    title: '确认结案平账？',
+    title: isZh ? '确认结案平账？' : 'Settle Sinking Fund?',
     subtitle: fund.title,
-    desc: `确定要将专款【${fund.title}】结案平账吗？平账后此项目将正式归档。`,
-    confirmText: '确认结案',
+    desc: isZh
+      ? `确定要将专款【${fund.title}】结案平账吗？平账后此项目将正式归档。`
+      : `Are you sure you want to settle and archive "${fund.title}"?`,
+    confirmText: isZh ? '确认结案' : 'Settle Fund',
     danger: false,
     onConfirm: async () => {
       fund.status = 'settled';
@@ -4731,10 +5098,15 @@ function settleFund(fundId) {
       renderBudgetTracker();
 
       if (supabaseClient && state.user?.id) {
-        supabaseClient.from('projects').update({
-          status: 'settled',
-          updated_at: new Date().toISOString(),
-        }).eq('id', fundId).eq('user_id', state.user.id).catch(() => {});
+        supabaseClient
+          .from('projects')
+          .update({
+            status: 'settled',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', fundId)
+          .eq('user_id', state.user.id)
+          .catch(() => {});
       }
 
       try {
@@ -4744,8 +5116,12 @@ function settleFund(fundId) {
         });
       } catch (e) {}
       triggerHaptic(15);
-      showToast(`专款【${fund.title}】已结案平账`);
-    }
+      showToast(
+        isZh
+          ? `专款【${fund.title}】已结案平账`
+          : `Fund "${fund.title}" settled`,
+      );
+    },
   });
 }
 
@@ -4755,12 +5131,15 @@ function deleteProject(fundId) {
   if (!fund) return;
 
   const remaining = Math.max(0, fund.target_amount - fund.spent_amount);
+  const isZh = state.lang === 'zh';
 
   showConfirmModal({
-    title: '确认撤销该专款？',
+    title: isZh ? '确认撤销该专款？' : 'Delete Sinking Fund?',
     subtitle: fund.title,
-    desc: `确定要撤销【${fund.title}】专款吗？撤销后，剩余未用的 ${state.currency} ${formatNumber(remaining)} 将原路释放回日常预算，已产生的流水不受影响。`,
-    confirmText: '确认撤销',
+    desc: isZh
+      ? `确定要撤销【${fund.title}】专款吗？撤销后，剩余未用的 ${state.currency} ${formatNumber(remaining)} 将原路释放回日常预算，已产生的流水不受影响。`
+      : `Delete "${fund.title}"? Any unused ${state.currency} ${formatNumber(remaining)} will be returned to your daily budget. Existing transactions remain intact.`,
+    confirmText: isZh ? '确认撤销' : 'Delete Fund',
     danger: true,
     onConfirm: async () => {
       state.projects = (state.projects || []).filter((p) => p.id !== fundId);
@@ -4769,7 +5148,12 @@ function deleteProject(fundId) {
       renderBudgetTracker();
 
       if (supabaseClient && state.user?.id) {
-        supabaseClient.from('projects').delete().eq('id', fundId).eq('user_id', state.user.id).catch(() => {});
+        supabaseClient
+          .from('projects')
+          .delete()
+          .eq('id', fundId)
+          .eq('user_id', state.user.id)
+          .catch(() => {});
       }
 
       try {
@@ -4779,8 +5163,8 @@ function deleteProject(fundId) {
         });
       } catch (e) {}
       triggerHaptic(15);
-      showToast('专款已撤销');
-    }
+      showToast(isZh ? '专款已撤销' : 'Sinking fund deleted');
+    },
   });
 }
 
@@ -4796,10 +5180,15 @@ async function toggleClaimFriendPaid(claimId, friendIdx) {
   renderClaims();
 
   if (supabaseClient && state.user?.id) {
-    supabaseClient.from('claims').update({
-      friends: claim.friends,
-      updated_at: new Date().toISOString(),
-    }).eq('id', claimId).eq('user_id', state.user.id).catch(() => {});
+    supabaseClient
+      .from('claims')
+      .update({
+        friends: claim.friends,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', claimId)
+      .eq('user_id', state.user.id)
+      .catch(() => {});
   }
 
   try {
@@ -4809,9 +5198,14 @@ async function toggleClaimFriendPaid(claimId, friendIdx) {
     });
   } catch (e) {}
 
+  const isZh = state.lang === 'zh';
   const statusMsg = friend.paid
-    ? `已收到 ${friend.name} 的 ${state.currency} ${formatNumber(friend.amount)}`
-    : `已标记为待收`;
+    ? isZh
+      ? `已收到 ${friend.name} 的 ${state.currency} ${formatNumber(friend.amount)}`
+      : `Received ${state.currency} ${formatNumber(friend.amount)} from ${friend.name}`
+    : isZh
+      ? `已标记为待收`
+      : `Marked as pending`;
   showToast(statusMsg);
 }
 
@@ -4819,25 +5213,35 @@ function settleAllClaim(claimId) {
   triggerHaptic(15);
   const claim = (state.claims || []).find((c) => c.id === claimId);
   if (!claim) return;
+  const isZh = state.lang === 'zh';
 
   showConfirmModal({
-    title: '确认全额结清？',
+    title: isZh ? '确认全额结清？' : 'Mark All as Settled?',
     subtitle: claim.title,
-    desc: '确定要将此笔账单的所有分摊款项标记为全额结清吗？',
-    confirmText: '确认结清',
+    desc: isZh
+      ? '确定要将此笔账单的所有分摊款项标记为全额结清吗？'
+      : 'Mark all friend shares on this split bill as paid and settled?',
+    confirmText: isZh ? '确认结清' : 'Settle All',
     danger: false,
     onConfirm: async () => {
-      (claim.friends || []).forEach((f) => { f.paid = true; });
+      (claim.friends || []).forEach((f) => {
+        f.paid = true;
+      });
       claim.status = 'settled';
       saveClaims(state.claims);
       renderClaims();
 
       if (supabaseClient && state.user?.id) {
-        supabaseClient.from('claims').update({
-          friends: claim.friends,
-          status: 'settled',
-          updated_at: new Date().toISOString(),
-        }).eq('id', claimId).eq('user_id', state.user.id).catch(() => {});
+        supabaseClient
+          .from('claims')
+          .update({
+            friends: claim.friends,
+            status: 'settled',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', claimId)
+          .eq('user_id', state.user.id)
+          .catch(() => {});
       }
 
       try {
@@ -4846,8 +5250,8 @@ function settleAllClaim(claimId) {
           headers: getAuthHeaders(),
         });
       } catch (e) {}
-      showToast('该笔代垫款项已全额结清');
-    }
+      showToast(isZh ? '该笔代垫款项已全额结清' : 'All shares marked as settled');
+    },
   });
 }
 
@@ -4855,12 +5259,15 @@ function deleteClaim(claimId) {
   triggerHaptic(10);
   const claim = (state.claims || []).find((c) => c.id === claimId);
   if (!claim) return;
+  const isZh = state.lang === 'zh';
 
   showConfirmModal({
-    title: '确认删除该待收账单？',
+    title: isZh ? '确认删除该待收账单？' : 'Delete Split Bill Claim?',
     subtitle: claim.title,
-    desc: '确定要删除此笔代垫记录吗？此操作不可撤销。',
-    confirmText: '确认删除',
+    desc: isZh
+      ? '确定要删除此笔代垫记录吗？此操作不可撤销。'
+      : 'Are you sure you want to delete this split bill claim? This cannot be undone.',
+    confirmText: isZh ? '确认删除' : 'Delete Claim',
     danger: true,
     onConfirm: async () => {
       state.claims = (state.claims || []).filter((c) => c.id !== claimId);
@@ -4868,7 +5275,12 @@ function deleteClaim(claimId) {
       renderClaims();
 
       if (supabaseClient && state.user?.id) {
-        supabaseClient.from('claims').delete().eq('id', claimId).eq('user_id', state.user.id).catch(() => {});
+        supabaseClient
+          .from('claims')
+          .delete()
+          .eq('id', claimId)
+          .eq('user_id', state.user.id)
+          .catch(() => {});
       }
 
       try {
@@ -4877,8 +5289,8 @@ function deleteClaim(claimId) {
           headers: getAuthHeaders(),
         });
       } catch (e) {}
-      showToast('已删除待收账单');
-    }
+      showToast(isZh ? '已删除待收账单' : 'Claim deleted');
+    },
   });
 }
 
@@ -4887,17 +5299,20 @@ function renderBudgetTopupHistory() {
   const container = document.getElementById('budgetTopupHistoryContainer');
   if (!container) return;
 
-  const month = state.currentMonth === 'all' ? getCurrentMonthKey() : state.currentMonth;
-  const topups = (state.budgetTopUps && Array.isArray(state.budgetTopUps[month]))
-    ? state.budgetTopUps[month]
-    : [];
+  const month =
+    state.currentMonth === 'all' ? getCurrentMonthKey() : state.currentMonth;
+  const topups =
+    state.budgetTopUps && Array.isArray(state.budgetTopUps[month])
+      ? state.budgetTopUps[month]
+      : [];
 
   const sym = state.currency || 'RM';
+  const isZh = state.lang === 'zh';
 
   if (topups.length === 0) {
     container.innerHTML = `
       <div class="topup-history-empty" style="text-align: center; padding: 12px 8px; color: var(--text-muted); font-size: 0.8rem;">
-        本月暂无追加记录
+        ${isZh ? '本月暂无追加记录' : 'No budget top-ups this month'}
       </div>
     `;
     return;
@@ -4905,30 +5320,35 @@ function renderBudgetTopupHistory() {
 
   container.innerHTML = `
     <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin: 16px 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px;">
-      本月已追加记录 (${topups.length})
+      ${isZh ? `本月已追加记录 (${topups.length})` : `Top-Up History (${topups.length})`}
     </div>
     <div class="topup-history-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;">
-      ${topups.map((item) => `
+      ${topups
+        .map(
+          (item) => `
         <div class="topup-history-item" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 8px;">
           <div style="display: flex; flex-direction: column; gap: 2px;">
-            <strong style="font-size: 0.85rem; color: var(--text-primary); font-weight: 600;">${escapeHtml(item.reason || '临时追加额度')}</strong>
+            <strong style="font-size: 0.85rem; color: var(--text-primary); font-weight: 600;">${escapeHtml(item.reason || (isZh ? '临时追加额度' : 'Temporary Top-Up'))}</strong>
             <span style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml((item.date || '').slice(0, 10))}</span>
           </div>
           <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-weight: 700; color: #16a34a; font-family: var(--font-mono, monospace); font-size: 0.9rem;">+ ${sym} ${formatNumber(item.amount)}</span>
-            <button type="button" class="btn-del-topup" onclick="deleteBudgetTopup('${item.id}')" title="删除此笔追加" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; transition: all 0.15s ease;">
+            <button type="button" class="btn-del-topup" onclick="deleteBudgetTopup('${item.id}')" title="${isZh ? '删除此笔追加' : 'Delete top-up'}" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; transition: all 0.15s ease;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             </button>
           </div>
         </div>
-      `).join('')}
+      `,
+        )
+        .join('')}
     </div>
   `;
 }
 
 function deleteBudgetTopup(topupId) {
   triggerHaptic(10);
-  const month = state.currentMonth === 'all' ? getCurrentMonthKey() : state.currentMonth;
+  const month =
+    state.currentMonth === 'all' ? getCurrentMonthKey() : state.currentMonth;
   const topups = state.budgetTopUps || {};
   if (!Array.isArray(topups[month])) return;
 
@@ -4938,7 +5358,11 @@ function deleteBudgetTopup(topupId) {
   const [removed] = topups[month].splice(idx, 1);
   saveBudgetTopUps(topups);
   triggerHaptic(15);
-  showToast(`已删除追加预算 ${state.currency} ${formatNumber(removed.amount)}`);
+  showToast(
+    state.lang === 'zh'
+      ? `已删除追加预算 ${state.currency} ${formatNumber(removed.amount)}`
+      : `Removed budget top-up of ${state.currency} ${formatNumber(removed.amount)}`,
+  );
   renderBudgetTopupHistory();
   renderBudgetTracker();
 }
@@ -4946,24 +5370,35 @@ function deleteBudgetTopup(topupId) {
 function openTopupBudgetModal() {
   triggerHaptic(10);
   if (!elements.topupBudgetModal) return;
-  if (elements.budgetTopupAmountInput) elements.budgetTopupAmountInput.value = '300';
-  if (elements.budgetTopupReasonInput) elements.budgetTopupReasonInput.value = '';
+  if (elements.budgetTopupAmountInput)
+    elements.budgetTopupAmountInput.value = '300';
+  if (elements.budgetTopupReasonInput)
+    elements.budgetTopupReasonInput.value = '';
   renderBudgetTopupHistory();
   elements.topupBudgetModal.classList.remove('hidden');
+  pushModalHistoryState();
 }
 
 function closeTopupBudgetModal() {
   triggerHaptic(10);
   elements.topupBudgetModal?.classList.add('hidden');
+  popModalHistoryIfCleared();
 }
 
 function saveBudgetTopup() {
+  const isZh = state.lang === 'zh';
   const amount = parseFloat(elements.budgetTopupAmountInput?.value) || 0;
-  const reason = (elements.budgetTopupReasonInput?.value || '').trim() || '临时追加额度';
-  const month = state.currentMonth === 'all' ? getCurrentMonthKey() : state.currentMonth;
+  const reason =
+    (elements.budgetTopupReasonInput?.value || '').trim() ||
+    (isZh ? '临时追加额度' : 'Temporary Top-Up');
+  const month =
+    state.currentMonth === 'all' ? getCurrentMonthKey() : state.currentMonth;
 
   if (amount <= 0) {
-    return showToast('请输入有效的追加金额', true);
+    return showToast(
+      isZh ? '请输入有效的追加金额' : 'Please enter a valid top-up amount',
+      true,
+    );
   }
 
   const topups = state.budgetTopUps || {};
@@ -4979,29 +5414,50 @@ function saveBudgetTopup() {
   saveBudgetTopUps(topups);
   triggerHaptic(15);
   closeTopupBudgetModal();
-  showToast(`已为本月追加预算 ${state.currency} ${formatNumber(amount)}`);
+  showToast(
+    isZh
+      ? `已为本月追加预算 ${state.currency} ${formatNumber(amount)}`
+      : `Added ${state.currency} ${formatNumber(amount)} to monthly budget`,
+  );
   renderBudgetTracker();
 }
 
 // Safe Action Confirmation Modal
 let currentConfirmCallback = null;
-function showConfirmModal({ title, subtitle, desc, onConfirm, confirmText, danger }) {
+function showConfirmModal({
+  title,
+  subtitle,
+  desc,
+  onConfirm,
+  confirmText,
+  danger,
+}) {
   if (!elements.confirmActionModal) return;
-  if (elements.confirmModalTitle) elements.confirmModalTitle.textContent = title || '请确认';
-  if (elements.confirmModalSub) elements.confirmModalSub.textContent = subtitle || '';
-  if (elements.confirmModalDesc) elements.confirmModalDesc.textContent = desc || '';
+  const isZh = state.lang === 'zh';
+  if (elements.confirmModalTitle)
+    elements.confirmModalTitle.textContent =
+      title || (isZh ? '请确认' : 'Please Confirm');
+  if (elements.confirmModalSub)
+    elements.confirmModalSub.textContent = subtitle || '';
+  if (elements.confirmModalDesc)
+    elements.confirmModalDesc.textContent = desc || '';
   if (elements.proceedConfirmBtn) {
-    elements.proceedConfirmBtn.textContent = confirmText || '确认';
-    elements.proceedConfirmBtn.className = danger ? 'btn-modal-danger' : 'btn-modal-primary';
+    elements.proceedConfirmBtn.textContent =
+      confirmText || (isZh ? '确认' : 'Confirm');
+    elements.proceedConfirmBtn.className = danger
+      ? 'btn-modal-danger'
+      : 'btn-modal-primary';
   }
   currentConfirmCallback = onConfirm;
   elements.confirmActionModal.classList.remove('hidden');
+  pushModalHistoryState();
 }
 
 function closeConfirmModal() {
   triggerHaptic(10);
   elements.confirmActionModal?.classList.add('hidden');
   currentConfirmCallback = null;
+  popModalHistoryIfCleared();
 }
 
 // Populate Project Select in Transaction Creation Modal
@@ -5009,9 +5465,26 @@ function updateProjectDropdownOptions() {
   const select = elements.entryProjectSelect;
   if (!select) return;
 
-  const activeFunds = (state.projects || []).filter((p) => p.status === 'active');
-  select.innerHTML = '<option value="">-- 无关联 (日常生活预算) --</option>' +
-    activeFunds.map((f) => `<option value="${f.id}">${escapeHtml(f.title)} (${f.mode === 'budget_deduct' ? '从本月预算扣除' : '额外专项'})</option>`).join('');
+  const isZh = state.lang === 'zh';
+  const activeFunds = (state.projects || []).filter(
+    (p) => p.status === 'active',
+  );
+  select.innerHTML =
+    `<option value="">${isZh ? '-- 无关联 (日常生活预算) --' : '-- None (Daily Budget) --'}</option>` +
+    activeFunds
+      .map(
+        (f) =>
+          `<option value="${f.id}">${escapeHtml(f.title)} (${
+            f.mode === 'budget_deduct'
+              ? isZh
+                ? '从本月预算扣除'
+                : 'From Monthly Budget'
+              : isZh
+                ? '额外专项'
+                : 'Extra Fund'
+          })</option>`,
+      )
+      .join('');
 }
 
 // Add a Dynamic Friend Row in Split Bill Drawer
@@ -5060,8 +5533,14 @@ function setupProjectsModuleEventListeners() {
 
   // 2. New Project Modal Triggers
   elements.openNewProjectBtn?.addEventListener('click', openNewProjectModal);
-  elements.closeNewProjectModalBtn?.addEventListener('click', closeNewProjectModal);
+  elements.closeNewProjectModalBtn?.addEventListener(
+    'click',
+    closeNewProjectModal,
+  );
   elements.cancelNewProjectBtn?.addEventListener('click', closeNewProjectModal);
+  elements.newProjectModal?.addEventListener('click', (e) => {
+    if (e.target === elements.newProjectModal) closeNewProjectModal();
+  });
   elements.saveNewProjectBtn?.addEventListener('click', saveNewProject);
 
   elements.btnModeBudgetDeduct?.addEventListener('click', () => {
@@ -5078,13 +5557,25 @@ function setupProjectsModuleEventListeners() {
 
   // 3. Budget Top-up Triggers
   elements.quickTopupBudgetBtn?.addEventListener('click', openTopupBudgetModal);
-  elements.closeTopupBudgetModalBtn?.addEventListener('click', closeTopupBudgetModal);
-  elements.cancelTopupBudgetBtn?.addEventListener('click', closeTopupBudgetModal);
+  elements.closeTopupBudgetModalBtn?.addEventListener(
+    'click',
+    closeTopupBudgetModal,
+  );
+  elements.cancelTopupBudgetBtn?.addEventListener(
+    'click',
+    closeTopupBudgetModal,
+  );
+  elements.topupBudgetModal?.addEventListener('click', (e) => {
+    if (e.target === elements.topupBudgetModal) closeTopupBudgetModal();
+  });
   elements.saveTopupBudgetBtn?.addEventListener('click', saveBudgetTopup);
 
   // 4. Safe Confirmation Modal Triggers
   elements.closeConfirmModalBtn?.addEventListener('click', closeConfirmModal);
   elements.cancelConfirmBtn?.addEventListener('click', closeConfirmModal);
+  elements.confirmActionModal?.addEventListener('click', (e) => {
+    if (e.target === elements.confirmActionModal) closeConfirmModal();
+  });
   elements.proceedConfirmBtn?.addEventListener('click', async () => {
     if (typeof currentConfirmCallback === 'function') {
       const cb = currentConfirmCallback;
@@ -5108,7 +5599,11 @@ function setupProjectsModuleEventListeners() {
     elements.splitBillDrawer?.classList.toggle('hidden', isOpen);
     elements.toggleSplitBillBtn?.classList.toggle('active', !isOpen);
 
-    if (!isOpen && elements.splitFriendsList && elements.splitFriendsList.children.length === 0) {
+    if (
+      !isOpen &&
+      elements.splitFriendsList &&
+      elements.splitFriendsList.children.length === 0
+    ) {
       addSplitFriendRow();
     }
   });

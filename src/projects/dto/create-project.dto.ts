@@ -12,6 +12,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
  * Data Transfer Object for creating a new Sinking Fund / Project.
  */
 export class CreateProjectDto {
+  @ApiPropertyOptional({ example: 'proj_1730000000000', description: 'Client-generated unique ID' })
+  @IsString()
+  @IsOptional()
+  id?: string;
+
   @ApiProperty({ example: '🚗 汽车大保养', description: 'Project title' })
   @IsString()
   @IsNotEmpty()

@@ -4,10 +4,11 @@ import {
   IsNumber,
   IsPositive,
   IsArray,
+  IsOptional,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ClaimFriendDto {
   @ApiProperty({ example: '小明' })
@@ -22,6 +23,11 @@ export class ClaimFriendDto {
 }
 
 export class CreateClaimDto {
+  @ApiPropertyOptional({ example: 'claim_1730000000000', description: 'Client-generated unique ID' })
+  @IsString()
+  @IsOptional()
+  id?: string;
+
   @ApiProperty({ example: '周五聚餐火锅' })
   @IsString()
   @IsNotEmpty()

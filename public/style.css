@@ -812,10 +812,9 @@ body {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-  scroll-behavior: smooth;
+  overscroll-behavior-y: auto;
+  scroll-behavior: auto;
   touch-action: pan-y;
-  contain: paint;
   max-height: calc(100dvh - 300px);
   min-height: 240px;
   border: 1px solid var(--border-card);
@@ -2209,8 +2208,12 @@ body {
     border: 1px solid var(--border-card);
     border-radius: var(--radius-md);
     align-items: center;
+  }
+
+  /* Defer rendering only for rows strictly below the initial fold */
+  .ledger-table tbody tr:not(.timeline-date-row):nth-child(n + 15) {
     content-visibility: auto;
-    contain-intrinsic-size: auto 68px;
+    contain-intrinsic-size: auto none auto 92px;
   }
 
   .ledger-table tbody tr:not(.timeline-date-row):last-child {
@@ -2219,15 +2222,12 @@ body {
 
   .ledger-table tbody tr.timeline-date-row {
     display: block;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    position: relative;
+    z-index: 2;
     padding: 0;
     margin: 14px 0 8px 0;
     background: transparent;
     border: none;
-    transform: translateZ(0);
-    will-change: transform;
   }
 
   .ledger-table tbody tr.timeline-date-row:first-child {
@@ -2270,7 +2270,10 @@ body {
   }
   .table-container {
     border: none;
-    max-height: calc(100dvh - 285px);
+    max-height: none !important;
+    min-height: 0;
+    overflow: visible !important;
+    overscroll-behavior-y: auto;
   }
   .create-sheet-overlay {
     align-items: flex-end;
