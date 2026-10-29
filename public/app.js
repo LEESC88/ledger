@@ -6,7 +6,7 @@
  */
 
 // Current Client Release Version
-const APP_VERSION = '1.3.9';
+const APP_VERSION = '1.4.0';
 
 // Default BaaS Cloud Configuration (Decoded from safe payload, overridable by window.__ENV__)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -4056,19 +4056,63 @@ async function checkForAppUpdates(isManual = false) {
     }
 
     let remoteData = null;
+    // 1. Try GitHub Releases API first (instant, real-time, no 5-minute Fastly CDN cache)
     try {
-      const ghRes = await fetch(
-        `https://raw.githubusercontent.com/LEESC88/ledger/master/public/version.json?t=${Date.now()}`,
-        { cache: 'no-store' },
+      const relRes = await fetch(
+        'https://api.github.com/repos/LEESC88/ledger/releases/latest',
+        { headers: { Accept: 'application/vnd.github.v3+json' } },
       );
-      if (ghRes.ok) {
-        remoteData = await ghRes.json();
+      if (relRes.ok) {
+        const relData = await relRes.json();
+        const tagVer = (relData.tag_name || '').replace(/^v/, '');
+        if (tagVer) {
+          const apkAsset = (relData.assets || []).find(
+            (a) => a.name && a.name.endsWith('.apk'),
+          );
+          remoteData = {
+            version: tagVer,
+            apkUrl: apkAsset?.browser_download_url || pendingApkDownloadUrl,
+            notes: relData.body || '',
+          };
+        }
       }
     } catch (e) {
-      // Fallback to local version.json
+      // Fallback to raw / jsdelivr
     }
 
+    // 2. Try raw.githubusercontent.com as secondary
     if (!remoteData) {
+      try {
+        const ghRes = await fetch(
+          `https://raw.githubusercontent.com/LEESC88/ledger/master/public/version.json?t=${Date.now()}`,
+          { cache: 'no-store' },
+        );
+        if (ghRes.ok) {
+          remoteData = await ghRes.json();
+        }
+      } catch (e) {
+        // Fallback to jsdelivr
+      }
+    }
+
+    // 3. Try jsDelivr as tertiary fallback
+    if (!remoteData) {
+      try {
+        const jsdRes = await fetch(
+          `https://cdn.jsdelivr.net/gh/LEESC88/ledger@master/public/version.json?t=${Date.now()}`,
+          { cache: 'no-store' },
+        );
+        if (jsdRes.ok) {
+          remoteData = await jsdRes.json();
+        }
+      } catch (e) {
+        // Fallback
+      }
+    }
+
+    // 4. Local version.json fallback ONLY in web browser mode (not in native APK wrapper)
+    const isNativeApp = !!(window.NativeUpdater || window.Capacitor);
+    if (!remoteData && !isNativeApp) {
       const localRes = await fetch(`/version.json?t=${Date.now()}`, {
         cache: 'no-store',
       });

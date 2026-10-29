@@ -2201,9 +2201,9 @@ body {
       "account actions"
       "note actions"
       "date actions";
-    gap: 3px 10px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
+    gap: 2px 8px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
     background: var(--bg-input);
     border: 1px solid var(--border-card);
     border-radius: var(--radius-md);
@@ -2222,26 +2222,27 @@ body {
 
   .ledger-table tbody tr.timeline-date-row {
     display: block;
-    position: relative;
-    z-index: 2;
+    position: static !important;
+    top: auto !important;
+    z-index: 1;
     padding: 0;
-    margin: 14px 0 8px 0;
+    margin: 8px 0 4px 0 !important;
     background: transparent;
     border: none;
   }
 
   .ledger-table tbody tr.timeline-date-row:first-child {
-    margin-top: 0;
+    margin-top: 0 !important;
   }
 
   .ledger-table tbody tr.timeline-date-row td.timeline-date-cell {
     display: block;
     width: 100% !important;
-    padding: 7px 10px !important;
-    background: var(--bg-surface);
-    border: 1px solid var(--border-card);
-    border-radius: var(--radius-md);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    padding: 5px 8px !important;
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-card) !important;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   }
 
   .ledger-table td {
@@ -2270,10 +2271,17 @@ body {
   }
   .table-container {
     border: none;
-    max-height: none !important;
+    flex: 1;
     min-height: 0;
-    overflow: visible !important;
-    overscroll-behavior-y: auto;
+    max-height: calc(100dvh - 280px);
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+  }
+  .timeline-date-row {
+    position: static !important;
+    top: auto !important;
   }
   .create-sheet-overlay {
     align-items: flex-end;
@@ -2659,10 +2667,12 @@ body {
    DAILY TIMELINE GROUPING & HAPTIC / BOTTOM SHEET UI ENHANCEMENTS
    ========================================================================== */
 
-.timeline-date-row {
-  position: sticky;
-  top: 33px; /* sits cleanly under the sticky table header */
-  z-index: 2;
+@media (min-width: 641px) {
+  .timeline-date-row {
+    position: sticky;
+    top: 33px; /* sits cleanly under the sticky table header */
+    z-index: 2;
+  }
 }
 
 .timeline-date-cell {
