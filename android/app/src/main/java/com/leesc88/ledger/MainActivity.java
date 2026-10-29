@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.json.JSONObject;
@@ -114,7 +115,7 @@ public class MainActivity extends BridgeActivity {
                         conn.setConnectTimeout(15000);
                         conn.setReadTimeout(30000);
                         conn.setInstanceFollowRedirects(false);
-                        conn.setRequestProperty("User-Agent", "LEDGER-Android-Client/1.4.0");
+                        conn.setRequestProperty("User-Agent", "LEDGER-Android-Client/1.4.1");
 
                         int responseCode = conn.getResponseCode();
                         if (responseCode == HttpURLConnection.HTTP_MOVED_PERM
@@ -177,6 +178,50 @@ public class MainActivity extends BridgeActivity {
                         if (input != null) input.close();
                         if (conn != null) conn.disconnect();
                     } catch (Exception ignored) {}
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void shareCsvFile(String fileName, String csvContent, String chooserTitle) {
+            if (csvContent == null) return;
+            final String safeName = (fileName != null && !fileName.trim().isEmpty())
+                ? fileName.replaceAll("[^a-zA-Z0-9._\\-\\u4e00-\\u9fa5]", "_")
+                : "ledger_export.csv";
+            final String finalFileName = safeName.toLowerCase().endsWith(".csv") ? safeName : (safeName + ".csv");
+            final String title = (chooserTitle != null && !chooserTitle.trim().isEmpty())
+                ? chooserTitle
+                : "Export CSV";
+
+            runOnUiThread(() -> {
+                try {
+                    Context context = MainActivity.this;
+                    File csvFile = new File(getCacheDir(), finalFileName);
+                    try (FileOutputStream fos = new FileOutputStream(csvFile, false)) {
+                        if (!csvContent.startsWith("\uFEFF")) {
+                            fos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF});
+                        }
+                        fos.write(csvContent.getBytes(StandardCharsets.UTF_8));
+                        fos.flush();
+                    }
+
+                    Uri fileUri = FileProvider.getUriForFile(
+                        context,
+                        getPackageName() + ".fileprovider",
+                        csvFile
+                    );
+
+                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                    shareIntent.setType("text/csv");
+                    shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, finalFileName);
+                    shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                    Intent chooser = Intent.createChooser(shareIntent, title);
+                    chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(chooser);
+                } catch (Exception e) {
+                    notifyDownloadError("CSV export failed: " + e.getMessage());
                 }
             });
         }

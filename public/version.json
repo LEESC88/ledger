@@ -1,6 +1,6 @@
 {
-  "version": "1.4.0",
+  "version": "1.4.1",
   "releaseDate": "2026-10-29",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk",
-  "notes": "Fixed mobile transaction scroll container with native smooth inertia, resolved date header floating cut-off over transactions, tightened timeline spacing for compact view, added real-time instant GitHub Releases API update checker, synchronized continuous streak days with active duration, repurposed accounts center into monthly spending breakdown with historical month filter, enabled custom file path picker for CSV exports with professional Excel-friendly formatted financial tables, added cloud synchronization for sinking fund pools and split bill claims, and added modal back-button/escape navigation guards."
+  "notes": "Added native Android share and save sheet for CSV exports allowing direct saving to phone file manager, resolved consecutive streak count updating across midnight and upon recording, fixed background app wakeup date auto-refresh, and optimized real-time streak UI synchronization."
 }

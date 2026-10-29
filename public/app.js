@@ -6,7 +6,7 @@
  */
 
 // Current Client Release Version
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.1';
 
 // Default BaaS Cloud Configuration (Decoded from safe payload, overridable by window.__ENV__)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -741,7 +741,7 @@ function openCreateModal() {
   triggerHaptic(10);
   closeProfileDropdown();
   updateProjectDropdownOptions();
-  if (elements.inputDate && !elements.inputDate.value) {
+  if (elements.inputDate) {
     elements.inputDate.value = getLocalDateString();
   }
   renderCategoryGrid(state.currentType);
@@ -1210,6 +1210,8 @@ function saveOfflineRecord(payload) {
   updateMonthFilterDropdown(state.records);
   renderTable();
   calculateLocalSummaryMetrics();
+  updateAccountModalData();
+  renderStreakAndBadges();
 
   showToast(
     state.lang === 'zh'
@@ -1741,15 +1743,16 @@ function groupRecordsByDate(records) {
   const groupsMap = new Map();
   for (const record of records) {
     if (!record.date) continue;
-    if (!groupsMap.has(record.date)) {
+    const normDate = normalizeRecordDateYMD(record.date) || record.date;
+    if (!groupsMap.has(normDate)) {
       let relative = '';
-      if (record.date === today) {
+      if (normDate === today) {
         relative = state.lang === 'zh' ? '今天' : 'Today';
-      } else if (record.date === yesterday) {
+      } else if (normDate === yesterday) {
         relative = state.lang === 'zh' ? '昨天' : 'Yesterday';
       }
-      groupsMap.set(record.date, {
-        date: record.date,
+      groupsMap.set(normDate, {
+        date: normDate,
         relativeLabel: relative,
         totalExpense: 0,
         totalIncome: 0,
@@ -1757,7 +1760,7 @@ function groupRecordsByDate(records) {
       });
     }
 
-    const group = groupsMap.get(record.date);
+    const group = groupsMap.get(normDate);
     if (record.type === 'expense') {
       group.totalExpense += Number(record.amount || 0);
     } else if (record.type === 'income') {
@@ -2089,6 +2092,20 @@ async function handleRecordSubmit(e) {
     elements.inputAmount.value = '';
     elements.inputNote.value = '';
     closeCreateModal();
+
+    // Optimistically update local records and streak counter for zero-latency feedback
+    const optimisticRecord = {
+      id: `temp-${Date.now()}`,
+      type: payload.type,
+      amount: payload.amount,
+      category: payload.category,
+      account_name: payload.account_name || 'Cash',
+      date: normalizeRecordDateYMD(payload.date) || payload.date,
+      note: payload.note,
+    };
+    state.records = [optimisticRecord, ...(state.records || [])];
+    renderStreakAndBadges();
+    updateAccountModalData();
 
     // Immediately refresh claims and sinking funds views
     renderClaims();
@@ -2549,6 +2566,61 @@ async function saveBlobWithPicker(
   defaultFileName,
   fileDescription = 'CSV 表格文件 (*.csv)',
 ) {
+  // 1. Android Native APK Share & Save Sheet (FileProvider + Intent.ACTION_SEND)
+  if (
+    window.NativeUpdater &&
+    typeof window.NativeUpdater.shareCsvFile === 'function'
+  ) {
+    try {
+      const csvText = await blob.text();
+      window.NativeUpdater.shareCsvFile(
+        defaultFileName,
+        csvText,
+        fileDescription,
+      );
+      return {
+        success: true,
+        fileName: defaultFileName,
+        isNativeShare: true,
+      };
+    } catch (err) {
+      console.warn('NativeUpdater.shareCsvFile failed:', err);
+    }
+  }
+
+  // 2. Mobile Browser Web Share API (System Share & Save to Files Sheet)
+  const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(
+    navigator.userAgent || '',
+  );
+  if (
+    isMobileDevice &&
+    typeof navigator.share === 'function' &&
+    typeof navigator.canShare === 'function'
+  ) {
+    try {
+      const csvFile = new File([blob], defaultFileName, {
+        type: 'text/csv;charset=utf-8',
+      });
+      if (navigator.canShare({ files: [csvFile] })) {
+        await navigator.share({
+          files: [csvFile],
+          title: defaultFileName,
+        });
+        return {
+          success: true,
+          fileName: defaultFileName,
+          isNativeShare: true,
+        };
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        return { canceled: true, fileName: defaultFileName };
+      }
+      console.warn('navigator.share failed, falling back:', err);
+    }
+  }
+
+  // 3. Desktop OS Save File Picker (Chrome / Edge Desktop)
   if (typeof window.showSaveFilePicker === 'function') {
     try {
       const handle = await window.showSaveFilePicker({
@@ -2577,7 +2649,7 @@ async function saveBlobWithPicker(
     }
   }
 
-  // Fallback download link for browsers without showSaveFilePicker
+  // 4. Fallback download link for browsers without native picker/share
   const url = URL.createObjectURL(blob);
   const downloadLink = document.createElement('a');
   downloadLink.href = url;
@@ -2818,7 +2890,13 @@ async function exportToCSV() {
     return;
   }
 
-  if (saveRes.isNativePicker) {
+  if (saveRes.isNativeShare) {
+    showToast(
+      isZh
+        ? `已唤起系统分享与转存面板：${saveRes.fileName}`
+        : `Opened system share & save sheet: ${saveRes.fileName}`,
+    );
+  } else if (saveRes.isNativePicker) {
     showToast(
       isZh
         ? `已成功保存 ${recordsToExport.length} 笔账单至：${saveRes.fileName}`
@@ -3110,10 +3188,56 @@ function setAvatarWithFallback(imgEl, user) {
   imgEl.src = url;
 }
 
+function normalizeRecordDateYMD(raw) {
+  if (!raw) return '';
+  const str = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    return str.slice(0, 10);
+  }
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    return getLocalDateString(parsed);
+  }
+  return '';
+}
+
+function parseLocalMidnight(ymdOrIso) {
+  if (!ymdOrIso) return null;
+  const str = String(ymdOrIso).trim();
+  const m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) {
+    return new Date(
+      parseInt(m[1], 10),
+      parseInt(m[2], 10) - 1,
+      parseInt(m[3], 10),
+    );
+  }
+  const d = new Date(str);
+  if (isNaN(d.getTime())) return null;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
 function formatUsageDuration(firstLoginIso) {
-  if (!firstLoginIso) return state.lang === 'zh' ? '1 天' : '1 Day';
-  const diffMs = Math.max(0, Date.now() - new Date(firstLoginIso).getTime());
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+  let days = 1;
+  if (firstLoginIso) {
+    const startMidnight = parseLocalMidnight(firstLoginIso);
+    const todayMidnight = parseLocalMidnight(getLocalDateString());
+    if (startMidnight && todayMidnight) {
+      days =
+        Math.max(
+          0,
+          Math.round(
+            (todayMidnight.getTime() - startMidnight.getTime()) / 86400000,
+          ),
+        ) + 1;
+    }
+  }
+  if (state.records && state.records.length > 0) {
+    const streakDays = calculateStreak(state.records);
+    if (streakDays > days) {
+      days = streakDays;
+    }
+  }
   if (state.lang === 'zh') return `${days} 天`;
   return `${days} ${days === 1 ? 'Day' : 'Days'}`;
 }
@@ -3499,27 +3623,24 @@ const MOTIVATION_BADGES = [
 function calculateStreak(records) {
   if (!records || records.length === 0) return 0;
   const uniqueDates = Array.from(
-    new Set(records.map((r) => r.date).filter(Boolean)),
+    new Set(
+      records
+        .map((r) => normalizeRecordDateYMD(r?.date))
+        .filter(Boolean),
+    ),
   );
   uniqueDates.sort((a, b) => b.localeCompare(a));
 
   if (uniqueDates.length === 0) return 0;
 
   const now = new Date();
-  const formatYMD = (d) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
-
-  const today = formatYMD(now);
+  const today = getLocalDateString(now);
   const yesterdayDate = new Date(
     now.getFullYear(),
     now.getMonth(),
     now.getDate() - 1,
   );
-  const yesterday = formatYMD(yesterdayDate);
+  const yesterday = getLocalDateString(yesterdayDate);
 
   if (uniqueDates[0] !== today && uniqueDates[0] !== yesterday) {
     return 0;
@@ -3527,8 +3648,9 @@ function calculateStreak(records) {
 
   let streak = 1;
   for (let i = 0; i < uniqueDates.length - 1; i++) {
-    const d1 = new Date(uniqueDates[i] + 'T00:00:00');
-    const d2 = new Date(uniqueDates[i + 1] + 'T00:00:00');
+    const d1 = parseLocalMidnight(uniqueDates[i]);
+    const d2 = parseLocalMidnight(uniqueDates[i + 1]);
+    if (!d1 || !d2) break;
     const diffDays = Math.round((d1.getTime() - d2.getTime()) / 86400000);
     if (diffDays === 1) {
       streak++;
@@ -3537,28 +3659,43 @@ function calculateStreak(records) {
     }
   }
 
-  // Synchronize streak with active usage duration if user has records
+  // Synchronize streak with calendar usage days up to the latest active record date
+  const latestActiveMidnight = parseLocalMidnight(uniqueDates[0]);
   let usageDays = 0;
-  if (state.user) {
-    const firstLoginKey = 'ledger_first_login_' + state.user.id;
-    const meta = state.user.user_metadata || {};
-    const firstLogin =
-      meta.first_login_at || localStorage.getItem(firstLoginKey);
-    if (firstLogin) {
-      const diffMs = Math.max(0, Date.now() - new Date(firstLogin).getTime());
-      usageDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-    }
-  } else {
-    for (let k = 0; k < localStorage.length; k++) {
-      const key = localStorage.key(k);
-      if (key && key.startsWith('ledger_first_login_')) {
-        const val = localStorage.getItem(key);
-        if (val) {
-          const diffMs = Math.max(0, Date.now() - new Date(val).getTime());
-          usageDays = Math.max(
-            usageDays,
-            Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1,
-          );
+  if (latestActiveMidnight) {
+    if (state.user) {
+      const firstLoginKey = 'ledger_first_login_' + state.user.id;
+      const meta = state.user.user_metadata || {};
+      const firstLogin =
+        meta.first_login_at || localStorage.getItem(firstLoginKey);
+      const startMidnight = parseLocalMidnight(firstLogin);
+      if (startMidnight) {
+        usageDays =
+          Math.max(
+            0,
+            Math.round(
+              (latestActiveMidnight.getTime() - startMidnight.getTime()) /
+                86400000,
+            ),
+          ) + 1;
+      }
+    } else {
+      for (let k = 0; k < localStorage.length; k++) {
+        const key = localStorage.key(k);
+        if (key && key.startsWith('ledger_first_login_')) {
+          const val = localStorage.getItem(key);
+          const startMidnight = parseLocalMidnight(val);
+          if (startMidnight) {
+            const candidate =
+              Math.max(
+                0,
+                Math.round(
+                  (latestActiveMidnight.getTime() - startMidnight.getTime()) /
+                    86400000,
+                ),
+              ) + 1;
+            usageDays = Math.max(usageDays, candidate);
+          }
         }
       }
     }
@@ -5658,6 +5795,22 @@ function setupProjectsModuleEventListeners() {
   });
 
   elements.openNewClaimBtn?.addEventListener('click', openCreateModalWithSplit);
+
+  // Refresh current local date, relative day tags, and streak when returning from background across midnight
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      if (
+        elements.inputDate &&
+        (!elements.createEntryModal ||
+          elements.createEntryModal.classList.contains('hidden'))
+      ) {
+        elements.inputDate.value = getLocalDateString();
+      }
+      renderTable();
+      renderStreakAndBadges();
+      updateAccountModalData();
+    }
+  });
 }
 
 // Start Application
