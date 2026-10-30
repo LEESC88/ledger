@@ -1,11 +1,11 @@
 {
-  "name": "LEDGER - Financial Management",
-  "short_name": "LEDGER",
+  "name": "MonetaX - Personal Finance",
+  "short_name": "MonetaX",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0F172A",
-  "theme_color": "#0D9488",
-  "description": "Personal finance management, budget tracking, and offline ledger",
+  "background_color": "#090D16",
+  "theme_color": "#14B8A6",
+  "description": "Minimalist personal finance, budget tracking, and private vault",
   "icons": [
     {
       "src": "/icon.svg",

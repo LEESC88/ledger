@@ -1,12 +1,11 @@
 /**
  * ============================================================================
- * LEDGER — Client Application Engine (Minimalist Pro Max Edition v1.3.0)
+ * MonetaX — Client Application Engine (Minimalist Pro Max Edition)
  * Pure Vanilla JavaScript • Multi-Page Mobile Architecture • Bilingual (EN/中文)
  * ============================================================================
  */
-
 // Current Client Release Version
-const APP_VERSION = '1.4.2';
+const APP_VERSION = '1.5.0';
 
 // Default BaaS Cloud Configuration (Decoded from safe payload, overridable by window.__ENV__)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -194,6 +193,8 @@ let state = {
   budgetTopUps: {},
   activeProjectTab: 'sinking',
   selectedAccountsMonth: 'current',
+  editingRecordId: null,
+  isPrivacyMode: localStorage.getItem('ledger_privacy_mode') === 'true',
 };
 
 // Default Supported Payment Accounts / Asset Wallets
@@ -259,11 +260,19 @@ const elements = {
   createEntryModal: document.getElementById('createEntryModal'),
   closeCreateModalBtn: document.getElementById('closeCreateModalBtn'),
   categoryGridContainer: document.getElementById('categoryGridContainer'),
+  createModalTitle: document.querySelector('#createEntryModal .modal-title'),
+  createModalSubtitle: document.querySelector(
+    '#createEntryModal .modal-subtitle',
+  ),
+  submitBtnText: document.querySelector('#submitBtn span'),
 
   // Header Controls
   currencySelector: document.getElementById('currencySelector'),
   monthFilter: document.getElementById('monthFilter'),
   refreshBtn: document.getElementById('refreshBtn'),
+  privacyToggleBtn: document.getElementById('privacyToggleBtn'),
+  privacyIconEye: document.getElementById('privacyIconEye'),
+  privacyIconEyeOff: document.getElementById('privacyIconEyeOff'),
   btnTypeExpense: document.getElementById('btnTypeExpense'),
   btnTypeIncome: document.getElementById('btnTypeIncome'),
   inputAmount: document.getElementById('inputAmount'),
@@ -744,13 +753,44 @@ function switchAppPage(pageName) {
 /**
  * Open & Close Create Transaction Modal
  */
+/**
+ * Open & Close Create / Edit Transaction Modal
+ */
 function openCreateModal() {
   triggerHaptic(10);
+  state.editingRecordId = null;
   closeProfileDropdown();
   updateProjectDropdownOptions();
+
+  // Reset Modal Header and Button
+  if (elements.createModalTitle) {
+    elements.createModalTitle.textContent = t('create_modal_title');
+  }
+  if (elements.createModalSubtitle) {
+    elements.createModalSubtitle.textContent = t('create_modal_sub');
+  }
+  if (elements.submitBtnText) {
+    elements.submitBtnText.textContent = t('commit_btn');
+  }
+
+  // Clear Form Fields
+  if (elements.inputAmount) elements.inputAmount.value = '';
+  if (elements.inputNote) elements.inputNote.value = '';
   if (elements.inputDate) {
     elements.inputDate.value = getLocalDateString();
   }
+
+  // Reset Advanced Toggles & Drawers
+  if (elements.toggleFundLinkBtn)
+    elements.toggleFundLinkBtn.classList.remove('active');
+  if (elements.toggleSplitBillBtn)
+    elements.toggleSplitBillBtn.classList.remove('active');
+  elements.sinkingFundDrawer?.classList.add('hidden');
+  elements.splitBillDrawer?.classList.add('hidden');
+  if (elements.entryProjectSelect) elements.entryProjectSelect.value = '';
+  if (elements.splitMyShareInput) elements.splitMyShareInput.value = '';
+  if (elements.splitFriendsList) elements.splitFriendsList.innerHTML = '';
+
   renderCategoryGrid(state.currentType);
   renderAccountPicker();
   elements.createEntryModal?.classList.remove('hidden');
@@ -760,8 +800,86 @@ function openCreateModal() {
   }, 60);
 }
 
+function openEditRecordModal(id) {
+  triggerHaptic(10);
+  const record = state.records.find((r) => String(r.id) === String(id));
+  if (!record) return;
+
+  state.editingRecordId = record.id;
+  closeProfileDropdown();
+  updateProjectDropdownOptions();
+
+  // 1. Update Title and Button for Editing
+  if (elements.createModalTitle) {
+    elements.createModalTitle.textContent = t('edit_modal_title');
+  }
+  if (elements.createModalSubtitle) {
+    elements.createModalSubtitle.textContent = t('edit_modal_sub');
+  }
+  if (elements.submitBtnText) {
+    elements.submitBtnText.textContent = t('save_changes_btn');
+  }
+
+  // 2. Pre-fill Transaction Type
+  setEntryType(record.type || 'expense');
+
+  // 3. Pre-fill Amount
+  if (elements.inputAmount) {
+    elements.inputAmount.value = record.amount;
+  }
+
+  // 4. Pre-fill Category & Re-render Grid
+  if (elements.selectCategory) {
+    elements.selectCategory.value = record.category;
+  }
+  renderCategoryGrid(record.type || 'expense');
+  if (elements.categoryGridContainer) {
+    elements.categoryGridContainer
+      .querySelectorAll('.cat-grid-btn')
+      .forEach((b) => {
+        b.classList.toggle(
+          'active',
+          b.getAttribute('data-cat-val') === record.category,
+        );
+      });
+  }
+
+  // 5. Pre-fill Payment Account
+  state.selectedAccount = record.account_name || 'Cash';
+  if (elements.selectedAccountInput) {
+    elements.selectedAccountInput.value = state.selectedAccount;
+  }
+  renderAccountPicker();
+
+  // 6. Pre-fill Date & Note
+  if (elements.inputDate) {
+    elements.inputDate.value = record.date;
+  }
+  if (elements.inputNote) {
+    elements.inputNote.value = formatRecordCleanNote(record.note || '');
+  }
+
+  // 7. Hide Project & Split Drawers during basic edit for clarity
+  if (elements.toggleFundLinkBtn)
+    elements.toggleFundLinkBtn.classList.remove('active');
+  if (elements.toggleSplitBillBtn)
+    elements.toggleSplitBillBtn.classList.remove('active');
+  elements.sinkingFundDrawer?.classList.add('hidden');
+  elements.splitBillDrawer?.classList.add('hidden');
+
+  // 8. Open Sheet
+  elements.createEntryModal?.classList.remove('hidden');
+  pushModalHistoryState();
+  setTimeout(() => {
+    elements.inputAmount?.focus();
+    elements.inputAmount?.select();
+  }, 60);
+}
+window.openEditRecordModal = openEditRecordModal;
+
 function closeCreateModal(fromPopState = false) {
   elements.createEntryModal?.classList.add('hidden');
+  state.editingRecordId = null;
   if (elements.createSheetDialog) {
     elements.createSheetDialog.style.transform = '';
   }
@@ -1348,8 +1466,7 @@ function renderBudgetTracker() {
   if (elements.budgetFormulaRow && elements.budgetFormulaText) {
     if (topUps > 0 || lockedFunds > 0) {
       elements.budgetFormulaRow.classList.remove('hidden');
-      const effLabel =
-        state.lang === 'zh' ? '有效日常' : 'Effective Daily';
+      const effLabel = state.lang === 'zh' ? '有效日常' : 'Effective Daily';
       elements.budgetFormulaText.textContent =
         `${t('budget_base_label')}: ${sym} ${formatNumber(baseBudget)} ` +
         (topUps > 0
@@ -1635,8 +1752,11 @@ function renderRecordRowHtml(record, sym) {
   const accMeta = getAccountMeta(record.account_name);
   const accLabel = getAccountDisplayLabel(record.account_name);
 
+  const editTooltip =
+    state.lang === 'zh' ? '点击编辑账单' : 'Click to edit transaction';
+
   return `
-    <tr data-id="${record.id}" class="${isDraft ? 'row-draft' : ''}">
+    <tr data-id="${record.id}" class="record-row ${isDraft ? 'row-draft' : ''}" onclick="openEditRecordModal('${record.id}')" title="${editTooltip}">
       <td class="col-date">${escapeHtml(record.date)}${draftBadge}</td>
       <td class="col-category">
         <span class="category-tag">
@@ -1657,7 +1777,7 @@ function renderRecordRowHtml(record, sym) {
         ${sign}${formatNumber(record.amount)}
       </td>
       <td class="col-actions text-center">
-        <button class="btn-del" onclick="handleDelete('${record.id}')" title="Delete">
+        <button class="btn-del" onclick="event.stopPropagation(); handleDelete('${record.id}')" title="Delete">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -1892,7 +2012,73 @@ function renderTable() {
 }
 
 /**
- * Handle Form Submission (Post Transaction)
+ * Execute Transaction Update in local state, offline queue and Supabase cloud.
+ */
+async function executeRecordUpdate(editingId, updatedPayload) {
+  const record = state.records.find((r) => String(r.id) === String(editingId));
+  if (!record)
+    throw new Error(
+      state.lang === 'zh' ? '未找到对应账单记录' : 'Record not found',
+    );
+  record.type = updatedPayload.type;
+  record.amount = updatedPayload.amount;
+  record.category = updatedPayload.category;
+  record.account_name = updatedPayload.account_name;
+  record.date = updatedPayload.date;
+  record.note = updatedPayload.note || '';
+
+  if (String(editingId).startsWith('draft-')) {
+    let queue = getOfflineQueue();
+    const qIdx = queue.findIndex(
+      (item) => String(item.id) === String(editingId),
+    );
+    if (qIdx !== -1) {
+      queue[qIdx] = { ...queue[qIdx], ...updatedPayload };
+      saveOfflineQueue(queue);
+    }
+  }
+
+  if (
+    supabaseClient &&
+    state.user?.id &&
+    !String(editingId).startsWith('draft-')
+  ) {
+    const { error } = await supabaseClient
+      .from('records')
+      .update({
+        type: updatedPayload.type,
+        amount: updatedPayload.amount,
+        category: updatedPayload.category,
+        account_name: updatedPayload.account_name,
+        date: updatedPayload.date,
+        note: updatedPayload.note || null,
+      })
+      .eq('id', editingId)
+      .eq('user_id', state.user.id);
+    if (error) throw new Error(error.message);
+  } else if (!String(editingId).startsWith('draft-')) {
+    // Local / SQLite backend persistence fallback
+    const res = await fetch(`/api/records/${editingId}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(updatedPayload),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || 'Local record update failed');
+    }
+  }
+
+  renderTable();
+  calculateLocalSummaryMetrics();
+  renderBudgetTracker();
+  updateDailySpendingTrend();
+  loadAccounts();
+  return { success: true };
+}
+
+/**
+ * Handle Form Submission (Post Transaction or Save Edit)
  */
 async function handleRecordSubmit(e) {
   e.preventDefault();
@@ -1931,6 +2117,25 @@ async function handleRecordSubmit(e) {
     date,
     ...(note ? { note } : {}),
   };
+
+  // Branch: Handle Edit Transaction
+  if (state.editingRecordId) {
+    try {
+      elements.submitBtn.disabled = true;
+      elements.submitBtn.style.opacity = '0.7';
+
+      await executeRecordUpdate(state.editingRecordId, payload);
+
+      closeCreateModal();
+      showToast(t('transaction_updated_toast'));
+    } catch (err) {
+      showToast(err.message || 'Update failed', true);
+    } finally {
+      elements.submitBtn.disabled = false;
+      elements.submitBtn.style.opacity = '1';
+    }
+    return;
+  }
 
   if (!navigator.onLine) {
     saveOfflineRecord(payload);
@@ -2020,18 +2225,16 @@ async function handleRecordSubmit(e) {
         // Sync claim to Supabase Cloud & backend API
         if (supabaseClient && state.user?.id) {
           try {
-            await supabaseClient
-              .from('claims')
-              .upsert({
-                id: claim.id,
-                user_id: state.user.id,
-                title: claim.title,
-                total_amount: claim.total_amount,
-                my_share: claim.my_share,
-                friends: claim.friends,
-                status: claim.status,
-                date: claim.date,
-              });
+            await supabaseClient.from('claims').upsert({
+              id: claim.id,
+              user_id: state.user.id,
+              title: claim.title,
+              total_amount: claim.total_amount,
+              my_share: claim.my_share,
+              friends: claim.friends,
+              status: claim.status,
+              date: claim.date,
+            });
           } catch (e) {}
         }
 
@@ -2894,12 +3097,12 @@ async function exportToCSV() {
   const csvContent = '\uFEFF' + allRows.join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 
-  const defaultFileName = `ledger_export_${state.currentMonth === 'all' ? 'all' : state.currentMonth}_${new Date().toISOString().slice(0, 10)}.csv`;
+  const defaultFileName = `monetax_export_${state.currentMonth === 'all' ? 'all' : state.currentMonth}_${new Date().toISOString().slice(0, 10)}.csv`;
 
   const saveRes = await saveBlobWithPicker(
     blob,
     defaultFileName,
-    isZh ? '账单明细 CSV 表格 (*.csv)' : 'Ledger Export CSV (*.csv)',
+    isZh ? 'MonetaX 账单明细 CSV 表格 (*.csv)' : 'MonetaX Export CSV (*.csv)',
   );
 
   if (saveRes.canceled) {
@@ -3007,7 +3210,9 @@ function evaluateRetentionEligible() {
       const isDisabled = matchingRecords.length === 0;
       elements.purgeOldRecordsBtn.disabled = isDisabled;
       elements.purgeOldRecordsBtn.style.opacity = isDisabled ? '0.35' : '1';
-      elements.purgeOldRecordsBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+      elements.purgeOldRecordsBtn.style.cursor = isDisabled
+        ? 'not-allowed'
+        : 'pointer';
       elements.purgeOldRecordsBtn.title = '';
     }
   }
@@ -3038,22 +3243,22 @@ async function downLoadArchiveCSV() {
     matchingRecords = (state.records || []).filter(
       (r) => r.date && r.date.startsWith(String(currentYear)),
     );
-    defaultFileName = `ledger_export_year_${currentYear}_${getLocalDateString()}.csv`;
+    defaultFileName = `monetax_export_year_${currentYear}_${getLocalDateString()}.csv`;
     fileDesc = isZh ? '本年度账单 CSV (*.csv)' : 'Current Year CSV (*.csv)';
   } else {
     const years = parseInt(val) || 3;
     const cutoffDate = getRetentionCutoffDate(years);
     matchingRecords = (state.records || []).filter((r) => r.date < cutoffDate);
-    defaultFileName = `ledger_archive_older_than_${years}y_${cutoffDate}.csv`;
+    defaultFileName = `monetax_archive_older_than_${years}y_${cutoffDate}.csv`;
     fileDesc = isZh ? '归档账单 CSV (*.csv)' : 'Archive Records CSV (*.csv)';
   }
 
   if (matchingRecords.length === 0) {
     showToast(
       isZh
-        ? (val === 'current_year'
-            ? '本年度暂无可导出的账单记录'
-            : '没有符合归档年限的历史账单')
+        ? val === 'current_year'
+          ? '本年度暂无可导出的账单记录'
+          : '没有符合归档年限的历史账单'
         : 'No records available for archiving',
       true,
     );
@@ -3101,11 +3306,7 @@ async function downLoadArchiveCSV() {
     [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 
-  const saveRes = await saveBlobWithPicker(
-    blob,
-    defaultFileName,
-    fileDesc,
-  );
+  const saveRes = await saveBlobWithPicker(blob, defaultFileName, fileDesc);
 
   if (saveRes.canceled) {
     showToast(isZh ? '已取消导出' : 'Export canceled');
@@ -3114,9 +3315,9 @@ async function downLoadArchiveCSV() {
 
   showToast(
     isZh
-      ? (val === 'current_year'
-          ? `已成功导出本年度共 ${matchingRecords.length} 笔账单`
-          : `已成功归档导出 ${matchingRecords.length} 笔历史账单`)
+      ? val === 'current_year'
+        ? `已成功导出本年度共 ${matchingRecords.length} 笔账单`
+        : `已成功归档导出 ${matchingRecords.length} 笔历史账单`
       : `Downloaded ${matchingRecords.length} records`,
   );
 }
@@ -3432,6 +3633,33 @@ function setAppTheme(themeVal) {
 }
 
 /**
+ * Toggle Financial Privacy Mode (Mask sensitive numbers with blur)
+ * @param {boolean} [forceState] - Optional explicit state (used during initialization)
+ */
+function togglePrivacyMode(forceState) {
+  const nextState =
+    typeof forceState === 'boolean' ? forceState : !state.isPrivacyMode;
+  state.isPrivacyMode = nextState;
+  localStorage.setItem('ledger_privacy_mode', String(nextState));
+  document.body.classList.toggle('privacy-active', nextState);
+
+  if (elements.privacyIconEye && elements.privacyIconEyeOff) {
+    elements.privacyIconEye.classList.toggle('hidden', nextState);
+    elements.privacyIconEyeOff.classList.toggle('hidden', !nextState);
+  }
+  elements.privacyToggleBtn?.classList.toggle('privacy-on', nextState);
+
+  if (typeof forceState !== 'boolean') {
+    triggerHaptic(8);
+    showToast(
+      nextState ? t('privacy_enabled_toast') : t('privacy_disabled_toast'),
+    );
+  }
+  return nextState;
+}
+window.togglePrivacyMode = togglePrivacyMode;
+
+/**
  * Profile Dropdown Toggle and Close Handlers
  */
 function toggleProfileDropdown(e) {
@@ -3738,9 +3966,7 @@ function calculateStreak(records) {
   if (!records || records.length === 0) return 0;
   const uniqueDates = Array.from(
     new Set(
-      records
-        .map((r) => normalizeRecordDateYMD(r?.date))
-        .filter(Boolean),
+      records.map((r) => normalizeRecordDateYMD(r?.date)).filter(Boolean),
     ),
   );
   uniqueDates.sort((a, b) => b.localeCompare(a));
@@ -4024,8 +4250,7 @@ async function signInWithGoogle() {
  */
 function signOutUser() {
   showConfirmModal({
-    title:
-      state.lang === 'zh' ? '确认退出登录？' : 'Sign Out?',
+    title: state.lang === 'zh' ? '确认退出登录？' : 'Sign Out?',
     subtitle: state.user?.email || '',
     desc:
       state.lang === 'zh'
@@ -4106,7 +4331,10 @@ function updateAuthUI(user) {
     ) {
       setAppTheme(meta.theme);
     }
-    if (meta.ledger_budget_topups && typeof meta.ledger_budget_topups === 'object') {
+    if (
+      meta.ledger_budget_topups &&
+      typeof meta.ledger_budget_topups === 'object'
+    ) {
       loadBudgetTopUps();
       state.budgetTopUps = {
         ...meta.ledger_budget_topups,
@@ -4169,7 +4397,7 @@ async function registerServiceWorker() {
 
 let pendingUpdateVersion = null;
 let pendingApkDownloadUrl =
-  'https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk';
+  'https://github.com/LEESC88/ledger/releases/latest/download/MonetaX.apk';
 
 function openInAppUpdateModal() {
   elements.updateDownloadProgressArea?.classList.add('hidden');
@@ -4520,14 +4748,18 @@ async function init() {
     elements.searchInput?.focus();
   });
 
-  // 10. Refresh button
+  // 10. Refresh button & Privacy Mode Toggle
   elements.refreshBtn?.addEventListener('click', () => {
     loadSummary();
     loadRecords();
     loadAccounts();
     fetchProjectsFromBackend();
     fetchClaimsFromBackend();
-    showToast(state.lang === 'zh' ? '数据已刷新' : 'Ledger data synced');
+    showToast(state.lang === 'zh' ? '数据已刷新' : 'MonetaX data synced');
+  });
+
+  elements.privacyToggleBtn?.addEventListener('click', () => {
+    togglePrivacyMode();
   });
 
   // Account Filter Select in Search Bar
@@ -4696,10 +4928,11 @@ async function init() {
     });
   });
 
-  // Apply initial theme & language from localStorage
+  // Apply initial theme, language & privacy mode from localStorage
   const savedTheme = localStorage.getItem('ledger_theme') || 'system';
   setAppTheme(savedTheme);
   setAppLanguage(state.lang);
+  togglePrivacyMode(state.isPrivacyMode);
 
   // Initial data fetch
   loadSummary();
@@ -5790,7 +6023,9 @@ function settleAllClaim(claimId) {
           headers: getAuthHeaders(),
         });
       } catch (e) {}
-      showToast(isZh ? '该笔代垫款项已全额结清' : 'All shares marked as settled');
+      showToast(
+        isZh ? '该笔代垫款项已全额结清' : 'All shares marked as settled',
+      );
     },
   });
 }

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Record } from './entities/record.entity.js';
 import { CreateRecordDto } from './dto/create-record.dto.js';
+import { UpdateRecordDto } from './dto/update-record.dto.js';
 import { TransactionType } from '../common/enums/transaction-type.enum.js';
 
 /**
@@ -61,6 +62,28 @@ export class RecordsService {
     if (result.affected === 0) {
       throw new NotFoundException(`Record with ID ${id} not found`);
     }
+  }
+
+  /**
+   * Updates an existing transaction record by its unique ID, verifying owner if userId provided.
+   */
+  async update(
+    id: number,
+    updateRecordDto: UpdateRecordDto,
+    userId?: string,
+  ): Promise<Record> {
+    const whereCondition: any = { id };
+    if (userId) {
+      whereCondition.userId = userId;
+    }
+    const record = await this.recordRepository.findOne({
+      where: whereCondition,
+    });
+    if (!record) {
+      throw new NotFoundException(`Record with ID ${id} not found`);
+    }
+    Object.assign(record, updateRecordDto);
+    return await this.recordRepository.save(record);
   }
 
   /**

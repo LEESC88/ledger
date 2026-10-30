@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * LEDGER — Internationalization & Bilingual Dictionary (i18n)
+ * MonetaX — Internationalization & Bilingual Dictionary (i18n)
  * English (en) • 简体中文 (zh)
  * ============================================================================
  */
@@ -18,7 +18,7 @@
       login_feat_3: 'Budget Alerts',
       login_google_btn: 'Continue with Google',
       login_security_note: 'End-to-End User Isolation • Google OAuth 2.0',
-      login_subtitle: 'Minimalist Personal Finance & Cloud Ledger',
+      login_subtitle: 'Minimalist Personal Finance & Cloud Vault',
       login_encrypted_note:
         'End-to-end isolated cloud storage via Google OAuth 2.0',
       feat_instant: 'Instant Record',
@@ -27,7 +27,7 @@
       continue_google: 'Continue with Google',
 
       // 2. Navigation & Common Status
-      nav_ledger: 'Ledger',
+      nav_ledger: 'Records',
       nav_projects: 'Projects',
       nav_create: 'Create',
       nav_analytics: 'Analytics',
@@ -43,6 +43,9 @@
       btn_cancel: 'Cancel',
       today: 'Today',
       yesterday: 'Yesterday',
+      privacy_mode_title: 'Toggle Privacy Mode (Blur Amounts)',
+      privacy_enabled_toast: 'Privacy mode enabled',
+      privacy_disabled_toast: 'Privacy mode disabled',
 
       // 3. Ledger Transactions & Search
       ledger_title: 'Transactions',
@@ -72,14 +75,18 @@
       status_surplus: 'Surplus',
       status_deficit: 'Deficit',
 
-      // 4. Create Transaction Modal
+      // 4. Create & Edit Transaction Modal
       create_modal_title: 'New Transaction',
       create_modal_sub: 'Record an expense or income entry',
+      edit_modal_title: 'Edit Transaction',
+      edit_modal_sub: 'Update transaction amount, category or note',
       new_entry_title: 'New Transaction',
       note_placeholder: 'Optional note...',
       select_category: 'Category',
       commit_btn: 'Save Transaction',
+      save_changes_btn: 'Save Changes',
       btn_save_entry: 'Save Transaction',
+      transaction_updated_toast: 'Transaction updated successfully',
 
       // 5. Accounts & Asset Wallets
       account_label: 'Payment Account',
@@ -283,6 +290,9 @@
       btn_cancel: '取消',
       today: '今天',
       yesterday: '昨天',
+      privacy_mode_title: '防窥隐私模式（遮罩金额）',
+      privacy_enabled_toast: '已开启防窥隐私模式',
+      privacy_disabled_toast: '已关闭防窥隐私模式',
 
       // 3. 账单明细与检索
       ledger_title: '账单明细',
@@ -312,14 +322,18 @@
       status_surplus: '结余盈余',
       status_deficit: '支出超支',
 
-      // 4. 新增记账弹窗
+      // 4. 新增与编辑记账弹窗
       create_modal_title: '新增记账',
       create_modal_sub: '快速记录一笔支出或收入',
+      edit_modal_title: '编辑账单',
+      edit_modal_sub: '修改账单金额、分类或备注',
       new_entry_title: '记一笔账',
       note_placeholder: '添加备注说明（选填）...',
       select_category: '选择分类',
       commit_btn: '保存账单',
+      save_changes_btn: '保存修改',
       btn_save_entry: '保存账单',
+      transaction_updated_toast: '账单修改成功',
 
       // 5. 账户与钱包中心
       account_label: '支付/收款账户',

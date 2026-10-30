@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Body,
   Param,
@@ -9,17 +10,16 @@ import {
   Headers,
   ParseIntPipe,
   DefaultValuePipe,
-  Header,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiParam,
   ApiQuery,
-  ApiHeader,
 } from '@nestjs/swagger';
 import { RecordsService } from './records.service.js';
 import { CreateRecordDto } from './dto/create-record.dto.js';
+import { UpdateRecordDto } from './dto/update-record.dto.js';
 
 /**
  * RecordsController
@@ -133,6 +133,21 @@ export class RecordsController {
     @Headers('x-user-id') userId?: string,
   ) {
     return await this.recordsService.purgeOlderThan(years, userId);
+  }
+
+  /**
+   * HTTP PATCH /api/records/:id
+   * Updates an existing transaction record by ID.
+   */
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update a transaction record by ID' })
+  @ApiParam({ name: 'id', example: 1, description: 'Record ID to update' })
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateRecordDto: UpdateRecordDto,
+    @Headers('x-user-id') userId?: string,
+  ) {
+    return await this.recordsService.update(id, updateRecordDto, userId);
   }
 
   /**

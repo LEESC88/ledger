@@ -39,45 +39,48 @@ jobs:
 
       - name: Install Capacitor & Sync Android Web Assets
         run: |
-          node -e "const fs = require('fs'); fs.writeFileSync('package.json', JSON.stringify({ name: 'ledger-apk', version: '1.2.0', dependencies: { '@capacitor/core': '^6.0.0', '@capacitor/cli': '^6.0.0', '@capacitor/android': '^6.0.0' } }, null, 2));"
+          node -e "const fs = require('fs'); fs.writeFileSync('package.json', JSON.stringify({ name: 'monetax-apk', version: '${{ steps.version.outputs.VERSION }}', dependencies: { '@capacitor/core': '^6.0.0', '@capacitor/cli': '^6.0.0', '@capacitor/android': '^6.0.0' } }, null, 2));"
           rm -f package-lock.json
           npm install --no-audit --no-fund
           npx cap sync android
 
-      - name: Build Android APK via Gradle
+      - name: Build Signed Release Android APK via Gradle
         working-directory: ./android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
-          cp app/build/outputs/apk/debug/app-debug.apk ../LEDGER.apk
-          cp app/build/outputs/apk/debug/app-debug.apk ../LEDGER-v${{ steps.version.outputs.VERSION }}.apk
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk ../MonetaX.apk
+          cp app/build/outputs/apk/release/app-release.apk ../MonetaX-v${{ steps.version.outputs.VERSION }}.apk
+          cp app/build/outputs/apk/release/app-release.apk ../LEDGER.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LEDGER-APK-v${{ steps.version.outputs.VERSION }}
+          name: MonetaX-APK-v${{ steps.version.outputs.VERSION }}
           path: |
+            MonetaX.apk
+            MonetaX-v${{ steps.version.outputs.VERSION }}.apk
             LEDGER.apk
-            LEDGER-v${{ steps.version.outputs.VERSION }}.apk
 
-      - name: Publish APK to GitHub Releases
+      - name: Publish Signed APK to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.VERSION }}
-          name: LEDGER v${{ steps.version.outputs.VERSION }} (Android APK)
+          name: MonetaX v${{ steps.version.outputs.VERSION }} (Signed Android APK)
           body: |
-            ## 📱 LEDGER v${{ steps.version.outputs.VERSION }} — Android APK Release
+            ## 📱 MonetaX v${{ steps.version.outputs.VERSION }} — Official Signed Android APK Release
 
             ${{ steps.version.outputs.NOTES }}
 
             ### 📥 Direct Download
-            Download **`LEDGER.apk`** below and install it directly on your Android device.
+            Download **`MonetaX.apk`** below and install it directly on your Android device (V1/V2 Production Keystore Signed).
 
             - **Architecture**: Standalone Local-First + Direct Supabase Cloud Sync (No separate backend server needed)
-            - **UI**: High-Contrast Light Mode (WCAG AA/AAA Compliant)
+            - **Highlights**: Click-to-Edit Transactions • 360° Anti-Peeking Privacy Mode (`👁️`) • Dynamic Monthly Budgets & Sinking Funds • Split Bill Claims
           files: |
+            MonetaX.apk
+            MonetaX-v${{ steps.version.outputs.VERSION }}.apk
             LEDGER.apk
-            LEDGER-v${{ steps.version.outputs.VERSION }}.apk
           draft: false
           prerelease: false
           make_latest: true

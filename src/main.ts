@@ -27,9 +27,9 @@ async function bootstrap() {
   // 2. Swagger / OpenAPI Configuration
   // Configures the interactive API documentation available at /api-docs.
   const config = new DocumentBuilder()
-    .setTitle('Simple Ledger API')
+    .setTitle('MonetaX API')
     .setDescription(
-      'Personal expense and income Ledger RESTful API documentation',
+      'MonetaX Personal Finance & Cloud Vault RESTful API documentation',
     )
     .setVersion('1.0')
     .addTag('Records', 'Transaction management endpoints')

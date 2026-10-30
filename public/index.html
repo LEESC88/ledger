@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <title>LEDGER &mdash; Minimalist Personal Finance</title>
+    <title>MonetaX &mdash; Minimalist Personal Finance</title>
     <!-- Content Security Policy (CSP) for Production Defense -->
     <meta
       http-equiv="Content-Security-Policy"
@@ -70,9 +70,9 @@
         <!-- Brand Identity -->
         <div class="login-brand-header">
           <div class="brand-glyph glyph-lg">
-            <span class="glyph-core"></span>
+            <img src="/icon.svg" alt="MonetaX" class="brand-logo-svg" />
           </div>
-          <span class="brand-title title-lg">LEDGER</span>
+          <span class="brand-title title-lg">MonetaX</span>
           <span class="badge-pill-cyan" data-i18n="login_badge"
             >Personal Finance Pro</span
           >
@@ -160,9 +160,9 @@
         <div class="header-left">
           <div class="brand">
             <div class="brand-glyph">
-              <span class="glyph-core"></span>
+              <img src="/icon.svg" alt="MonetaX" class="brand-logo-svg" />
             </div>
-            <span class="brand-title">LEDGER</span>
+            <span class="brand-title">MonetaX</span>
           </div>
 
           <!-- Network & Cloud Sync Status Pill -->
@@ -219,6 +219,47 @@
               <path
                 d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"
               />
+            </svg>
+          </button>
+
+          <!-- Privacy Mode Eye Toggle Button -->
+          <button
+            id="privacyToggleBtn"
+            class="btn-icon-header"
+            title="Privacy Mode"
+            aria-label="Toggle Privacy Mode"
+            data-i18n-title="privacy_mode_title"
+          >
+            <!-- Open Eye (Visible by default) -->
+            <svg
+              id="privacyIconEye"
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <!-- Slashed Eye (Hidden by default, shown in privacy mode) -->
+            <svg
+              id="privacyIconEyeOff"
+              class="hidden"
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
             </svg>
           </button>
 
@@ -1213,7 +1254,7 @@
             <line x1="3" y1="12" x2="3.01" y2="12"></line>
             <line x1="3" y1="18" x2="3.01" y2="18"></line>
           </svg>
-          <span data-i18n="nav_ledger">Ledger</span>
+          <span data-i18n="nav_ledger">Records</span>
         </button>
 
         <!-- Projects & Claims Tab (Position 2 of 5) -->

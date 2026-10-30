@@ -186,46 +186,39 @@ body {
 }
 
 .brand-glyph {
-  width: 28px;
-  height: 28px;
-  background: var(--brand-cyan-subtle);
-  border: 1px solid rgba(13, 148, 136, 0.3);
-  border-radius: var(--radius-sm);
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .brand-glyph.glyph-lg {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
 }
 
-.glyph-core {
-  width: 10px;
-  height: 10px;
-  background: var(--brand-cyan);
-  border-radius: 2px;
-}
-
-.brand-glyph.glyph-lg .glyph-core {
-  width: 15px;
-  height: 15px;
-  border-radius: 3px;
+.brand-logo-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
 }
 
 .brand-title {
-  font-size: 0.98rem;
+  font-size: 1.02rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   color: var(--text-primary);
 }
 
 .brand-title.title-lg {
-  font-size: 1.35rem;
-  letter-spacing: 0.1em;
+  font-size: 1.42rem;
+  letter-spacing: 0.06em;
 }
 
 .badge-pill-cyan {
@@ -401,6 +394,58 @@ body {
   background: var(--brand-cyan-subtle);
   color: var(--brand-cyan);
   border-color: var(--brand-cyan);
+}
+
+.btn-icon-header.privacy-on {
+  background: rgba(13, 148, 136, 0.16) !important;
+  color: #14b8a6 !important;
+  border-color: rgba(20, 184, 166, 0.45) !important;
+}
+
+/* ==========================================================================
+   Privacy Anti-Peeking Blur Filter (Mask sensitive financial numbers)
+   ========================================================================== */
+body.privacy-active .kpi-mini-val,
+body.privacy-active .col-amount,
+body.privacy-active .timeline-sum,
+body.privacy-active #budgetSpentVal,
+body.privacy-active #budgetLimitVal,
+body.privacy-active #budgetRemainingLabel,
+body.privacy-active #budgetFormulaText,
+body.privacy-active .budget-numbers-line strong,
+body.privacy-active .budget-rem-text,
+body.privacy-active .wallet-spending-amount,
+body.privacy-active #totalNetWorthValue,
+body.privacy-active #claimsPendingTotalVal,
+body.privacy-active .topup-history-amount,
+body.privacy-active .project-card,
+body.privacy-active .claim-card,
+body.privacy-active #dailyTrendChart,
+body.privacy-active #categoryChart {
+  filter: blur(5.5px);
+  user-select: none;
+  transition: filter 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Hover or Touch to Temporarily Peek at a Specific Amount */
+body.privacy-active .kpi-mini-val:hover,
+body.privacy-active .col-amount:hover,
+body.privacy-active .timeline-sum:hover,
+body.privacy-active #budgetSpentVal:hover,
+body.privacy-active #budgetLimitVal:hover,
+body.privacy-active #budgetRemainingLabel:hover,
+body.privacy-active #budgetFormulaText:hover,
+body.privacy-active .budget-numbers-line strong:hover,
+body.privacy-active .budget-rem-text:hover,
+body.privacy-active .wallet-spending-amount:hover,
+body.privacy-active #totalNetWorthValue:hover,
+body.privacy-active #claimsPendingTotalVal:hover,
+body.privacy-active .topup-history-amount:hover,
+body.privacy-active .project-card:hover,
+body.privacy-active .claim-card:hover,
+body.privacy-active #dailyTrendChart:hover,
+body.privacy-active #categoryChart:hover {
+  filter: blur(0);
 }
 
 /* Sync Status Pill */
@@ -843,6 +888,15 @@ body {
   padding: 9px 12px;
   background: var(--bg-subtle);
   border-bottom: 1px solid var(--border-card);
+}
+
+.ledger-table tbody tr:not(.timeline-date-row) {
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.ledger-table tbody tr:not(.timeline-date-row):hover {
+  background-color: var(--bg-hover);
 }
 
 .ledger-table td {
@@ -2208,6 +2262,12 @@ body {
     border: 1px solid var(--border-card);
     border-radius: var(--radius-md);
     align-items: center;
+    cursor: pointer;
+    transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .ledger-table tbody tr:not(.timeline-date-row):active {
+    transform: scale(0.985);
   }
 
   /* Defer rendering only for rows strictly below the initial fold */

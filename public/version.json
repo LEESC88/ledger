@@ -1,6 +1,6 @@
 {
-  "version": "1.4.2",
-  "releaseDate": "2026-10-29",
-  "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk",
-  "notes": "Added current year CSV export option, fixed CSV export click response and removed button prefixes, resolved sinking funds and split bill claims persistence and cloud sync across refresh, enhanced triple-layer persistence with Supabase metadata backup and local database fallback, and added 50k record safety limits."
+  "version": "1.5.0",
+  "releaseDate": "2026-10-30",
+  "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/MonetaX.apk",
+  "notes": "Official MonetaX v1.5.0 Brand Upgrade & Signed Release: Rebranded to MonetaX with precision 30° isometric emblem, added Click-to-Edit transaction capability with full cloud and local SQLite persistence, introduced 360° Anti-Peeking Privacy Mode (👁️) with Gaussian blur masking across KPIs, ledger, monthly budgets, analytics charts, sinking funds, and claims, and enabled official V1/V2 production APK signature."
 }

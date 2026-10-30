@@ -1,8 +1,9 @@
-const CACHE_NAME = 'ledger-cache-v1.4.1';
+const CACHE_NAME = 'monetax-cache-v1.5.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/style.css',
+  '/i18n.js',
   '/app.js',
   '/manifest.json',
   '/icon.svg',

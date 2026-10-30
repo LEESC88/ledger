@@ -1,33 +1,45 @@
 <div align="center">
 
-# 📘 LEDGER
+<img src="public/icon.svg" alt="MonetaX Logo" width="96" height="96" />
 
-### Minimalist, Local-First Personal Finance & Cloud-Synchronized Ledger
-### 极简·本地优先·云端实时同步个人财务记账系统
+# 🛡️ MonetaX
 
-**A high-performance, distraction-free expense tracker built for Web & Android.**  
-*Instant offline entry • End-to-end user isolation with Supabase RLS • Tactile native haptics • Daily timeline journaling • Visual analytics & budget monitoring.*
+### Minimalist, Local-First Personal Finance & Private Cloud Vault
+### 极简 · 本地优先 · 防窥私密 · 云端实时同步个人财务管理终端
+
+**A high-performance, distraction-free personal finance & wealth vault built for Web & Android.**  
+*Instant offline entry • 360° Anti-Peeking Privacy Mode (`👁️`) • Click-to-Edit transactions • End-to-end user isolation with Supabase RLS • Sinking Funds & Split Bill Claims • Visual analytics & budget monitoring.*
 
 [![GitHub Release](https://img.shields.io/github/v/release/LEESC88/ledger?style=for-the-badge&color=0D9488&label=Latest%20Release)](https://github.com/LEESC88/ledger/releases/latest)
-[![CI Build Status](https://img.shields.io/github/actions/workflow/status/LEESC88/ledger/ci.yml?branch=master&style=for-the-badge&label=Build%20%26%20APK)](https://github.com/LEESC88/ledger/actions)
+[![CI Build Status](https://img.shields.io/github/actions/workflow/status/LEESC88/ledger/release-apk.yml?branch=master&style=for-the-badge&label=Build%20%26%20Signed%20APK)](https://github.com/LEESC88/ledger/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![Platform: Android & Web](https://img.shields.io/badge/Platform-Android%20%7C%20Web%20%7C%20PWA-10B981?style=for-the-badge)](https://github.com/LEESC88/ledger/releases)
 
 <br/>
 
-[📱 **Download Latest APK (安卓安装包直接下载)**](https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk) • [📦 **All Releases (历史版本)**](https://github.com/LEESC88/ledger/releases) • [🇬🇧 **English Docs**](#-english-documentation) • [🇨🇳 **中文文档**](#-中文文档-chinese-documentation)
+[📱 **Download Latest Signed APK (`MonetaX.apk`)**](https://github.com/LEESC88/ledger/releases/latest/download/MonetaX.apk) • [📦 **All Releases (历史版本)**](https://github.com/LEESC88/ledger/releases) • [🇬🇧 **English Docs**](#-english-documentation) • [🇨🇳 **中文文档**](#-中文文档-chinese-documentation)
 
 </div>
 
 ---
 
-## 📱 Standalone Android APK Download / 安卓 APK 直接下载
+## 📱 Standalone Signed Android APK Download / 安卓正式签名版 APK 直接下载
 
-Install and run **LEDGER** directly on your Android phone without needing to host or deploy any backend server:
+Install and run **MonetaX** directly on your Android phone without needing to host or deploy any backend server:
 
-* 🚀 **[Download Latest Android APK (`LEDGER.apk`)](https://github.com/LEESC88/ledger/releases/latest/download/LEDGER.apk)**
+* 🚀 **[Download Latest Signed Android APK (`MonetaX.apk`)](https://github.com/LEESC88/ledger/releases/latest/download/MonetaX.apk)**
 * 📦 **[View Release Notes & Historical Versions](https://github.com/LEESC88/ledger/releases)**
+* 🔐 **V1/V2 Production Keystore Signed**: Built via `assembleRelease` with production V1/V2 signature schemes for seamless installation and in-place upgrades.
 * 🔄 **In-App Auto Update**: Check and install new versions on the fly directly inside **Settings ➔ Application Version ➔ Check & Update**.
+
+---
+
+## 🆕 What's New in v1.5.0 (Official Brand Upgrade & Signed Release)
+
+* 🎨 **Brand Evolution to MonetaX**: Rebranded from *LEDGER* to **MonetaX** with a custom 30° isometric precision-interlocked Emerald & Champagne Gold vault emblem across Web, PWA, and Android Adaptive Icons.
+* ✏️ **Click-to-Edit Transactions**: Tap any transaction row in the timeline to open the pre-filled Edit Sheet—modify transaction type, amount, category, payment account, date, or note with instant synchronization across Supabase Cloud, local offline queue, and SQLite (`PATCH /api/records/:id`).
+* 👁️ **360° Anti-Peeking Privacy Mode**: One-tap Eye Toggle in the top header masks all sensitive financial figures and charts with a `5.5px` Gaussian blur (KPIs, transaction amounts, daily totals, monthly budget metrics, daily trend & category donut charts, sinking funds, and split bill claims). Hover or touch any blurred element to temporarily peek.
+* 🔐 **Official Release APK Signing**: Enabled V1/V2 production keystore signing (`assembleRelease`) in Gradle & GitHub Actions CI/CD.
 
 ---
 
@@ -37,9 +49,9 @@ Install and run **LEDGER** directly on your Android phone without needing to hos
 
 ### ✨ Overview
 
-**LEDGER** cuts through the noise of bloated commercial bookkeeping apps filled with credit promotions, social feeds, and intrusive trackers. It returns personal finance to its core: **speed, clarity, autonomy, and tactile joy**.
+**MonetaX** cuts through the noise of bloated commercial bookkeeping apps filled with credit promotions, social feeds, and intrusive trackers. It returns personal finance to its core: **speed, clarity, privacy, autonomy, and tactile joy**.
 
-Built on a **Local-First + Direct Supabase Cloud (PostgreSQL)** architecture, LEDGER functions with 100% autonomy:
+Built on a **Local-First + Direct Supabase Cloud (PostgreSQL)** architecture, MonetaX functions with 100% autonomy:
 * **Offline / In-Flight**: Sub-millisecond instant record entry into an optimistic queue with `⚡ Draft` indicator.
 * **Online**: Background two-way synchronization with Supabase PostgreSQL protected by Row-Level Security (RLS).
 * **Native Feel**: Web Haptics mechanical vibrations, fluid bottom sheet drag physics, and smooth 150ms cross-fades.
@@ -107,7 +119,11 @@ Built on a **Local-First + Direct Supabase Cloud (PostgreSQL)** architecture, LE
 * **Split Bill Claims (代垫与报销)**: Itemize multi-person shared expenses and group activities with granular per-friend debt tracking, individual payment status toggling, and one-tap total settlements.
 * **Triple-Layer Cloud Persistence**: Synchronized across Supabase PostgreSQL tables (`projects`, `claims`), Supabase Auth user metadata (`user_metadata`), and NestJS SQLite backend with tombstone-aware conflict resolution to prevent accidental overwrites or data loss upon refresh.
 
-#### 7. 🛡️ Enterprise Security, Data Retention & CSV Export
+#### 7. ✏️ Click-to-Edit Transactions & 👁️ 360° Anti-Peeking Privacy Mode
+* **One-Tap Transaction Editing**: Tap any transaction row in the timeline to open the pre-filled Edit Bottom Sheet. Modify transaction type, amount, category, payment account, date, or note with instant synchronization across Supabase Cloud (`records.update`), local offline queue, and NestJS SQLite (`PATCH /api/records/:id`).
+* **360° Privacy Blur Shield (`👁️`)**: Toggle the header eye icon to instantly apply a `5.5px` Gaussian blur across all sensitive numbers and charts (KPIs, transaction amounts, daily totals, monthly budget figures, daily trend & category donut charts, sinking fund targets, and split bill claims). Hover or touch any blurred element to temporarily peek.
+
+#### 8. 🛡️ Enterprise Security, Data Retention & CSV Export
 * **Native Google OAuth 2.0**: Zero-port deep-link scheme (`com.leesc88.ledger://oauth`) with isolated account data.
 * **Row-Level Security (RLS)**: Data isolation enforced at the PostgreSQL database level.
 * **Flexible CSV Export & Native Android Sheet**: Export transactions for the current year or historical thresholds (1, 2, 3, or 5 years) directly via the native Android Share/Save sheet into your phone's File Manager.
@@ -315,8 +331,12 @@ cd android
 * **容量防爆保护**：内置单用户 50,000 条记录容量限额与预警防护，有效防止云端数据库过载。
 
 #### 8. 模块化多语言与外观主题
-* **独立字典文件（[public/i18n.js](public/i18n.js)）**：116 个中英文键值按 10 个业务模块严谨归类，支持中文与英文一秒无刷新热切换；
+* **独立字典文件（[public/i18n.js](public/i18n.js)）**：中英文键值按业务模块严谨归类，支持中文与英文一秒无刷新热切换；
 * **三模外观**：纯净高对比浅色（Light）、深邃蓝黑防眩晕深色（Dark）与跟随系统（System）。
+
+#### 9. 账单点击编辑（Click-to-Edit）与 360° 防窥隐私模式（Privacy Mode）
+* **点击流水直达编辑**：直接点击明细表中的任意一笔账单行，即可弹出预填充的编辑面板，自由修改收支类型、金额、分类、支付账户、日期与备注，并同步更新 Supabase 云端、本地离线草稿队列与 SQLite 数据库（`PATCH /api/records/:id`）。
+* **360° 防窥隐私护盾（`👁️`）**：一键点击顶部导航栏眼睛图标，自动对全站所有敏感金额与图表施加 `5.5px` 高斯模糊（涵盖顶部 KPI、流水金额、每日小计、月度预算各项数值、趋势折线图、分类占比圆环图、专款卡片与代垫卡片），支持鼠标悬停或触屏点按临时透视查看，状态持久记忆。
 
 ---
 

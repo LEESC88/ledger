@@ -1,5 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="128" fill="#0D9488"/>
-  <rect x="110" y="110" width="292" height="292" rx="56" fill="#FFFFFF" fill-opacity="0.12" stroke="#FFFFFF" stroke-width="16"/>
-  <path d="M180 190 H332 M180 256 H280 M180 322 H332" stroke="#FFFFFF" stroke-width="32" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bgMint2" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#36EDA0"/>
+      <stop offset="55%" stop-color="#1FC093"/>
+      <stop offset="100%" stop-color="#128E84"/>
+    </linearGradient>
+    <linearGradient id="navyGrad2" x1="180" y1="120" x2="844" y2="904" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#14213D"/>
+      <stop offset="100%" stop-color="#0A1122"/>
+    </linearGradient>
+    <linearGradient id="goldGrad2" x1="200" y1="160" x2="824" y2="864" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F7D47E"/>
+      <stop offset="50%" stop-color="#E3B658"/>
+      <stop offset="100%" stop-color="#C89636"/>
+    </linearGradient>
+    <filter id="dropShadow2" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#051F1B" flood-opacity="0.32"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="210" fill="url(#bgMint2)"/>
+  <g filter="url(#dropShadow2)">
+    <polygon points="154.00,305.31 512.00,98.62 588.00,142.50 588.00,470.48 530.00,503.96 530.00,175.98 512.00,165.59 154.00,372.28" fill="url(#navyGrad2)"/>
+    <polygon points="870.00,718.69 512.00,925.38 436.00,881.50 436.00,553.52 494.00,520.04 494.00,848.02 512.00,858.41 870.00,651.72" fill="url(#navyGrad2)"/>
+    <polygon points="154.00,507.84 212.00,474.36 212.00,685.21 306.00,739.48 306.00,806.45 154.00,718.69" fill="url(#navyGrad2)"/>
+    <polygon points="870.00,516.16 812.00,549.64 812.00,338.79 718.00,284.52 718.00,217.55 870.00,305.31" fill="url(#navyGrad2)"/>
+    <polygon points="154.00,413.85 503.00,212.36 503.00,279.33 306.00,393.07 306.00,630.93 342.00,651.72 342.00,620.91 400.00,587.43 400.00,860.72 342.00,827.23 342.00,718.69 248.00,664.42 248.00,426.55 154.00,480.82" fill="url(#goldGrad2)"/>
+    <polygon points="870.00,610.15 521.00,811.64 521.00,744.67 718.00,630.93 718.00,393.07 682.00,372.28 682.00,403.09 624.00,436.57 624.00,163.28 682.00,196.77 682.00,305.31 776.00,359.58 776.00,597.45 870.00,543.18" fill="url(#goldGrad2)"/>
+  </g>
 </svg>
