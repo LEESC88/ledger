@@ -61,11 +61,16 @@ Built on a **Local-First + Direct Supabase Cloud (PostgreSQL)** architecture, Mo
 ### 🏗️ System Architecture
 
 <div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/architecture-light.png">
-    <img alt="MonetaX System Architecture" src="docs/architecture-dark.png" width="100%" />
-  </picture>
+  <a href="https://htmlpreview.github.io/?https://github.com/LEESC88/ledger/blob/master/docs/architecture.html" target="_blank" title="Click to open interactive architecture diagram / 点击查看交互式高清架构图">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.png">
+      <source media="(prefers-color-scheme: light)" srcset="docs/architecture-light.png">
+      <img alt="MonetaX System Architecture" src="docs/architecture-dark.png" width="100%" />
+    </picture>
+  </a>
+  <p>
+    🔍 <b><a href="https://htmlpreview.github.io/?https://github.com/LEESC88/ledger/blob/master/docs/architecture.html" target="_blank">Click here to open the Fullscreen Interactive Architecture Viewer</a></b> • <b><a href="docs/architecture.html">Open Local HTML File</a></b>
+  </p>
 </div>
 
 MonetaX follows a clean **Three-Tier Local-First + Dual-Track Persistence** architecture, designed for maximum resilience, sub-millisecond tactile responsiveness, and complete multi-tenant cloud isolation:
@@ -227,11 +232,16 @@ cd android
 ### 🏛️ 2. 系统技术架构与核心分层
 
 <div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/architecture-light.png">
-    <img alt="MonetaX 系统技术架构" src="docs/architecture-dark.png" width="100%" />
-  </picture>
+  <a href="https://htmlpreview.github.io/?https://github.com/LEESC88/ledger/blob/master/docs/architecture.html" target="_blank" title="点击查看交互式高清架构图 / Click to open interactive architecture diagram">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.png">
+      <source media="(prefers-color-scheme: light)" srcset="docs/architecture-light.png">
+      <img alt="MonetaX 系统技术架构" src="docs/architecture-dark.png" width="100%" />
+    </picture>
+  </a>
+  <p>
+    🔍 <b><a href="https://htmlpreview.github.io/?https://github.com/LEESC88/ledger/blob/master/docs/architecture.html" target="_blank">点击此处全屏打开高清交互式架构图（支持节点点击溯源、引导视图与高亮）</a></b> • <b><a href="docs/architecture.html">查看本地 HTML 文件</a></b>
+  </p>
 </div>
 
 MonetaX 整体遵循 **“三层拓扑 · 本地优先 · 存储双轨 · 零延迟交互”** 的生产级系统架构设计，经由 Archify 校验并深度映射至代码实现仓库：
