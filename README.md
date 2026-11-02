@@ -60,29 +60,32 @@ Built on a **Local-First + Direct Supabase Cloud (PostgreSQL)** architecture, Mo
 
 ### 🏗️ System Architecture
 
-```text
-┌────────────────────────────────────────────────────────────────────────┐
-│                        LEDGER CLIENT RUNTIME                           │
-│                                                                        │
-│   [Android Native APK (Capacitor 6)]       [Web & PWA Browser Engine]  │
-│                                                                        │
-│   • UI / Interaction: Modern Vanilla JS (ES2022) • Container Queries   │
-│   • Motion & Touch: Web Haptic API • Physics Bottom Sheet Drag Handle  │
-│   • Visuals: Chart.js 4 (High-Contrast Category Donut & Daily Trend)   │
-│   • Offline Resilience: LocalStorage Event Queue • Optimistic Engine   │
-│   • Localization: Modular Bilingual Engine (public/i18n.js)            │
-└────────────────────────────────────┬───────────────────────────────────┘
-                                     │ (HTTPS / OAuth 2.0 / REST)
-                                     ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                        CLOUD & BACKEND PLATFORM                        │
-│                                                                        │
-│   [Supabase Cloud Platform (Primary)]        [NestJS API Server (Opt)] │
-│   • Google OAuth 2.0 Native Deep-Link        • RFC 4180 CSV Exporter   │
-│   • PostgreSQL with Row-Level Security       • Data Pruning & Archives │
-│   • Real-Time Cloud User Profile Metadata    • In-App Release Registry │
-└────────────────────────────────────────────────────────────────────────┘
-```
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/architecture-light.png">
+    <img alt="MonetaX System Architecture" src="docs/architecture-dark.png" width="100%" />
+  </picture>
+</div>
+
+MonetaX follows a clean **Three-Tier Local-First + Dual-Track Persistence** architecture, designed for maximum resilience, sub-millisecond tactile responsiveness, and complete multi-tenant cloud isolation:
+
+1. **Client Runtime & Local-First Engine Layer (终端与 Local-First 引擎层)**
+   * **Android Native Shell (`Capacitor 6`)**: Native WebView wrapper with deep-link OAuth callback (`com.leesc88.ledger://oauth`), native CSV `FileProvider` share intent, and `NativeUpdater` in-app APK installer.
+   * **In-App OTA Engine (`NativeUpdaterInterface`)**: Automated background version polling against `version.json`, real-time download percentage bridge, and package installer invocation.
+   * **Responsive SPA UI (`Vanilla ES2022`)**: Lightweight `<3.8MB` zero-virtual-DOM single-page architecture featuring fluid drag physics, 360° Anti-Peeking privacy mode, Chart.js 4 visual analytics, and modular i18n (`zh-CN`, `en`, `ms`).
+   * **Local-First Financial Engine**: Instant optimistic transaction CRUD, sub-`16ms` single-tap record deletion, and calendar month auto-rollover (`YYYY-MM`).
+   * **PWA Service Worker & LocalStorage Vault**: Network-first asset delivery (`public/sw.js`) and resilient local vault with offline draft retry/replay queue.
+
+2. **Server Gateway & Cloud Sync Control Layer (服务网关与云同步控制层)**
+   * **Release Manifest & Signing**: `version.json` endpoint coupled with production V1/V2 keystore signatures.
+   * **NestJS 11 Modular Backend**: RESTful APIs for `Records`, `Budgets`, `Projects` (Sinking Funds), and `Claims` (Split Bills) with global `ValidationPipe` enforcement.
+   * **Supabase Auth & Cloud Sync Coordinator**: Google OAuth 2.0 PKCE authentication and bi-directional background sync coordinator.
+
+3. **Storage & Cloud Distribution Tier (持久化与云端分发层)**
+   * **GitHub Releases CDN**: Global fast CDN distribution for signed `MonetaX.apk` assets.
+   * **Local SQLite Database**: Zero-config local persistence powered by `better-sqlite3` and TypeORM (`data/ledger.db`).
+   * **Supabase Cloud Vault**: PostgreSQL with strict Row-Level Security (RLS) policies and tenant-isolated `user_metadata` cloud backups.
 
 ---
 
@@ -223,37 +226,33 @@ cd android
 
 ### 🏛️ 2. 系统技术架构与核心分层
 
-```text
-┌────────────────────────────────────────────────────────────────────────┐
-│                        LEDGER 终端应用层 (Client)                      │
-│                                                                        │
-│   [Android 原生独立 APK]              [桌面 / 移动端 PWA 浏览器应用]   │
-│   • 运行基座: Capacitor 6 原生 WebView   • 离线拦截: Service Worker 缓存│
-│   • 原生通信: Deep Link 授权回调唤醒     • 安装标准: Web App Manifest  │
-│                                                                        │
-│   ┌────────────────────────────────────────────────────────────────┐   │
-│   │ 业务核心引擎 (public/app.js) & 模块化字典 (public/i18n.js)      │   │
-│   │                                                                │   │
-│   │  • 时间轴分组渲染器: groupRecordsByDate(records)               │   │
-│   │  • 每日开销走势引擎: calculateDailySpendingTrend(...)           │   │
-│   │  • 坚持激励打卡体系: calculateStreak(...) & evaluateBadges()  │   │
-│   │  • 触感交互反馈总线: triggerHaptic(10ms) & 下拉阻尼手势        │   │
-│   │  • 离线乐观更新队列: LocalStorage Event Queue & 自动重试机制   │   │
-│   │  • 视觉可视化核心: Chart.js 4 (环形分布图 + 每日开销渐变图)    │   │
-│   └────────────────────────────────────────────────────────────────┘   │
-└────────────────────────────────────┬───────────────────────────────────┘
-                                     │ (HTTPS / OAuth 2.0 / REST)
-                                     ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                       云端服务与数据库层 (Cloud Backend)               │
-│                                                                        │
-│   [Supabase Cloud Platform (首选直连)]   [NestJS 企业级后端 (可选服务端)]│
-│   • Google OAuth 2.0 用户鉴权            • RFC 4180 CSV 格式化导出     │
-│   • PostgreSQL 15+ 关系型核心数据库      • 历史账单阈值清理与归档接口  │
-│   • 行级安全策略 (RLS) 强制权限过滤      • In-App 自建版本控制与分发   │
-│   • 用户个性化 Profile 元数据同步        • TypeORM 实体模型与数据校验  │
-└────────────────────────────────────────────────────────────────────────┘
-```
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/architecture-light.png">
+    <img alt="MonetaX 系统技术架构" src="docs/architecture-dark.png" width="100%" />
+  </picture>
+</div>
+
+MonetaX 整体遵循 **“三层拓扑 · 本地优先 · 存储双轨 · 零延迟交互”** 的生产级系统架构设计，经由 Archify 校验并深度映射至代码实现仓库：
+
+#### 架构三层核心划分：
+1. **终端与 Local-First 引擎层 (`Client Runtime`)**：
+   * **Android 原生容器 (`Capacitor 6`)**：托管原生 WebView，封装 `com.leesc88.ledger://oauth` 深度链接唤醒、原生 CSV `FileProvider` 分享 Intent 及 `NativeUpdater` 原生安装器桥接。
+   * **端内 OTA 更新引擎 (`NativeUpdaterInterface`)**：轮询 `version.json`，实时计算并回传 APK 下载百分比，智能引导 Android 8.0+ 未知应用安装权限。
+   * **MonetaX 响应式视图 (`Vanilla ES2022`)**：轻量级 `<3.8MB` 单页应用，包含 `#pageLedger`、`#pageProjects`、`#pageAnalytics`、`#pageSettings` 四大视图、360° 防窥私密模式 (`👁️`)、Chart.js 4 图表与中/英/马三语字典。
+   * **Local-First 财务引擎**：实现账单 CRUD、`<16ms` 乐观 UI 单击秒删、自然月跨月自动切换与重置（`YYYY-MM`）及离线重放状态机。
+   * **PWA 离线缓存服务 & 本地金库**：`public/sw.js` 静态资源网络优先缓存，LocalStorage 按月隔离存储与离线草稿队列重放。
+
+2. **服务网关与云同步控制层 (`Server & Sync Tier`)**：
+   * **版本清单与签名配置**：`version.json` 客户端元数据分发与 Gradle V1/V2 签名体系。
+   * **NestJS 11 模块化后端**：严格划分为 `Records`（账单）、`Budgets`（预算）、`Projects`（专款）、`Claims`（代垫分摊）四大模块，全局 `ValidationPipe` 强校验输入。
+   * **Supabase 认证与云同步**：Google OAuth 2.0 PKCE 认证会话恢复与专款/代垫双向云端同步器。
+
+3. **持久化与云端分发层 (`Storage & Cloud Tier`)**：
+   * **GitHub Releases 分发**：全球 CDN 高速下发最新签名的 `MonetaX.apk` 安装包。
+   * **SQLite 本地关系库**：基于 `better-sqlite3` 与 TypeORM 的本地 `data/ledger.db`，开箱即用。
+   * **Supabase 云端金库**：托管于云端 PostgreSQL，采用行级安全策略（RLS）与 `user_metadata` 保障严格的多租户财务隐私隔离。
 
 #### 技术选型亮点对比：
 
