@@ -1,6 +1,6 @@
 {
-  "version": "1.5.0",
-  "releaseDate": "2026-10-30",
+  "version": "1.5.1",
+  "releaseDate": "2026-11-02",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/MonetaX.apk",
-  "notes": "Official MonetaX v1.5.0 Brand Upgrade & Signed Release: Rebranded to MonetaX with precision 30° isometric emblem, added Click-to-Edit transaction capability with full cloud and local SQLite persistence, introduced 360° Anti-Peeking Privacy Mode (👁️) with Gaussian blur masking across KPIs, ledger, monthly budgets, analytics charts, sinking funds, and claims, and enabled official V1/V2 production APK signature."
+  "notes": "MonetaX v1.5.1 Release: Auto-defaults and resets Ledger & Monthly Budget views to the current calendar month (YYYY-MM) on new month rollover while preserving full historical records via the period selector; zero-latency optimistic one-tap transaction deletion; fixed mobile top header and Account Spending Sources card layout crowding."
 }

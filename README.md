@@ -34,12 +34,12 @@ Install and run **MonetaX** directly on your Android phone without needing to ho
 
 ---
 
-## 🆕 What's New in v1.5.0 (Official Brand Upgrade & Signed Release)
+## 🆕 What's New in v1.5.1 (Monthly Rollover Reset & Mobile UI Polish)
 
-* 🎨 **Brand Evolution to MonetaX**: Rebranded from *LEDGER* to **MonetaX** with a custom 30° isometric precision-interlocked Emerald & Champagne Gold vault emblem across Web, PWA, and Android Adaptive Icons.
-* ✏️ **Click-to-Edit Transactions**: Tap any transaction row in the timeline to open the pre-filled Edit Sheet—modify transaction type, amount, category, payment account, date, or note with instant synchronization across Supabase Cloud, local offline queue, and SQLite (`PATCH /api/records/:id`).
-* 👁️ **360° Anti-Peeking Privacy Mode**: One-tap Eye Toggle in the top header masks all sensitive financial figures and charts with a `5.5px` Gaussian blur (KPIs, transaction amounts, daily totals, monthly budget metrics, daily trend & category donut charts, sinking funds, and split bill claims). Hover or touch any blurred element to temporarily peek.
-* 🔐 **Official Release APK Signing**: Enabled V1/V2 production keystore signing (`assembleRelease`) in Gradle & GitHub Actions CI/CD.
+* 📅 **Automatic Monthly Rollover Reset (`YYYY-MM`)**: Entering a new calendar month automatically switches and resets the active Ledger view, top KPI strip, and Monthly Budget tracker to the current month (e.g., `2026-11`) while preserving all historical data intact—switch back to any previous month (e.g., `2026-10`) or `All Months` anytime via the top period selector.
+* ⚡ **Instant One-Tap Transaction Deletion**: Optimistic UI deletion closes the confirmation sheet and removes the entry in `<16ms` with expanded `36×36px` touch targets and row-scale isolation.
+* 📱 **Mobile Header & Account Spending Card Refinement**: Eliminated mobile top-bar crowding and redesigned the Account Spending Sources (`本月消费来源`) header into a clean, non-wrapping responsive layout.
+* 🎨 **MonetaX v1.5 Series Core**: Custom 30° isometric Emerald & Champagne Gold emblem, Click-to-Edit transactions (`PATCH /api/records/:id`), 360° Anti-Peeking Privacy Mode (`👁️`), and V1/V2 production keystore APK signing.
 
 ---
 

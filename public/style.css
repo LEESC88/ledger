@@ -956,14 +956,26 @@ body.privacy-active #categoryChart:hover {
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 5px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 8px;
   border-radius: var(--radius-xs);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 2;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-.btn-del:hover {
+.btn-del svg {
+  pointer-events: none;
+}
+
+.btn-del:hover,
+.btn-del:active {
   color: var(--expense-rose);
   background: var(--expense-subtle);
 }
@@ -2266,14 +2278,8 @@ body.privacy-active #categoryChart:hover {
     transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease;
   }
 
-  .ledger-table tbody tr:not(.timeline-date-row):active {
+  .ledger-table tbody tr:not(.timeline-date-row):active:not(:has(.btn-del:active)) {
     transform: scale(0.985);
-  }
-
-  /* Defer rendering only for rows strictly below the initial fold */
-  .ledger-table tbody tr:not(.timeline-date-row):nth-child(n + 15) {
-    content-visibility: auto;
-    contain-intrinsic-size: auto none auto 92px;
   }
 
   .ledger-table tbody tr:not(.timeline-date-row):last-child {
@@ -2320,11 +2326,63 @@ body.privacy-active #categoryChart:hover {
 }
 
 @media (max-width: 640px) {
+  .app-header {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  .header-left {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .brand {
+    gap: 6px;
+  }
+  .brand-glyph {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+  }
+  .brand-title {
+    font-size: 0.92rem;
+    letter-spacing: 0.02em;
+  }
+  .sync-status-pill {
+    padding: 5px;
+    border-radius: 50%;
+    gap: 0;
+  }
+  .sync-status-text {
+    display: none;
+  }
+  .streak-pill {
+    padding: 3px 6px;
+    font-size: 0.68rem;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+  .header-controls {
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  #monthFilter.header-select {
+    padding: 5px 22px 5px 8px;
+    font-size: 0.73rem;
+    max-width: 102px;
+    background-position: right 6px center;
+  }
+  .btn-icon-header {
+    width: 30px;
+    height: 30px;
+  }
   .user-name {
     display: none;
   }
   .user-profile-pill {
-    padding: 3px;
+    padding: 2px;
+  }
+  .user-avatar {
+    width: 24px;
+    height: 24px;
   }
   .btn-create-inline {
     display: none;
@@ -2459,6 +2517,15 @@ body.privacy-active #categoryChart:hover {
   padding-bottom: 12px;
 }
 
+.accounts-header-text {
+  min-width: 0;
+}
+
+.accounts-header-text .settings-group-heading {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
 .accounts-center-title-row {
   display: flex;
   align-items: center;
@@ -2480,6 +2547,8 @@ body.privacy-active #categoryChart:hover {
   border: 1px solid var(--brand-cyan);
   border-radius: var(--radius-md);
   padding: 5px 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .net-worth-label {
@@ -2488,6 +2557,7 @@ body.privacy-active #categoryChart:hover {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--brand-cyan);
+  white-space: nowrap;
 }
 
 .net-worth-val {
@@ -2495,6 +2565,7 @@ body.privacy-active #categoryChart:hover {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .accounts-wallets-list {
@@ -3763,10 +3834,16 @@ html.has-auth-session #appLayout {
 /* ==========================================================================
    Account Spending Sources Header & Month Selector
    ========================================================================== */
+#settingsAccountsCenterCard .accounts-center-title-row {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .accounts-spending-right-cluster {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .spending-month-select {
@@ -3781,6 +3858,7 @@ html.has-auth-session #appLayout {
   cursor: pointer;
   outline: none;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .spending-month-select:hover {
@@ -3792,4 +3870,48 @@ html.has-auth-session #appLayout {
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  #settingsAccountsCenterCard .accounts-center-title-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .accounts-spending-right-cluster {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .spending-month-select {
+    flex: 1;
+    max-width: 175px;
+    font-size: 0.78rem;
+    padding: 6px 10px;
+  }
+
+  .spending-total-capsule {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .brand-title {
+    font-size: 0.84rem;
+  }
+  #monthFilter.header-select {
+    max-width: 88px;
+    padding: 4px 18px 4px 6px;
+    font-size: 0.7rem;
+  }
+  .btn-icon-header {
+    width: 28px;
+    height: 28px;
+  }
 }

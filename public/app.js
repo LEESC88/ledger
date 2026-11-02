@@ -5,7 +5,7 @@
  * ============================================================================
  */
 // Current Client Release Version
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.5.1';
 
 // Default BaaS Cloud Configuration (Decoded from safe payload, overridable by window.__ENV__)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -168,6 +168,10 @@ const CATEGORY_META = {
 // Full Bilingual Dictionary (Loaded dynamically from public/i18n.js)
 const I18N = window.I18N || { en: {}, zh: {} };
 
+function getCurrentMonthKey(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
 // Application State
 let state = {
   user: null,
@@ -176,7 +180,8 @@ let state = {
   currency: localStorage.getItem('ledger_currency') || 'RM',
   currentType: 'expense',
   currentFilter: 'all',
-  currentMonth: 'all',
+  currentMonth: getCurrentMonthKey(),
+  lastActiveMonth: getCurrentMonthKey(),
   selectedAccount: 'Cash',
   selectedAccountFilter: 'all',
   accounts: [],
@@ -1375,12 +1380,26 @@ async function loadBudget(month) {
 
   try {
     if (supabaseClient) {
-      const { data, error } = await supabaseClient
+      let { data, error } = await supabaseClient
         .from('budgets')
         .select('amount')
         .eq('user_id', userId)
         .eq('month', targetMonth)
         .maybeSingle();
+
+      // If no specific budget set for this new month yet, inherit user's default base budget from cloud
+      if ((!data || data.amount === null) && targetMonth !== 'default') {
+        const fallbackRes = await supabaseClient
+          .from('budgets')
+          .select('amount')
+          .eq('user_id', userId)
+          .eq('month', 'default')
+          .maybeSingle();
+        if (!fallbackRes.error && fallbackRes.data) {
+          data = fallbackRes.data;
+          error = null;
+        }
+      }
 
       if (
         !error &&
@@ -1390,6 +1409,7 @@ async function loadBudget(month) {
       ) {
         state.monthlyBudget = Number(data.amount);
         localStorage.setItem(cacheKey, state.monthlyBudget);
+        localStorage.setItem(defaultKey, state.monthlyBudget);
         renderBudgetTracker();
         return;
       }
@@ -1428,12 +1448,19 @@ async function persistBudget(amount, month) {
 
   try {
     if (supabaseClient) {
+      const rowsToUpsert = [
+        { user_id: userId, month: targetMonth, amount: state.monthlyBudget },
+      ];
+      if (targetMonth !== 'default') {
+        rowsToUpsert.push({
+          user_id: userId,
+          month: 'default',
+          amount: state.monthlyBudget,
+        });
+      }
       const { error } = await supabaseClient
         .from('budgets')
-        .upsert(
-          { user_id: userId, month: targetMonth, amount: state.monthlyBudget },
-          { onConflict: 'user_id,month' },
-        );
+        .upsert(rowsToUpsert, { onConflict: 'user_id,month' });
       if (!error) return;
     }
 
@@ -1654,14 +1681,21 @@ async function loadRecords() {
     isDraft: true,
   }));
 
+  const normalizeRecordList = (list) =>
+    (Array.isArray(list) ? list : []).map((r) => ({
+      ...r,
+      date: normalizeRecordDateYMD(r?.date) || r?.date || '',
+    }));
+
   const applyRecords = (serverRecords) => {
+    const cleanServerRecords = normalizeRecordList(serverRecords);
     try {
-      localStorage.setItem(cacheKey, JSON.stringify(serverRecords));
+      localStorage.setItem(cacheKey, JSON.stringify(cleanServerRecords));
     } catch (e) {
       // Ignore storage quota warning
     }
 
-    state.records = [...draftRecords, ...serverRecords];
+    state.records = [...normalizeRecordList(draftRecords), ...cleanServerRecords];
     updateMonthFilterDropdown(state.records);
     renderTable();
     calculateLocalSummaryMetrics();
@@ -1700,7 +1734,10 @@ async function loadRecords() {
       // Ignore parse error
     }
 
-    state.records = [...draftRecords, ...cachedRecords];
+    state.records = [
+      ...normalizeRecordList(draftRecords),
+      ...normalizeRecordList(cachedRecords),
+    ];
     updateMonthFilterDropdown(state.records);
     renderTable();
     calculateLocalSummaryMetrics();
@@ -1712,18 +1749,22 @@ async function loadRecords() {
 
 /**
  * Populate Month Selector dynamically
+ * Always includes the current calendar month (YYYY-MM) and defaults selection to state.currentMonth.
  */
 function updateMonthFilterDropdown(records) {
-  if (!Array.isArray(records) || !elements.monthFilter) return;
-  const months = new Set();
-  records.forEach((r) => {
-    if (r.date && r.date.length >= 7) {
-      months.add(r.date.substring(0, 7));
-    }
-  });
+  if (!elements.monthFilter) return;
+  const currentMonthKey = getCurrentMonthKey();
+  const months = new Set([currentMonthKey]);
+  if (Array.isArray(records)) {
+    records.forEach((r) => {
+      if (r.date && r.date.length >= 7) {
+        months.add(r.date.substring(0, 7));
+      }
+    });
+  }
 
   const sortedMonths = Array.from(months).sort().reverse();
-  const currentValue = elements.monthFilter.value;
+  const desiredValue = state.currentMonth || currentMonthKey;
 
   let optionsHtml = `<option value="all">${escapeHtml(t('all_months'))}</option>`;
   sortedMonths.forEach((m) => {
@@ -1731,8 +1772,11 @@ function updateMonthFilterDropdown(records) {
   });
 
   elements.monthFilter.innerHTML = optionsHtml;
-  if (sortedMonths.includes(currentValue)) {
-    elements.monthFilter.value = currentValue;
+  if (desiredValue === 'all' || sortedMonths.includes(desiredValue)) {
+    elements.monthFilter.value = desiredValue;
+  } else {
+    state.currentMonth = currentMonthKey;
+    elements.monthFilter.value = currentMonthKey;
   }
 }
 
@@ -1776,9 +1820,9 @@ function renderRecordRowHtml(record, sym) {
       <td class="col-amount text-right ${amountClass}">
         ${sign}${formatNumber(record.amount)}
       </td>
-      <td class="col-actions text-center">
-        <button class="btn-del" onclick="event.stopPropagation(); handleDelete('${record.id}')" title="Delete">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <td class="col-actions text-center" onclick="event.stopPropagation()">
+        <button type="button" class="btn-del" onclick="event.stopPropagation(); handleDelete('${record.id}')" title="Delete" aria-label="Delete">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
           </svg>
@@ -2425,9 +2469,29 @@ window.handleDelete = function (id) {
         );
         renderTable();
         calculateLocalSummaryMetrics();
+        updateAccountModalData();
+        loadAccounts();
+        renderStreakAndBadges();
         showToast(state.lang === 'zh' ? '已删除离线记录' : 'Draft removed');
         return;
       }
+
+      // Optimistically remove from local state & re-render immediately for zero-latency one-tap feel
+      const previousRecords = [...state.records];
+      state.records = state.records.filter((r) => String(r.id) !== String(id));
+      const userKey = state.user?.id || 'guest';
+      const cacheKey = `ledger_cached_records_${userKey}`;
+      try {
+        const serverOnly = state.records.filter((r) => !r.isDraft);
+        localStorage.setItem(cacheKey, JSON.stringify(serverOnly));
+      } catch (e) {}
+      updateMonthFilterDropdown(state.records);
+      renderTable();
+      calculateLocalSummaryMetrics();
+      updateAccountModalData();
+      loadAccounts();
+      renderStreakAndBadges();
+      showToast(state.lang === 'zh' ? '已删除账单' : 'Transaction deleted');
 
       try {
         const userId = state.user?.id;
@@ -2453,7 +2517,6 @@ window.handleDelete = function (id) {
           if (!res.ok) throw new Error('Failed to delete transaction');
         }
 
-        showToast(state.lang === 'zh' ? '已删除账单' : 'Transaction deleted');
         await Promise.all([
           loadRecords(),
           loadSummary(),
@@ -2461,6 +2524,9 @@ window.handleDelete = function (id) {
           fetchClaimsFromBackend(),
         ]);
       } catch (err) {
+        state.records = previousRecords;
+        renderTable();
+        calculateLocalSummaryMetrics();
         showToast(err.message, true);
       }
     },
@@ -2745,7 +2811,7 @@ function calculateDailySpendingTrend(records, currentMonth) {
   const targetMonth =
     currentMonth && currentMonth !== 'all'
       ? currentMonth
-      : new Date().toISOString().slice(0, 7);
+      : getCurrentMonthKey();
   const [year, month] = targetMonth.split('-').map(Number);
   const daysInMonth = new Date(year, month, 0).getDate();
   const labels = Array.from({ length: daysInMonth }, (_, i) => String(i + 1));
@@ -4727,7 +4793,14 @@ async function init() {
     });
   });
 
-  // 8. Month selector
+  // 8. Month selector (defaults to current calendar month YYYY-MM)
+  state.currentMonth = getCurrentMonthKey();
+  state.lastActiveMonth = state.currentMonth;
+  try {
+    localStorage.setItem('ledger_last_active_month', state.currentMonth);
+  } catch (e) {}
+  updateMonthFilterDropdown(state.records);
+
   elements.monthFilter?.addEventListener('change', (e) => {
     state.currentMonth = e.target.value;
     loadSummary();
@@ -5018,11 +5091,6 @@ async function init() {
 // 13. PROJECTS, SINKING FUNDS & SPLIT BILL CLAIMS MODULE
 // ============================================================================
 
-function getCurrentMonthKey() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-
 function getProjectsStorageKey() {
   const userKey = state.user?.id || 'guest';
   return `ledger_projects_${userKey}`;
@@ -5165,7 +5233,12 @@ function getLockedSinkingFundAmount(month) {
   if (!month || month === 'all') month = getCurrentMonthKey();
   if (!Array.isArray(state.projects)) return 0;
   return state.projects
-    .filter((p) => p.status === 'active' && p.mode === 'budget_deduct')
+    .filter(
+      (p) =>
+        p.status === 'active' &&
+        p.mode === 'budget_deduct' &&
+        (!p.month || p.month === month),
+    )
     .reduce((sum, p) => {
       const target = parseFloat(p.target_amount) || 0;
       const spent = parseFloat(p.spent_amount) || 0;
@@ -6354,12 +6427,12 @@ function setupProjectsModuleEventListeners() {
     if (e.target === elements.confirmActionModal) closeConfirmModal();
   });
   elements.proceedConfirmBtn?.addEventListener('click', async () => {
-    if (typeof currentConfirmCallback === 'function') {
-      const cb = currentConfirmCallback;
-      currentConfirmCallback = null;
+    const cb = currentConfirmCallback;
+    currentConfirmCallback = null;
+    closeConfirmModal();
+    if (typeof cb === 'function') {
       await cb();
     }
-    closeConfirmModal();
   });
 
   // 5. Create Transaction Advanced Toggles
@@ -6392,21 +6465,42 @@ function setupProjectsModuleEventListeners() {
 
   elements.openNewClaimBtn?.addEventListener('click', openCreateModalWithSplit);
 
-  // Refresh current local date, relative day tags, and streak when returning from background across midnight
+  // Refresh current local date, relative day tags, month rollover, and streak when returning from background
+  const handleAppWakeupRollover = () => {
+    const nowMonth = getCurrentMonthKey();
+    const savedLastMonth = localStorage.getItem('ledger_last_active_month');
+    if (
+      (state.lastActiveMonth && state.lastActiveMonth !== nowMonth) ||
+      (savedLastMonth && savedLastMonth !== nowMonth)
+    ) {
+      state.lastActiveMonth = nowMonth;
+      try {
+        localStorage.setItem('ledger_last_active_month', nowMonth);
+      } catch (e) {}
+      state.currentMonth = nowMonth;
+      state.selectedAccountsMonth = 'current';
+      updateMonthFilterDropdown(state.records);
+      loadSummary();
+    }
+    if (
+      elements.inputDate &&
+      (!elements.createEntryModal ||
+        elements.createEntryModal.classList.contains('hidden'))
+    ) {
+      elements.inputDate.value = getLocalDateString();
+    }
+    renderTable();
+    renderStreakAndBadges();
+    updateAccountModalData();
+    renderAccountsCenter();
+  };
+
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-      if (
-        elements.inputDate &&
-        (!elements.createEntryModal ||
-          elements.createEntryModal.classList.contains('hidden'))
-      ) {
-        elements.inputDate.value = getLocalDateString();
-      }
-      renderTable();
-      renderStreakAndBadges();
-      updateAccountModalData();
+      handleAppWakeupRollover();
     }
   });
+  window.addEventListener('focus', handleAppWakeupRollover);
 }
 
 // Start Application
