@@ -5,7 +5,7 @@
  * ============================================================================
  */
 // Current Client Release Version
-const APP_VERSION = '1.5.1';
+const APP_VERSION = '1.5.2';
 
 // Default BaaS Cloud Configuration (Decoded from safe payload, overridable by window.__ENV__)
 const SUPABASE_DEFAULT_CONFIG = {
