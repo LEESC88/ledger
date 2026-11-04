@@ -34,12 +34,11 @@ Install and run **MonetaX** directly on your Android phone without needing to ho
 
 ---
 
-## 🆕 What's New in v1.5.1 (Monthly Rollover Reset & Mobile UI Polish)
+## 🆕 What's New in v1.5.2 (KPI Number Display Fix & Mobile Top Header Polish)
 
-* 📅 **Automatic Monthly Rollover Reset (`YYYY-MM`)**: Entering a new calendar month automatically switches and resets the active Ledger view, top KPI strip, and Monthly Budget tracker to the current month (e.g., `2026-11`) while preserving all historical data intact—switch back to any previous month (e.g., `2026-10`) or `All Months` anytime via the top period selector.
-* ⚡ **Instant One-Tap Transaction Deletion**: Optimistic UI deletion closes the confirmation sheet and removes the entry in `<16ms` with expanded `36×36px` touch targets and row-scale isolation.
-* 📱 **Mobile Header & Account Spending Card Refinement**: Eliminated mobile top-bar crowding and redesigned the Account Spending Sources (`本月消费来源`) header into a clean, non-wrapping responsive layout.
-* 🎨 **MonetaX v1.5 Series Core**: Custom 30° isometric Emerald & Champagne Gold emblem, Click-to-Edit transactions (`PATCH /api/records/:id`), 360° Anti-Peeking Privacy Mode (`👁️`), and V1/V2 production keystore APK signing.
+* 🔢 **Adaptive Full Number & Decimal Display**: Resolved KPI summary cards (Net Balance, Income, Expense) number and decimal truncation (`...`), introducing a dynamic font-scaling engine (`fitKpiMiniValues`) so monetary values and decimal cents are always 100% visible across all screen sizes.
+* 📱 **Mobile Top Header Layout Refinement**: Streamlined component spacing and sizing in the top navigation bar to prevent icon overflow and edge-clipping when streak badges (`🔥 10d`) and sync status pills are active.
+* 📅 **MonetaX v1.5.1 Foundations**: Monthly rollover auto-reset (`YYYY-MM`), instant `<16ms` one-tap optimistic transaction deletion, Click-to-Edit transactions, and 360° Anti-Peeking Privacy Mode (`👁️`).
 
 ---
 

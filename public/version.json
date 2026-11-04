@@ -1,6 +1,6 @@
 {
-  "version": "1.5.1",
-  "releaseDate": "2026-11-02",
+  "version": "1.5.2",
+  "releaseDate": "2026-11-04",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/MonetaX.apk",
-  "notes": "MonetaX v1.5.1 Release: Auto-defaults and resets Ledger & Monthly Budget views to the current calendar month (YYYY-MM) on new month rollover while preserving full historical records via the period selector; zero-latency optimistic one-tap transaction deletion; fixed mobile top header and Account Spending Sources card layout crowding."
+  "notes": "MonetaX v1.5.2 Release: Fixed top KPI summary cards (Net Balance, Income, Expense) number and decimal truncation, ensuring full monetary values and decimals are always 100% visible with adaptive font-scaling; refined mobile top header spacing with streak badge active."
 }

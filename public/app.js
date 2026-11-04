@@ -738,7 +738,9 @@ function switchAppPage(pageName) {
 
   closeProfileDropdown();
 
-  if (target === 'analytics') {
+  if (target === 'ledger') {
+    setTimeout(fitKpiMiniValues, 10);
+  } else if (target === 'analytics') {
     renderBudgetTracker();
     if (state.summary?.categoryBreakdown) {
       setTimeout(
@@ -1062,16 +1064,44 @@ function formatNumber(amount) {
 function updateCurrencySymbols() {
   const sym = state.currency;
   document.querySelectorAll('.currency-sym').forEach((el) => {
+    const isKpiSym = Boolean(el.closest('.kpi-mini-val'));
+    const sep = isKpiSym ? '' : ' ';
     const text = el.textContent || '';
     if (text.includes('+')) {
-      el.textContent = `+ ${sym}`;
+      el.textContent = `+${sep}${sym}`;
     } else if (text.includes('-') || text.includes('−')) {
-      el.textContent = `− ${sym}`;
+      el.textContent = `−${sep}${sym}`;
     } else {
       el.textContent = sym;
     }
   });
+  fitKpiMiniValues();
 }
+
+/**
+ * Dynamically scale KPI mini card font size so full numbers & decimals are always visible without truncation.
+ */
+function fitKpiMiniValues() {
+  const kpiVals = document.querySelectorAll('.kpi-mini-val');
+  if (!kpiVals.length) return;
+  kpiVals.forEach((el) => {
+    el.style.fontSize = '';
+    el.style.flexWrap = 'nowrap';
+    const maxW = el.clientWidth;
+    if (!maxW) return;
+
+    let currentPx = parseFloat(window.getComputedStyle(el).fontSize) || 14;
+    const minPx = 9.5;
+    while (el.scrollWidth > maxW && currentPx > minPx) {
+      currentPx = Math.max(minPx, currentPx - 0.5);
+      el.style.fontSize = `${currentPx}px`;
+    }
+    if (el.scrollWidth > maxW) {
+      el.style.flexWrap = 'wrap';
+    }
+  });
+}
+window.addEventListener('resize', fitKpiMiniValues);
 
 /**
  * Display Floating Toast Notification
@@ -1307,6 +1337,7 @@ function calculateLocalSummaryMetrics() {
     elements.totalExpenseValue.textContent = formatNumber(
       state.summary.totalExpense,
     );
+  fitKpiMiniValues();
 
   updateSummaryStatusBadge(state.summary.netBalance);
   renderCategoryChart(categoryBreakdown);
@@ -1652,6 +1683,7 @@ async function loadSummary() {
     elements.netBalanceValue.textContent = formatNumber(data.netBalance);
     elements.totalIncomeValue.textContent = formatNumber(data.totalIncome);
     elements.totalExpenseValue.textContent = formatNumber(data.totalExpense);
+    fitKpiMiniValues();
 
     updateSummaryStatusBadge(data.netBalance);
     renderCategoryChart(data.categoryBreakdown);
