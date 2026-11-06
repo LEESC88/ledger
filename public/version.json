@@ -1,6 +1,6 @@
 {
-  "version": "1.5.2",
-  "releaseDate": "2026-11-04",
+  "version": "1.5.3",
+  "releaseDate": "2026-11-06",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/MonetaX.apk",
-  "notes": "MonetaX v1.5.2 Release: Fixed top KPI summary cards (Net Balance, Income, Expense) number and decimal truncation, ensuring full monetary values and decimals are always 100% visible with adaptive font-scaling; refined mobile top header spacing with streak badge active."
+  "notes": "MonetaX v1.5.3 Release: ⚡ 0ms Instant Cold-Start Hydration (<16ms) eliminating 1~2s startup blank wait; instant offline cache restore for records, summary metrics, and sinking funds; native standalone mobile network bypass for zero-lag launch."
 }

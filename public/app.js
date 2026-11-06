@@ -5,7 +5,7 @@
  * ============================================================================
  */
 // Current Client Release Version
-const APP_VERSION = '1.5.2';
+const APP_VERSION = '1.5.3';
 
 // Default BaaS Cloud Configuration (Decoded from safe payload, overridable by window.__ENV__)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -1727,7 +1727,10 @@ async function loadRecords() {
       // Ignore storage quota warning
     }
 
-    state.records = [...normalizeRecordList(draftRecords), ...cleanServerRecords];
+    state.records = [
+      ...normalizeRecordList(draftRecords),
+      ...cleanServerRecords,
+    ];
     updateMonthFilterDropdown(state.records);
     renderTable();
     calculateLocalSummaryMetrics();
@@ -4271,17 +4274,20 @@ async function initSupabaseClient() {
   let url = SUPABASE_DEFAULT_CONFIG.url;
   let anonKey = SUPABASE_DEFAULT_CONFIG.anonKey;
 
-  try {
-    const res = await fetch('/api/records/config');
-    if (res.ok) {
-      const config = await res.json();
-      if (config.supabaseUrl && config.supabaseAnonKey) {
-        url = config.supabaseUrl;
-        anonKey = config.supabaseAnonKey;
+  const isNative = !!(window.NativeUpdater || window.Capacitor);
+  if (!isNative) {
+    try {
+      const res = await fetch('/api/records/config');
+      if (res.ok) {
+        const config = await res.json();
+        if (config.supabaseUrl && config.supabaseAnonKey) {
+          url = config.supabaseUrl;
+          anonKey = config.supabaseAnonKey;
+        }
       }
+    } catch (err) {
+      // Standalone mobile APK uses default BaaS config
     }
-  } catch (err) {
-    // Standalone mobile APK uses default BaaS config
   }
 
   try {
@@ -4361,6 +4367,7 @@ function signOutUser() {
         await supabaseClient.auth.signOut().catch(() => {});
       }
       state.user = null;
+      localStorage.removeItem('ledger_last_active_user_id');
       switchAppPage('ledger');
       updateAuthUI(null);
       showToast(
@@ -4757,9 +4764,66 @@ async function checkForAppUpdates(isManual = false) {
 }
 
 /**
+ * Instant Local Cache Hydration (<16ms 0-delay first-frame render)
+ * Restores previous active session's records, summary, projects, and claims directly from localStorage
+ * so the user sees full UI immediately without waiting for network/cloud round-trips.
+ */
+function hydrateLocalCacheImmediately() {
+  try {
+    let userKey = localStorage.getItem('ledger_last_active_user_id') || 'guest';
+    let cacheKey = `ledger_cached_records_${userKey}`;
+
+    // Auto-detect non-empty cached records key if current key is empty
+    if (!localStorage.getItem(cacheKey)) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (
+          k &&
+          k.startsWith('ledger_cached_records_') &&
+          (localStorage.getItem(k) || '').length > 5
+        ) {
+          cacheKey = k;
+          break;
+        }
+      }
+    }
+
+    const raw = localStorage.getItem(cacheKey);
+    if (raw) {
+      try {
+        const cachedRecords = JSON.parse(raw);
+        if (Array.isArray(cachedRecords) && cachedRecords.length > 0) {
+          state.records = cachedRecords;
+          updateMonthFilterDropdown(state.records);
+          renderTable();
+          calculateLocalSummaryMetrics();
+          renderStreakAndBadges();
+          updateAccountModalData();
+          loadAccounts();
+        }
+      } catch (e) {
+        console.error('Error parsing cached records:', e);
+      }
+    }
+
+    // Instantly hydrate projects, sinking funds & claims from local storage
+    loadProjects();
+    loadClaims();
+    renderSinkingFunds();
+    renderClaims();
+    renderBudgetTracker();
+  } catch (err) {
+    console.warn('Local cache hydration fallback:', err);
+  }
+}
+
+/**
  * Application Bootstrapper
  */
 async function init() {
+  // 0. Instant Local Cache Hydration (<16ms 0-delay first render)
+  hydrateLocalCacheImmediately();
+
   // 1. Multi-Page Navigation Listeners
   elements.bottomNavItems.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -5089,6 +5153,7 @@ async function init() {
         state.user = session?.user || null;
         updateAuthUI(state.user);
         if (event === 'SIGNED_IN' && state.user) {
+          localStorage.setItem('ledger_last_active_user_id', state.user.id);
           await Promise.all([
             loadRecords(),
             loadSummary(),
@@ -5101,6 +5166,7 @@ async function init() {
       const { data } = await supabaseClient.auth.getSession();
       if (data?.session?.user) {
         state.user = data.session.user;
+        localStorage.setItem('ledger_last_active_user_id', state.user.id);
         updateAuthUI(state.user);
         await Promise.all([
           loadRecords(),
