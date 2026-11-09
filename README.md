@@ -8,7 +8,7 @@
 ### 极简 · 本地优先 · 防窥私密 · 云端实时同步个人财务管理终端
 
 **A high-performance, distraction-free personal finance & wealth vault built for Web & Android.**  
-*Instant offline entry • 360° Anti-Peeking Privacy Mode (`👁️`) • Click-to-Edit transactions • End-to-end user isolation with Supabase RLS • Sinking Funds & Split Bill Claims • Visual analytics & budget monitoring.*
+*Instant offline entry • Receipt & Purchase Photo Vault with 2-Year Lifecycle • 360° Anti-Peeking Privacy Mode (`👁️`) • Click-to-Edit transactions • End-to-end user isolation with Supabase RLS • Sinking Funds & Split Bill Claims • Visual analytics & budget monitoring.*
 
 [![GitHub Release](https://img.shields.io/github/v/release/LEESC88/ledger?style=for-the-badge&color=0D9488&label=Latest%20Release)](https://github.com/LEESC88/ledger/releases/latest)
 [![CI Build Status](https://img.shields.io/github/actions/workflow/status/LEESC88/ledger/release-apk.yml?branch=master&style=for-the-badge&label=Build%20%26%20Signed%20APK)](https://github.com/LEESC88/ledger/actions)
@@ -34,11 +34,12 @@ Install and run **MonetaX** directly on your Android phone without needing to ho
 
 ---
 
-## 🆕 What's New in v1.5.3 (0ms Instant Cold-Start Hydration & Launch Speedup)
+## 🆕 What's New in v1.5.4 (Receipt Photo Vault, HD Zoom Lightbox & 2-Year Lifecycle)
 
-* ⚡ **0ms Instant Cold-Start Hydration (`<16ms`)**: Eliminated the 1~2s blank loading latency when opening the application. The app immediately hydrates and paints the last active session's cached transactions, monthly summary metrics, sinking funds, and budget status synchronously from local storage on frame 0, before seamlessly revalidating with Supabase Cloud in the background.
-* 🚀 **Native Standalone Mobile Network Bypass**: Automatically bypasses redundant local `/api/*` configuration probing when running inside the standalone Capacitor Android wrapper, eliminating network timeout penalties on cold launch.
-* 🔢 **v1.5.2 Foundations**: Dynamic font-scaling engine (`fitKpiMiniValues`) ensuring full monetary values and decimals are 100% visible, plus refined mobile top header spacing.
+* 📷 **Receipt & Purchase Photo Attachment**: Snap a receipt with your camera or pick from your album when recording or editing any transaction. Built-in client-side HTML5 Canvas WebP compression (`1080px` max edge, `0.78` quality) shrinks `5–8MB` photos down to `~60–90KB` (`98%` savings) before syncing to Supabase Storage (`receipt-images`) and local SQLite.
+* 🔍 **Full-Screen HD Zoomable Lightbox**: Tap any receipt thumbnail or timeline badge to open the full-screen viewer featuring `100%`–`400%` interactive zoom controls, double-tap/click quick zoom (`100%` ↔ `225%`), touch pinch-to-zoom, mouse wheel zoom, drag-to-pan, one-tap download, and automatic 360° Privacy Mode blur shielding.
+* 📦 **2-Year Rolling Retention & 1-Tap Local ZIP Archive**: Automatically detects receipt images older than 2 years (`730` days) and displays a **7-day grace period countdown banner**. Download all expiring photos + `receipt_manifest.csv` as a single local `.zip` package (`JSZip`) in one tap while freeing cloud storage—preserving **100% of your transaction amounts, categories, and notes forever**.
+* 🔒 **Hardened Multi-Tenant User Isolation & v1.5.3 0ms Cold-Start Hydration**: Strict backend & client-side `user_id` isolation guards combined with `<16ms` synchronous local cache hydration on cold launch.
 
 ---
 
@@ -127,12 +128,17 @@ MonetaX follows a clean **Three-Tier Local-First + Dual-Track Persistence** arch
 * **Triple-Layer Cloud Persistence**: Synchronized across Supabase PostgreSQL tables (`projects`, `claims`), Supabase Auth user metadata (`user_metadata`), and NestJS SQLite backend with tombstone-aware conflict resolution to prevent accidental overwrites or data loss upon refresh.
 
 #### 7. ✏️ Click-to-Edit Transactions & 👁️ 360° Anti-Peeking Privacy Mode
-* **One-Tap Transaction Editing**: Tap any transaction row in the timeline to open the pre-filled Edit Bottom Sheet. Modify transaction type, amount, category, payment account, date, or note with instant synchronization across Supabase Cloud (`records.update`), local offline queue, and NestJS SQLite (`PATCH /api/records/:id`).
-* **360° Privacy Blur Shield (`👁️`)**: Toggle the header eye icon to instantly apply a `5.5px` Gaussian blur across all sensitive numbers and charts (KPIs, transaction amounts, daily totals, monthly budget figures, daily trend & category donut charts, sinking fund targets, and split bill claims). Hover or touch any blurred element to temporarily peek.
+* **One-Tap Transaction Editing**: Tap any transaction row in the timeline to open the pre-filled Edit Bottom Sheet. Modify transaction type, amount, category, payment account, date, receipt photo, or note with instant synchronization across Supabase Cloud (`records.update`), local offline queue, and NestJS SQLite (`PATCH /api/records/:id`).
+* **360° Privacy Blur Shield (`👁️`)**: Toggle the header eye icon to instantly apply a `5.5px` Gaussian blur across all sensitive numbers, charts, and receipt thumbnails (KPIs, transaction amounts, daily totals, monthly budget figures, daily trend & category donut charts, sinking fund targets, split bill claims, and receipt previews). Hover or touch any blurred element to temporarily peek.
 
-#### 8. 🛡️ Enterprise Security, Data Retention & CSV Export
+#### 8. 📷 Receipt & Purchase Photo Vault (2-Year Rolling Lifecycle)
+* **Client-Side WebP Compression Engine**: Automatically downscales and encodes photos to `1080px` WebP (`~60–90KB`) on the client prior to upload, keeping local cache and cloud bandwidth fast and lightweight.
+* **Interactive HD Zoom Lightbox**: Supports `100%`–`400%` zoom buttons, pinch-to-zoom, mouse wheel zoom, click/tap `225%` toggle, drag-to-pan, and one-tap original WebP download.
+* **2-Year Rolling Retention & 7-Day Grace Period**: Receipt photos older than 2 years enter a 7-day countdown grace period with a 1-tap local `.zip` bundler (`JSZip` + `receipt_manifest.csv`). After backup or grace period expiry, only the cloud image binary is purged while 100% of transaction records and amounts remain permanently intact (`[Receipt Archived]` badge).
+
+#### 9. 🛡️ Enterprise Security, Data Retention & CSV Export
 * **Native Google OAuth 2.0**: Zero-port deep-link scheme (`com.leesc88.ledger://oauth`) with isolated account data.
-* **Row-Level Security (RLS)**: Data isolation enforced at the PostgreSQL database level.
+* **Row-Level Security (RLS) & Strict Multi-Tenant Guards**: End-to-end data isolation enforced at both the PostgreSQL RLS layer, Supabase Storage folder policy (`{user_id}/{year}/{filename}.webp`), and NestJS service layer.
 * **Flexible CSV Export & Native Android Sheet**: Export transactions for the current year or historical thresholds (1, 2, 3, or 5 years) directly via the native Android Share/Save sheet into your phone's File Manager.
 * **Storage Protection**: Built-in 50,000 record capacity limit per user with visual warning badges to prevent cloud database exhaustion.
 
@@ -343,8 +349,16 @@ MonetaX 整体遵循 **“三层拓扑 · 本地优先 · 存储双轨 · 零延
 * **三模外观**：纯净高对比浅色（Light）、深邃蓝黑防眩晕深色（Dark）与跟随系统（System）。
 
 #### 9. 账单点击编辑（Click-to-Edit）与 360° 防窥隐私模式（Privacy Mode）
-* **点击流水直达编辑**：直接点击明细表中的任意一笔账单行，即可弹出预填充的编辑面板，自由修改收支类型、金额、分类、支付账户、日期与备注，并同步更新 Supabase 云端、本地离线草稿队列与 SQLite 数据库（`PATCH /api/records/:id`）。
-* **360° 防窥隐私护盾（`👁️`）**：一键点击顶部导航栏眼睛图标，自动对全站所有敏感金额与图表施加 `5.5px` 高斯模糊（涵盖顶部 KPI、流水金额、每日小计、月度预算各项数值、趋势折线图、分类占比圆环图、专款卡片与代垫卡片），支持鼠标悬停或触屏点按临时透视查看，状态持久记忆。
+* **点击流水直达编辑**：直接点击明细表中的任意一笔账单行，即可弹出预填充的编辑面板，自由修改收支类型、金额、分类、支付账户、日期、收据附图与备注，并同步更新 Supabase 云端、本地离线草稿队列与 SQLite 数据库（`PATCH /api/records/:id`）。
+* **360° 防窥隐私护盾（`👁️`）**：一键点击顶部导航栏眼睛图标，自动对全站所有敏感金额、图表与收据缩略图施加 `5.5px` 高斯模糊（涵盖顶部 KPI、流水金额、每日小计、月度预算各项数值、趋势折线图、分类占比圆环图、专款卡片、代垫卡片及收据凭证预览），支持鼠标悬停或触屏点按临时透视查看，状态持久记忆。
+
+#### 10. 收据与消费附图金库（Receipt Photo Vault & 2-Year Rolling Retention）
+* **前端 Canvas WebP 极速压缩引擎**：支持手机拍照或相册选图，前端自动等比缩放至长边 `<= 1080px` 并编码为高清晰度 WebP（单张仅 `60~90KB`，体积压缩率高达 `98%`），双轨同步至 Supabase Storage（`receipt-images` 桶）与本地 SQLite。
+* **全屏高清可缩放查看器（HD Zoom Lightbox）**：支持 `100%`–`400%` 缩放控制栏、单击/双击快速放大（`100%` ↔ `225%`）、双指捏合缩放（Pinch-to-Zoom）、鼠标滚轮缩放、任意拖拽平移检视收据细节及一键下载原图。
+* **2 年滚动保留与 7 天宽限期一键打包备份**：
+  * 自动扫描满 2 年（`730` 天）的历史收据图片，触发 **7 天宽限期倒计时横幅**；
+  * 支持一键将所有到期收据图片连同 `receipt_manifest.csv` 账单对照明细打包为本地 `.zip` 压缩包（基于 `JSZip`）永久保存至手机或电脑；
+  * 清理仅释放云端图片体积，**100% 永久保留账单文字、分类、账户与金额流水**（标记为 `[收据已归档]`）。
 
 ---
 
@@ -365,6 +379,9 @@ CREATE TABLE public.records (
     account_name VARCHAR(50) DEFAULT 'Cash',
     date DATE NOT NULL DEFAULT CURRENT_DATE,
     note TEXT DEFAULT '',
+    image_url TEXT DEFAULT NULL,
+    image_size_kb INTEGER DEFAULT 0,
+    image_archived BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
