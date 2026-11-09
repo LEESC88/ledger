@@ -17,11 +17,14 @@ export class ClaimsService {
 
   /**
    * 1. 查询当前用户的所有代垫账单 (findAll)
+   * Strict tenant isolation: returns empty array if userId is not provided.
    */
   async findAll(userId?: string): Promise<Claim[]> {
-    const whereCondition = userId ? { userId } : {};
+    if (!userId) {
+      return [];
+    }
     return await this.claimRepository.find({
-      where: whereCondition,
+      where: { userId },
       order: { createdAt: 'DESC' },
     });
   }

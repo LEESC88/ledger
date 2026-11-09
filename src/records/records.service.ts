@@ -41,11 +41,15 @@ export class RecordsService {
   }
 
   /**
-   * Retrieves all transaction records from the database sorted by date descending.
+   * Retrieves all transaction records for the authenticated user sorted by date descending.
+   * Strict tenant isolation: returns empty array if userId is not provided.
    */
   async findAll(userId?: string): Promise<Record[]> {
+    if (!userId) {
+      return [];
+    }
     return await this.recordRepository.find({
-      where: userId ? { userId } : {},
+      where: { userId },
       order: { date: 'DESC', createdAt: 'DESC' },
     });
   }
@@ -129,17 +133,17 @@ export class RecordsService {
    * @param years - Retention period threshold in years
    */
   async findOlderThan(years: number, userId?: string): Promise<Record[]> {
+    if (!userId) {
+      return [];
+    }
     const cutoffDate = new Date();
     cutoffDate.setFullYear(cutoffDate.getFullYear() - years);
     const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
 
     const qb = this.recordRepository
       .createQueryBuilder('record')
-      .where('record.date < :cutoffDate', { cutoffDate: cutoffDateStr });
-
-    if (userId) {
-      qb.andWhere('record.userId = :userId', { userId });
-    }
+      .where('record.date < :cutoffDate', { cutoffDate: cutoffDateStr })
+      .andWhere('record.userId = :userId', { userId });
 
     return await qb.orderBy('record.date', 'ASC').getMany();
   }
@@ -158,15 +162,16 @@ export class RecordsService {
     cutoffDate.setFullYear(cutoffDate.getFullYear() - years);
     const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
 
+    if (!userId) {
+      return { purgedCount: 0, cutoffDate: cutoffDateStr };
+    }
+
     const qb = this.recordRepository
       .createQueryBuilder()
       .delete()
       .from(Record)
-      .where('date < :cutoffDate', { cutoffDate: cutoffDateStr });
-
-    if (userId) {
-      qb.andWhere('user_id = :userId', { userId });
-    }
+      .where('date < :cutoffDate', { cutoffDate: cutoffDateStr })
+      .andWhere('user_id = :userId', { userId });
 
     const result = await qb.execute();
     return { purgedCount: result.affected ?? 0, cutoffDate: cutoffDateStr };
@@ -176,9 +181,9 @@ export class RecordsService {
    * Evaluates storage capacity metrics and quota health for multi-user safety.
    */
   async getStorageStatus(userId?: string) {
-    const totalRecords = await this.recordRepository.count(
-      userId ? { where: { userId } } : {},
-    );
+    const totalRecords = userId
+      ? await this.recordRepository.count({ where: { userId } })
+      : 0;
     const estimatedBytes = totalRecords * 200; // ~200 bytes per record
     return {
       totalRecords,

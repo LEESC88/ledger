@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json, urlencoded } from 'express';
 import { AppModule } from './app.module.js';
 
 /**
@@ -10,6 +11,10 @@ import { AppModule } from './app.module.js';
  */
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Increase payload limit to 5MB to support compressed WebP receipt images in local/SQLite mode
+  app.use(json({ limit: '5mb' }));
+  app.use(urlencoded({ extended: true, limit: '5mb' }));
 
   // 1. Global ValidationPipe
   // Enforces DTO validation rules across all incoming requests.

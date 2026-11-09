@@ -5,7 +5,7 @@
  * ============================================================================
  */
 // Current Client Release Version
-const APP_VERSION = '1.5.3';
+const APP_VERSION = '1.5.4';
 
 // Default BaaS Cloud Configuration (Decoded from safe payload, overridable by window.__ENV__)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -75,6 +75,10 @@ const SVG_ICONS = {
   plus: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
   trash: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
   users: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
+  camera: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`,
+  receipt: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>`,
+  download: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`,
+  archive: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"></rect><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"></path><path d="M10 12h4"></path></svg>`,
 };
 
 // Visual Category Metadata (Line Icons, High-Contrast Palette Colors & Bilingual Labels)
@@ -199,6 +203,8 @@ let state = {
   activeProjectTab: 'sinking',
   selectedAccountsMonth: 'current',
   editingRecordId: null,
+  pendingReceiptDataUrl: null,
+  pendingReceiptSizeKb: 0,
   isPrivacyMode: localStorage.getItem('ledger_privacy_mode') === 'true',
 };
 
@@ -476,6 +482,39 @@ const elements = {
   avatarLightboxName: document.getElementById('avatarLightboxName'),
   avatarLightboxEmail: document.getElementById('avatarLightboxEmail'),
 
+  // Receipt Photo Upload & Lightbox Elements
+  triggerReceiptUploadBtn: document.getElementById('triggerReceiptUploadBtn'),
+  receiptFileInput: document.getElementById('receiptFileInput'),
+  receiptPreviewDrawer: document.getElementById('receiptPreviewDrawer'),
+  previewReceiptThumbWrap: document.getElementById('previewReceiptThumbWrap'),
+  receiptPreviewImg: document.getElementById('receiptPreviewImg'),
+  receiptPreviewMeta: document.getElementById('receiptPreviewMeta'),
+  removeReceiptBtn: document.getElementById('removeReceiptBtn'),
+  receiptLightboxModal: document.getElementById('receiptLightboxModal'),
+  receiptLightboxBackdrop: document.getElementById('receiptLightboxBackdrop'),
+  receiptLightboxFrame: document.getElementById('receiptLightboxFrame'),
+  closeReceiptLightboxBtn: document.getElementById('closeReceiptLightboxBtn'),
+  downloadReceiptLightboxBtn: document.getElementById(
+    'downloadReceiptLightboxBtn',
+  ),
+  zoomInReceiptBtn: document.getElementById('zoomInReceiptBtn'),
+  zoomOutReceiptBtn: document.getElementById('zoomOutReceiptBtn'),
+  zoomResetReceiptBtn: document.getElementById('zoomResetReceiptBtn'),
+  receiptLightboxImg: document.getElementById('receiptLightboxImg'),
+  receiptLightboxTitle: document.getElementById('receiptLightboxTitle'),
+  receiptLightboxSub: document.getElementById('receiptLightboxSub'),
+  receiptRetentionBanner: document.getElementById('receiptRetentionBanner'),
+  receiptRetentionBannerTitle: document.getElementById(
+    'receiptRetentionBannerTitle',
+  ),
+  receiptRetentionBannerDesc: document.getElementById(
+    'receiptRetentionBannerDesc',
+  ),
+  backupAndCleanReceiptsBtn: document.getElementById(
+    'backupAndCleanReceiptsBtn',
+  ),
+  cleanReceiptsOnlyBtn: document.getElementById('cleanReceiptsOnlyBtn'),
+
   // Bottom Sheet & Gesture
   createSheetDragHandle: document.getElementById('createSheetDragHandle'),
   createSheetDialog: document.querySelector('.create-sheet-dialog'),
@@ -594,6 +633,7 @@ let isPoppingModalHistory = false;
 
 function hasAnyOpenModal() {
   const modalEls = [
+    elements.receiptLightboxModal,
     elements.avatarLightboxModal,
     elements.confirmActionModal,
     elements.inAppUpdateModal,
@@ -627,6 +667,17 @@ function popModalHistoryIfCleared(fromPopState = false) {
 }
 
 function closeTopmostActiveModal(fromPopState = false) {
+  if (
+    elements.receiptLightboxModal &&
+    !elements.receiptLightboxModal.classList.contains('hidden')
+  ) {
+    if (typeof closeReceiptLightbox === 'function') {
+      closeReceiptLightbox(fromPopState);
+    } else {
+      elements.receiptLightboxModal.classList.add('hidden');
+    }
+    return true;
+  }
   if (
     elements.avatarLightboxModal &&
     !elements.avatarLightboxModal.classList.contains('hidden')
@@ -797,6 +848,9 @@ function openCreateModal() {
   if (elements.entryProjectSelect) elements.entryProjectSelect.value = '';
   if (elements.splitMyShareInput) elements.splitMyShareInput.value = '';
   if (elements.splitFriendsList) elements.splitFriendsList.innerHTML = '';
+  if (typeof clearPendingReceipt === 'function') {
+    clearPendingReceipt();
+  }
 
   renderCategoryGrid(state.currentType);
   renderAccountPicker();
@@ -874,6 +928,25 @@ function openEditRecordModal(id) {
   elements.sinkingFundDrawer?.classList.add('hidden');
   elements.splitBillDrawer?.classList.add('hidden');
 
+  // 7b. Pre-fill Receipt Photo Preview if attached
+  if (typeof clearPendingReceipt === 'function') {
+    clearPendingReceipt();
+  }
+  if (record.image_url && record.image_url !== 'archived') {
+    state.pendingReceiptDataUrl = record.image_url;
+    state.pendingReceiptSizeKb = record.image_size_kb || 0;
+    if (elements.receiptPreviewImg) {
+      elements.receiptPreviewImg.src = record.image_url;
+    }
+    if (elements.receiptPreviewMeta) {
+      elements.receiptPreviewMeta.textContent = record.image_size_kb
+        ? `WebP · ${record.image_size_kb} KB`
+        : 'WebP';
+    }
+    elements.receiptPreviewDrawer?.classList.remove('hidden');
+    elements.triggerReceiptUploadBtn?.classList.add('active');
+  }
+
   // 8. Open Sheet
   elements.createEntryModal?.classList.remove('hidden');
   pushModalHistoryState();
@@ -887,6 +960,9 @@ window.openEditRecordModal = openEditRecordModal;
 function closeCreateModal(fromPopState = false) {
   elements.createEntryModal?.classList.add('hidden');
   state.editingRecordId = null;
+  if (typeof clearPendingReceipt === 'function') {
+    clearPendingReceipt();
+  }
   if (elements.createSheetDialog) {
     elements.createSheetDialog.style.transform = '';
   }
@@ -1231,8 +1307,18 @@ async function syncOfflineDrafts() {
 
   for (const item of queue) {
     try {
+      if (
+        item.payload.image_url &&
+        String(item.payload.image_url).startsWith('data:image/') &&
+        typeof uploadReceiptToCloud === 'function'
+      ) {
+        item.payload.image_url = await uploadReceiptToCloud(
+          item.payload.image_url,
+        );
+      }
+
       if (supabaseClient && userId) {
-        const { error } = await supabaseClient.from('records').insert({
+        const baseInsert = {
           user_id: userId,
           type: item.payload.type,
           amount: item.payload.amount,
@@ -1240,7 +1326,18 @@ async function syncOfflineDrafts() {
           account_name: item.payload.account_name || 'Cash',
           date: item.payload.date,
           note: item.payload.note || null,
+        };
+        let { error } = await supabaseClient.from('records').insert({
+          ...baseInsert,
+          image_url: item.payload.image_url || null,
+          image_size_kb: item.payload.image_size_kb || 0,
         });
+        if (error && error.message?.includes('image_')) {
+          const retry = await supabaseClient
+            .from('records')
+            .insert(baseInsert);
+          error = retry.error;
+        }
 
         if (error) {
           remainingQueue.push(item);
@@ -1364,8 +1461,12 @@ function saveOfflineRecord(payload) {
     account_name: payload.account_name || 'Cash',
     date: payload.date,
     note: payload.note,
+    image_url: payload.image_url || null,
+    image_size_kb: payload.image_size_kb || 0,
     isDraft: true,
   };
+  state.pendingReceiptDataUrl = null;
+  state.pendingReceiptSizeKb = 0;
   state.records = [draftRecord, ...state.records];
 
   updateMonthFilterDropdown(state.records);
@@ -1699,8 +1800,15 @@ async function loadSummary() {
  * Fetch and Render All Records
  */
 async function loadRecords() {
-  const userKey = state.user?.id || 'guest';
+  const requestUserId = state.user?.id || null;
+  if (!requestUserId) {
+    return;
+  }
+  const userKey = requestUserId;
   const cacheKey = `ledger_cached_records_${userKey}`;
+  try {
+    localStorage.removeItem('ledger_cached_records_guest');
+  } catch (e) {}
   const queue = getOfflineQueue();
   const draftRecords = queue.map((item) => ({
     id: item.id,
@@ -1710,16 +1818,53 @@ async function loadRecords() {
     account_name: item.payload.account_name || 'Cash',
     date: item.payload.date,
     note: item.payload.note,
+    image_url: item.payload.image_url || null,
+    image_size_kb: item.payload.image_size_kb || 0,
     isDraft: true,
   }));
 
-  const normalizeRecordList = (list) =>
-    (Array.isArray(list) ? list : []).map((r) => ({
-      ...r,
-      date: normalizeRecordDateYMD(r?.date) || r?.date || '',
-    }));
+  const normalizeRecordList = (list) => {
+    let localReceipts = {};
+    try {
+      localReceipts = JSON.parse(
+        localStorage.getItem('ledger_local_receipt_map') || '{}',
+      );
+    } catch (e) {}
+    return (Array.isArray(list) ? list : [])
+      .filter((r) => {
+        const ownerId = r?.user_id || r?.userId;
+        return !ownerId || String(ownerId) === String(requestUserId);
+      })
+      .map((r) => {
+        const normDate = normalizeRecordDateYMD(r?.date) || r?.date || '';
+        const fallbackKey = `${normDate}_${r?.type}_${Number(r?.amount)}_${r?.category}`;
+        const localEntry =
+          (r?.id && localReceipts[String(r.id)]) ||
+          localReceipts[fallbackKey] ||
+          null;
+        return {
+          ...r,
+          date: normDate,
+          image_url:
+            r?.image_url !== undefined
+              ? r.image_url
+              : localEntry?.image_url || null,
+          image_size_kb:
+            r?.image_size_kb !== undefined
+              ? r.image_size_kb
+              : localEntry?.image_size_kb || 0,
+          image_archived:
+            r?.image_archived !== undefined
+              ? r.image_archived
+              : Boolean(localEntry?.image_archived),
+        };
+      });
+  };
 
   const applyRecords = (serverRecords) => {
+    if ((state.user?.id || null) !== requestUserId) {
+      return;
+    }
     const cleanServerRecords = normalizeRecordList(serverRecords);
     try {
       localStorage.setItem(cacheKey, JSON.stringify(cleanServerRecords));
@@ -1737,9 +1882,12 @@ async function loadRecords() {
     updateAccountModalData();
     loadAccounts();
     renderStreakAndBadges();
+    if (typeof checkTwoYearReceiptRetention === 'function') {
+      checkTwoYearReceiptRetention();
+    }
   };
 
-  const userId = state.user?.id;
+  const userId = requestUserId;
 
   try {
     if (supabaseClient && userId) {
@@ -1816,6 +1964,27 @@ function updateMonthFilterDropdown(records) {
 }
 
 /**
+ * Open Receipt Lightbox by Record ID
+ */
+function openReceiptLightboxByRecordId(recordId) {
+  const record = state.records.find((r) => String(r.id) === String(recordId));
+  if (!record || !record.image_url) return;
+  if (record.image_url === 'archived') {
+    showToast(t('receipt_archived_toast'));
+    return;
+  }
+  const sym = state.currency || 'RM';
+  const catLabel = getCategoryDisplayLabel(record.category);
+  const titleText = `${catLabel} · ${sym} ${formatNumber(record.amount)}`;
+  const cleanNote = formatRecordCleanNote(record.note);
+  const subText = `${record.date}${cleanNote && cleanNote !== '—' ? ' · ' + cleanNote : ''}`;
+  if (typeof openReceiptLightbox === 'function') {
+    openReceiptLightbox(record.image_url, titleText, subText);
+  }
+}
+window.openReceiptLightboxByRecordId = openReceiptLightboxByRecordId;
+
+/**
  * Render a single ledger record table row (HTML string)
  */
 function renderRecordRowHtml(record, sym) {
@@ -1830,6 +1999,13 @@ function renderRecordRowHtml(record, sym) {
   const catLabel = getCategoryDisplayLabel(record.category);
   const accMeta = getAccountMeta(record.account_name);
   const accLabel = getAccountDisplayLabel(record.account_name);
+
+  let receiptBadgeHtml = '';
+  if (record.image_url === 'archived') {
+    receiptBadgeHtml = `<span class="badge-receipt-archived" onclick="event.stopPropagation(); openReceiptLightboxByRecordId('${record.id}')" title="${escapeHtml(t('receipt_archived_toast'))}">${SVG_ICONS.archive}<span>${escapeHtml(t('receipt_archived_tag'))}</span></span>`;
+  } else if (record.image_url) {
+    receiptBadgeHtml = `<span class="badge-receipt-photo" onclick="event.stopPropagation(); openReceiptLightboxByRecordId('${record.id}')" title="${escapeHtml(t('view_receipt'))}">${SVG_ICONS.receipt}</span>`;
+  }
 
   const editTooltip =
     state.lang === 'zh' ? '点击编辑账单' : 'Click to edit transaction';
@@ -1850,7 +2026,7 @@ function renderRecordRowHtml(record, sym) {
         </span>
       </td>
       <td class="col-note" title="${escapeHtml(record.note || '')}">
-        ${renderRecordSourceBadgeHtml(record)}${escapeHtml(formatRecordCleanNote(record.note))}
+        ${renderRecordSourceBadgeHtml(record)}${escapeHtml(formatRecordCleanNote(record.note))}${receiptBadgeHtml}
       </td>
       <td class="col-amount text-right ${amountClass}">
         ${sign}${formatNumber(record.amount)}
@@ -2099,12 +2275,61 @@ async function executeRecordUpdate(editingId, updatedPayload) {
     throw new Error(
       state.lang === 'zh' ? '未找到对应账单记录' : 'Record not found',
     );
+  const previousImageUrl = record.image_url || null;
+
+  if (
+    updatedPayload.image_url &&
+    String(updatedPayload.image_url).startsWith('data:image/') &&
+    typeof uploadReceiptToCloud === 'function'
+  ) {
+    updatedPayload.image_url = await uploadReceiptToCloud(
+      updatedPayload.image_url,
+    );
+  }
+
+  if (
+    previousImageUrl &&
+    previousImageUrl !== updatedPayload.image_url &&
+    typeof deleteReceiptFromCloud === 'function'
+  ) {
+    deleteReceiptFromCloud(previousImageUrl).catch(() => {});
+  }
+
   record.type = updatedPayload.type;
   record.amount = updatedPayload.amount;
   record.category = updatedPayload.category;
   record.account_name = updatedPayload.account_name;
   record.date = updatedPayload.date;
   record.note = updatedPayload.note || '';
+  record.image_url =
+    updatedPayload.image_url !== undefined ? updatedPayload.image_url : null;
+  record.image_size_kb = updatedPayload.image_size_kb || 0;
+
+  try {
+    const localReceipts = JSON.parse(
+      localStorage.getItem('ledger_local_receipt_map') || '{}',
+    );
+    const normDate =
+      normalizeRecordDateYMD(updatedPayload.date) || updatedPayload.date || '';
+    const fallbackKey = `${normDate}_${updatedPayload.type}_${Number(updatedPayload.amount)}_${updatedPayload.category}`;
+    if (record.image_url) {
+      localReceipts[String(editingId)] = {
+        image_url: record.image_url,
+        image_size_kb: record.image_size_kb,
+      };
+      localReceipts[fallbackKey] = {
+        image_url: record.image_url,
+        image_size_kb: record.image_size_kb,
+      };
+    } else {
+      delete localReceipts[String(editingId)];
+      delete localReceipts[fallbackKey];
+    }
+    localStorage.setItem(
+      'ledger_local_receipt_map',
+      JSON.stringify(localReceipts),
+    );
+  } catch (e) {}
 
   if (String(editingId).startsWith('draft-')) {
     let queue = getOfflineQueue();
@@ -2122,18 +2347,33 @@ async function executeRecordUpdate(editingId, updatedPayload) {
     state.user?.id &&
     !String(editingId).startsWith('draft-')
   ) {
-    const { error } = await supabaseClient
+    const baseUpdate = {
+      type: updatedPayload.type,
+      amount: updatedPayload.amount,
+      category: updatedPayload.category,
+      account_name: updatedPayload.account_name,
+      date: updatedPayload.date,
+      note: updatedPayload.note || null,
+    };
+    let { error } = await supabaseClient
       .from('records')
       .update({
-        type: updatedPayload.type,
-        amount: updatedPayload.amount,
-        category: updatedPayload.category,
-        account_name: updatedPayload.account_name,
-        date: updatedPayload.date,
-        note: updatedPayload.note || null,
+        ...baseUpdate,
+        image_url: updatedPayload.image_url || null,
+        image_size_kb: updatedPayload.image_size_kb || 0,
       })
       .eq('id', editingId)
       .eq('user_id', state.user.id);
+
+    // Graceful fallback if Supabase schema columns have not been migrated yet
+    if (error && error.message?.includes('image_')) {
+      const retry = await supabaseClient
+        .from('records')
+        .update(baseUpdate)
+        .eq('id', editingId)
+        .eq('user_id', state.user.id);
+      error = retry.error;
+    }
     if (error) throw new Error(error.message);
   } else if (!String(editingId).startsWith('draft-')) {
     // Local / SQLite backend persistence fallback
@@ -2153,6 +2393,9 @@ async function executeRecordUpdate(editingId, updatedPayload) {
   renderBudgetTracker();
   updateDailySpendingTrend();
   loadAccounts();
+  if (typeof checkTwoYearReceiptRetention === 'function') {
+    checkTwoYearReceiptRetention();
+  }
   return { success: true };
 }
 
@@ -2195,6 +2438,8 @@ async function handleRecordSubmit(e) {
     account_name,
     date,
     ...(note ? { note } : {}),
+    image_url: state.pendingReceiptDataUrl || null,
+    image_size_kb: state.pendingReceiptSizeKb || 0,
   };
 
   // Branch: Handle Edit Transaction
@@ -2338,20 +2583,43 @@ async function handleRecordSubmit(e) {
       payload.project_id = selectedProjectId;
     }
 
+    if (
+      payload.image_url &&
+      String(payload.image_url).startsWith('data:image/') &&
+      typeof uploadReceiptToCloud === 'function'
+    ) {
+      payload.image_url = await uploadReceiptToCloud(payload.image_url);
+    }
+
     if (supabaseClient && userId) {
-      const { error } = await supabaseClient
+      const baseInsert = {
+        user_id: userId,
+        type: payload.type,
+        amount: payload.amount,
+        category: payload.category,
+        account_name: payload.account_name,
+        date: payload.date,
+        note: payload.note || null,
+      };
+      let { error } = await supabaseClient
         .from('records')
         .insert({
-          user_id: userId,
-          type: payload.type,
-          amount: payload.amount,
-          category: payload.category,
-          account_name: payload.account_name,
-          date: payload.date,
-          note: payload.note || null,
+          ...baseInsert,
+          image_url: payload.image_url || null,
+          image_size_kb: payload.image_size_kb || 0,
         })
         .select()
         .single();
+
+      // Graceful fallback if Supabase schema columns have not been migrated yet
+      if (error && error.message?.includes('image_')) {
+        const retry = await supabaseClient
+          .from('records')
+          .insert(baseInsert)
+          .select()
+          .single();
+        error = retry.error;
+      }
 
       if (error) {
         throw new Error(error.message);
@@ -2385,6 +2653,26 @@ async function handleRecordSubmit(e) {
     elements.inputNote.value = '';
     closeCreateModal();
 
+    // Persist receipt photo locally (Phase 1 local bridge before Phase 2 Supabase Storage sync)
+    if (payload.image_url) {
+      try {
+        const localReceipts = JSON.parse(
+          localStorage.getItem('ledger_local_receipt_map') || '{}',
+        );
+        const normDate =
+          normalizeRecordDateYMD(payload.date) || payload.date || '';
+        const fallbackKey = `${normDate}_${payload.type}_${Number(payload.amount)}_${payload.category}`;
+        localReceipts[fallbackKey] = {
+          image_url: payload.image_url,
+          image_size_kb: payload.image_size_kb || 0,
+        };
+        localStorage.setItem(
+          'ledger_local_receipt_map',
+          JSON.stringify(localReceipts),
+        );
+      } catch (e) {}
+    }
+
     // Optimistically update local records and streak counter for zero-latency feedback
     const optimisticRecord = {
       id: `temp-${Date.now()}`,
@@ -2394,7 +2682,11 @@ async function handleRecordSubmit(e) {
       account_name: payload.account_name || 'Cash',
       date: normalizeRecordDateYMD(payload.date) || payload.date,
       note: payload.note,
+      image_url: payload.image_url || null,
+      image_size_kb: payload.image_size_kb || 0,
     };
+    state.pendingReceiptDataUrl = null;
+    state.pendingReceiptSizeKb = 0;
     state.records = [optimisticRecord, ...(state.records || [])];
     renderStreakAndBadges();
     updateAccountModalData();
@@ -2512,6 +2804,27 @@ window.handleDelete = function (id) {
       }
 
       // Optimistically remove from local state & re-render immediately for zero-latency one-tap feel
+      if (recordToDelete?.image_url) {
+        if (typeof deleteReceiptFromCloud === 'function') {
+          deleteReceiptFromCloud(recordToDelete.image_url).catch(() => {});
+        }
+        try {
+          const localReceipts = JSON.parse(
+            localStorage.getItem('ledger_local_receipt_map') || '{}',
+          );
+          const normDate =
+            normalizeRecordDateYMD(recordToDelete.date) ||
+            recordToDelete.date ||
+            '';
+          const fallbackKey = `${normDate}_${recordToDelete.type}_${Number(recordToDelete.amount)}_${recordToDelete.category}`;
+          delete localReceipts[String(id)];
+          delete localReceipts[fallbackKey];
+          localStorage.setItem(
+            'ledger_local_receipt_map',
+            JSON.stringify(localReceipts),
+          );
+        } catch (e) {}
+      }
       const previousRecords = [...state.records];
       state.records = state.records.filter((r) => String(r.id) !== String(id));
       const userKey = state.user?.id || 'guest';
@@ -3455,6 +3768,15 @@ function purgeOldRecords() {
     onConfirm: async () => {
       const userId = state.user?.id;
       try {
+        const recordsToPurge = (state.records || []).filter(
+          (r) => r.date && r.date < cutoffDate && r.image_url,
+        );
+        for (const rec of recordsToPurge) {
+          if (typeof deleteReceiptFromCloud === 'function') {
+            await deleteReceiptFromCloud(rec.image_url);
+          }
+        }
+
         if (supabaseClient && userId) {
           const { error } = await supabaseClient
             .from('records')
@@ -3988,6 +4310,584 @@ function closeAvatarLightbox(fromPopState = false) {
 }
 
 // ============================================================================
+// Module: Receipt & Purchase Photo Compression, Preview & Lightbox (Phase 1)
+// ============================================================================
+
+/**
+ * Compress a receipt/purchase image client-side using HTML5 Canvas to WebP (~60-90KB).
+ */
+async function compressReceiptImage(file, maxDimension = 1080, quality = 0.78) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed to read image file'));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Failed to decode image'));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/webp', quality);
+        const approxBytes = Math.round((dataUrl.length * 3) / 4);
+        const sizeKb = Math.max(1, Math.round(approxBytes / 1024));
+        resolve({ dataUrl, sizeKb, width, height });
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Handle receipt file selection, compress image, and populate the preview drawer.
+ */
+async function handleReceiptFileSelected(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    showToast(
+      state.lang === 'zh' ? '请选择有效的图片' : 'Please select a valid image',
+      true,
+    );
+    return;
+  }
+  try {
+    const { dataUrl, sizeKb, width, height } = await compressReceiptImage(file);
+    state.pendingReceiptDataUrl = dataUrl;
+    state.pendingReceiptSizeKb = sizeKb;
+    if (elements.receiptPreviewImg) elements.receiptPreviewImg.src = dataUrl;
+    if (elements.receiptPreviewMeta) {
+      elements.receiptPreviewMeta.textContent = `WebP · ${width}×${height} · ~${sizeKb} KB`;
+    }
+    elements.receiptPreviewDrawer?.classList.remove('hidden');
+    elements.triggerReceiptUploadBtn?.classList.add('active');
+    triggerHaptic(10);
+  } catch (err) {
+    showToast(err.message || 'Image compression failed', true);
+  }
+}
+
+/**
+ * Clear pending receipt image from state and hide the preview drawer.
+ */
+function clearPendingReceipt() {
+  state.pendingReceiptDataUrl = null;
+  state.pendingReceiptSizeKb = 0;
+  if (elements.receiptFileInput) elements.receiptFileInput.value = '';
+  if (elements.receiptPreviewImg) elements.receiptPreviewImg.src = '';
+  elements.receiptPreviewDrawer?.classList.add('hidden');
+  elements.triggerReceiptUploadBtn?.classList.remove('active');
+  triggerHaptic(8);
+}
+
+let receiptZoomState = {
+  scale: 1,
+  panX: 0,
+  panY: 0,
+  isDragging: false,
+  startX: 0,
+  startY: 0,
+  initialPinchDist: 0,
+  initialPinchScale: 1,
+  moved: false,
+};
+
+function setReceiptLightboxZoom(scale, panX = 0, panY = 0) {
+  const clampedScale = Math.min(4, Math.max(1, Number(scale) || 1));
+  if (clampedScale <= 1.01) {
+    receiptZoomState.scale = 1;
+    receiptZoomState.panX = 0;
+    receiptZoomState.panY = 0;
+  } else {
+    receiptZoomState.scale = clampedScale;
+    const maxPan = (clampedScale - 1) * 260;
+    receiptZoomState.panX = Math.max(-maxPan, Math.min(maxPan, panX));
+    receiptZoomState.panY = Math.max(-maxPan, Math.min(maxPan, panY));
+  }
+  if (elements.receiptLightboxImg) {
+    elements.receiptLightboxImg.style.transform = `translate(${receiptZoomState.panX}px, ${receiptZoomState.panY}px) scale(${receiptZoomState.scale})`;
+    elements.receiptLightboxImg.classList.toggle(
+      'is-zoomed',
+      receiptZoomState.scale > 1.01,
+    );
+  }
+  if (elements.zoomResetReceiptBtn) {
+    elements.zoomResetReceiptBtn.textContent = `${Math.round(receiptZoomState.scale * 100)}%`;
+  }
+}
+
+function initReceiptLightboxZoomGestures() {
+  const img = elements.receiptLightboxImg;
+  const frame = elements.receiptLightboxFrame;
+  if (!img || !frame) return;
+
+  elements.zoomInReceiptBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    triggerHaptic(6);
+    setReceiptLightboxZoom(
+      receiptZoomState.scale + 0.5,
+      receiptZoomState.panX,
+      receiptZoomState.panY,
+    );
+  });
+
+  elements.zoomOutReceiptBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    triggerHaptic(6);
+    setReceiptLightboxZoom(
+      receiptZoomState.scale - 0.5,
+      receiptZoomState.panX,
+      receiptZoomState.panY,
+    );
+  });
+
+  elements.zoomResetReceiptBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    triggerHaptic(6);
+    setReceiptLightboxZoom(1, 0, 0);
+  });
+
+  // Wheel zoom on desktop
+  frame.addEventListener(
+    'wheel',
+    (e) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.25 : -0.25;
+      setReceiptLightboxZoom(
+        receiptZoomState.scale + delta,
+        receiptZoomState.panX,
+        receiptZoomState.panY,
+      );
+    },
+    { passive: false },
+  );
+
+  // Mouse drag to pan & click to toggle zoom
+  img.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    receiptZoomState.moved = false;
+    if (receiptZoomState.scale <= 1.01) return;
+    receiptZoomState.isDragging = true;
+    receiptZoomState.startX = e.clientX - receiptZoomState.panX;
+    receiptZoomState.startY = e.clientY - receiptZoomState.panY;
+    img.classList.add('is-dragging');
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!receiptZoomState.isDragging) return;
+    const dx = e.clientX - receiptZoomState.startX;
+    const dy = e.clientY - receiptZoomState.startY;
+    if (
+      Math.abs(dx - receiptZoomState.panX) > 3 ||
+      Math.abs(dy - receiptZoomState.panY) > 3
+    ) {
+      receiptZoomState.moved = true;
+    }
+    setReceiptLightboxZoom(receiptZoomState.scale, dx, dy);
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (receiptZoomState.isDragging) {
+      receiptZoomState.isDragging = false;
+      img.classList.remove('is-dragging');
+    }
+  });
+
+  img.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (receiptZoomState.moved) {
+      receiptZoomState.moved = false;
+      return;
+    }
+    triggerHaptic(6);
+    if (receiptZoomState.scale > 1.05) {
+      setReceiptLightboxZoom(1, 0, 0);
+    } else {
+      setReceiptLightboxZoom(2.25, 0, 0);
+    }
+  });
+
+  // Touch pinch-to-zoom & single-finger pan on mobile
+  frame.addEventListener(
+    'touchstart',
+    (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        receiptZoomState.isDragging = false;
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        receiptZoomState.initialPinchDist = Math.hypot(dx, dy);
+        receiptZoomState.initialPinchScale = receiptZoomState.scale;
+      } else if (e.touches.length === 1 && receiptZoomState.scale > 1.01) {
+        receiptZoomState.isDragging = true;
+        receiptZoomState.moved = false;
+        receiptZoomState.startX = e.touches[0].clientX - receiptZoomState.panX;
+        receiptZoomState.startY = e.touches[0].clientY - receiptZoomState.panY;
+        img.classList.add('is-dragging');
+      }
+    },
+    { passive: false },
+  );
+
+  frame.addEventListener(
+    'touchmove',
+    (e) => {
+      if (e.touches.length === 2 && receiptZoomState.initialPinchDist > 0) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        const newScale =
+          receiptZoomState.initialPinchScale *
+          (dist / receiptZoomState.initialPinchDist);
+        setReceiptLightboxZoom(
+          newScale,
+          receiptZoomState.panX,
+          receiptZoomState.panY,
+        );
+      } else if (e.touches.length === 1 && receiptZoomState.isDragging) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - receiptZoomState.startX;
+        const dy = e.touches[0].clientY - receiptZoomState.startY;
+        if (
+          Math.abs(dx - receiptZoomState.panX) > 4 ||
+          Math.abs(dy - receiptZoomState.panY) > 4
+        ) {
+          receiptZoomState.moved = true;
+        }
+        setReceiptLightboxZoom(receiptZoomState.scale, dx, dy);
+      }
+    },
+    { passive: false },
+  );
+
+  frame.addEventListener('touchend', () => {
+    receiptZoomState.isDragging = false;
+    receiptZoomState.initialPinchDist = 0;
+    img.classList.remove('is-dragging');
+  });
+}
+
+/**
+ * Open full-screen receipt lightbox modal with history stack integration.
+ */
+function openReceiptLightbox(imgSrc, titleText = '', subText = '') {
+  if (!imgSrc || !elements.receiptLightboxModal) return;
+  triggerHaptic(10);
+  setReceiptLightboxZoom(1, 0, 0);
+  if (elements.receiptLightboxImg) elements.receiptLightboxImg.src = imgSrc;
+  if (elements.receiptLightboxTitle) {
+    elements.receiptLightboxTitle.textContent = titleText || t('view_receipt');
+  }
+  if (elements.receiptLightboxSub) {
+    elements.receiptLightboxSub.textContent = subText || '';
+  }
+  elements.receiptLightboxModal.classList.remove('hidden');
+  pushModalHistoryState();
+}
+
+/**
+ * Close full-screen receipt lightbox modal.
+ */
+function closeReceiptLightbox(fromPopState = false) {
+  triggerHaptic(10);
+  setReceiptLightboxZoom(1, 0, 0);
+  elements.receiptLightboxModal?.classList.add('hidden');
+  popModalHistoryIfCleared(fromPopState === true);
+}
+
+// ============================================================================
+// Module: Receipt Cloud Storage Sync (Phase 2 — Supabase Storage & SQLite)
+// ============================================================================
+
+/**
+ * Convert a Base64 DataURL string into a binary Blob for Supabase Storage upload.
+ */
+function dataUrlToBlob(dataUrl) {
+  const [header, base64Data] = dataUrl.split(',');
+  const mimeMatch = header.match(/:(.*?);/);
+  const mimeType = mimeMatch ? mimeMatch[1] : 'image/webp';
+  const byteChars = atob(base64Data);
+  const byteArray = new Uint8Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) {
+    byteArray[i] = byteChars.charCodeAt(i);
+  }
+  return new Blob([byteArray], { type: mimeType });
+}
+
+/**
+ * Upload compressed WebP receipt image to Supabase Storage bucket `receipt-images`,
+ * falling back to the compressed DataURL when offline or in local SQLite mode.
+ */
+async function uploadReceiptToCloud(dataUrl) {
+  if (!dataUrl || !String(dataUrl).startsWith('data:image/')) return dataUrl;
+  const userId = state.user?.id;
+  if (!supabaseClient || !userId || !navigator.onLine) {
+    return dataUrl;
+  }
+  try {
+    const blob = dataUrlToBlob(dataUrl);
+    const yearMonth = new Date().toISOString().slice(0, 7);
+    const rand = Math.random().toString(36).slice(2, 7);
+    const filePath = `${userId}/${yearMonth}/${Date.now()}_${rand}.webp`;
+    const { error: uploadError } = await supabaseClient.storage
+      .from('receipt-images')
+      .upload(filePath, blob, {
+        contentType: 'image/webp',
+        upsert: false,
+      });
+    if (uploadError) return dataUrl;
+    const { data } = supabaseClient.storage
+      .from('receipt-images')
+      .getPublicUrl(filePath);
+    return data?.publicUrl || dataUrl;
+  } catch (err) {
+    return dataUrl;
+  }
+}
+
+/**
+ * Remove a receipt image file from Supabase Storage bucket `receipt-images`.
+ */
+async function deleteReceiptFromCloud(imageUrl) {
+  if (!imageUrl || !supabaseClient || !state.user?.id) return;
+  const marker = '/receipt-images/';
+  const idx = String(imageUrl).indexOf(marker);
+  if (idx === -1) return;
+  const storagePath = decodeURIComponent(
+    String(imageUrl)
+      .slice(idx + marker.length)
+      .split('?')[0],
+  );
+  if (!storagePath.startsWith(`${state.user.id}/`)) return;
+  try {
+    await supabaseClient.storage.from('receipt-images').remove([storagePath]);
+  } catch (err) {
+    // Ignore cloud storage deletion errors
+  }
+}
+
+// ============================================================================
+// Module: 2-Year Rolling Retention, 7-Day Grace & ZIP Backup (Phase 3)
+// ============================================================================
+
+/**
+ * Filter records that have an active receipt photo older than `retentionDays` (default: 730 days / 2 years).
+ */
+function getExpiredReceiptRecords(retentionDays = 730) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - retentionDays);
+  const cutoffDateStr = cutoff.toISOString().slice(0, 10);
+  return (state.records || []).filter((r) => {
+    const recDate = normalizeRecordDateYMD(r?.date) || '';
+    return (
+      Boolean(r?.image_url) &&
+      !r?.image_archived &&
+      recDate &&
+      recDate < cutoffDateStr
+    );
+  });
+}
+
+/**
+ * Check for receipt photos older than 2 years and manage the 7-day grace countdown banner.
+ */
+function checkTwoYearReceiptRetention() {
+  const expiredList = getExpiredReceiptRecords(730);
+  const graceKey = 'ledger_receipt_grace_started_at';
+  if (expiredList.length === 0) {
+    localStorage.removeItem(graceKey);
+    elements.receiptRetentionBanner?.classList.add('hidden');
+    return;
+  }
+  let startedAt = Number(localStorage.getItem(graceKey) || 0);
+  if (!startedAt) {
+    startedAt = Date.now();
+    localStorage.setItem(graceKey, String(startedAt));
+  }
+  const elapsedDays = Math.floor(
+    (Date.now() - startedAt) / (1000 * 60 * 60 * 24),
+  );
+  const remainingDays = Math.max(0, 7 - elapsedDays);
+  if (remainingDays <= 0) {
+    purgeExpiredReceiptsOnly(expiredList, true);
+    return;
+  }
+  if (elements.receiptRetentionBannerDesc) {
+    elements.receiptRetentionBannerDesc.textContent =
+      state.lang === 'zh'
+        ? `检测到 ${expiredList.length} 张满 2 年的旧凭证图片，将于 ${remainingDays} 天后自动释放云端空间（账单文字与金额永久保留）。`
+        : `${expiredList.length} receipt photo(s) older than 2 years will be auto-cleaned in ${remainingDays} day(s) (bill text & amounts are kept forever).`;
+  }
+  elements.receiptRetentionBanner?.classList.remove('hidden');
+}
+
+/**
+ * Purge expired receipt photos from cloud & local storage while keeping bill text & amounts forever.
+ */
+async function purgeExpiredReceiptsOnly(
+  expiredRecords,
+  isAutoSilent = false,
+) {
+  const targetList = Array.isArray(expiredRecords)
+    ? expiredRecords
+    : getExpiredReceiptRecords(730);
+  if (targetList.length === 0) return;
+
+  let localReceipts = {};
+  try {
+    localReceipts = JSON.parse(
+      localStorage.getItem('ledger_local_receipt_map') || '{}',
+    );
+  } catch (e) {}
+
+  for (const rec of targetList) {
+    if (rec.image_url) {
+      await deleteReceiptFromCloud(rec.image_url);
+    }
+    rec.image_url = null;
+    rec.image_size_kb = 0;
+    rec.image_archived = true;
+
+    const normDate = normalizeRecordDateYMD(rec.date) || rec.date || '';
+    const fallbackKey = `${normDate}_${rec.type}_${Number(rec.amount)}_${rec.category}`;
+    localReceipts[String(rec.id)] = {
+      image_url: null,
+      image_size_kb: 0,
+      image_archived: true,
+    };
+    localReceipts[fallbackKey] = {
+      image_url: null,
+      image_size_kb: 0,
+      image_archived: true,
+    };
+
+    if (
+      supabaseClient &&
+      state.user?.id &&
+      !String(rec.id).startsWith('draft-')
+    ) {
+      try {
+        await supabaseClient
+          .from('records')
+          .update({
+            image_url: null,
+            image_size_kb: 0,
+            image_archived: true,
+          })
+          .eq('id', rec.id)
+          .eq('user_id', state.user.id);
+      } catch (e) {}
+    } else if (!String(rec.id).startsWith('draft-')) {
+      fetch(`/api/records/${rec.id}`, {
+        method: 'PATCH',
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          image_url: null,
+          image_size_kb: 0,
+          image_archived: true,
+        }),
+      }).catch(() => {});
+    }
+  }
+
+  try {
+    localStorage.setItem(
+      'ledger_local_receipt_map',
+      JSON.stringify(localReceipts),
+    );
+    localStorage.removeItem('ledger_receipt_grace_started_at');
+  } catch (e) {}
+
+  elements.receiptRetentionBanner?.classList.add('hidden');
+  renderTable();
+  if (!isAutoSilent) {
+    showToast(t('receipt_retention_done_toast'));
+  }
+}
+
+/**
+ * Package all expired receipt photos + CSV manifest into a local ZIP download, then clean cloud storage.
+ */
+async function backupAndCleanExpiredReceipts() {
+  const expiredList = getExpiredReceiptRecords(730);
+  if (expiredList.length === 0) return;
+  if (typeof window.JSZip !== 'function') {
+    showToast(
+      state.lang === 'zh'
+        ? 'ZIP 组件未就绪，请检查网络'
+        : 'JSZip library not loaded',
+      true,
+    );
+    return;
+  }
+
+  try {
+    if (elements.backupAndCleanReceiptsBtn) {
+      elements.backupAndCleanReceiptsBtn.disabled = true;
+    }
+    const zip = new window.JSZip();
+    const folder = zip.folder('MonetaX_Receipts_Archive');
+    const csvLines = ['Date,Type,Category,Account,Amount,Note,Filename'];
+
+    for (let i = 0; i < expiredList.length; i++) {
+      const rec = expiredList[i];
+      const safeCat = String(rec.category || 'Item').replace(
+        /[^a-zA-Z0-9_\u4e00-\u9fa5-]/g,
+        '_',
+      );
+      const fileName = `${rec.date || 'unknown'}_${safeCat}_${rec.amount}_${i + 1}.webp`;
+      let blob = null;
+      if (String(rec.image_url).startsWith('data:image/')) {
+        blob = dataUrlToBlob(rec.image_url);
+      } else {
+        const res = await fetch(rec.image_url);
+        if (res.ok) blob = await res.blob();
+      }
+      if (blob) {
+        folder.file(fileName, blob);
+      }
+      const safeNote = String(rec.note || '').replace(/"/g, '""');
+      csvLines.push(
+        `${rec.date},${rec.type},"${rec.category}","${rec.account_name || 'Cash'}",${rec.amount},"${safeNote}","${fileName}"`,
+      );
+    }
+
+    folder.file('receipt_manifest.csv', '\uFEFF' + csvLines.join('\n'));
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const dlUrl = URL.createObjectURL(zipBlob);
+    const a = document.createElement('a');
+    a.href = dlUrl;
+    a.download = `MonetaX_Receipts_Archive_${new Date().toISOString().slice(0, 10)}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(dlUrl), 5000);
+
+    await purgeExpiredReceiptsOnly(expiredList, false);
+  } catch (err) {
+    showToast(err.message || 'ZIP backup failed', true);
+  } finally {
+    if (elements.backupAndCleanReceiptsBtn) {
+      elements.backupAndCleanReceiptsBtn.disabled = false;
+    }
+  }
+}
+
+
+// ============================================================================
 // Module: Streak Counter & Motivation Badges
 // ============================================================================
 
@@ -4367,7 +5267,13 @@ function signOutUser() {
         await supabaseClient.auth.signOut().catch(() => {});
       }
       state.user = null;
+      state.records = [];
+      state.projects = [];
+      state.claims = [];
+      state.summary = null;
       localStorage.removeItem('ledger_last_active_user_id');
+      elements.receiptRetentionBanner?.classList.add('hidden');
+      renderTable();
       switchAppPage('ledger');
       updateAuthUI(null);
       showToast(
@@ -4770,30 +5676,24 @@ async function checkForAppUpdates(isManual = false) {
  */
 function hydrateLocalCacheImmediately() {
   try {
-    let userKey = localStorage.getItem('ledger_last_active_user_id') || 'guest';
-    let cacheKey = `ledger_cached_records_${userKey}`;
+    // Purge any legacy unauthenticated guest cache to guarantee strict tenant isolation
+    localStorage.removeItem('ledger_cached_records_guest');
+    localStorage.removeItem('ledger_projects_guest');
+    localStorage.removeItem('ledger_claims_guest');
 
-    // Auto-detect non-empty cached records key if current key is empty
-    if (!localStorage.getItem(cacheKey)) {
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (
-          k &&
-          k.startsWith('ledger_cached_records_') &&
-          (localStorage.getItem(k) || '').length > 5
-        ) {
-          cacheKey = k;
-          break;
-        }
-      }
-    }
+    const userKey = localStorage.getItem('ledger_last_active_user_id');
+    if (!userKey) return;
 
+    const cacheKey = `ledger_cached_records_${userKey}`;
     const raw = localStorage.getItem(cacheKey);
     if (raw) {
       try {
         const cachedRecords = JSON.parse(raw);
         if (Array.isArray(cachedRecords) && cachedRecords.length > 0) {
-          state.records = cachedRecords;
+          state.records = cachedRecords.filter((r) => {
+            const ownerId = r?.user_id || r?.userId;
+            return !ownerId || String(ownerId) === String(userKey);
+          });
           updateMonthFilterDropdown(state.records);
           renderTable();
           calculateLocalSummaryMetrics();
@@ -4805,13 +5705,6 @@ function hydrateLocalCacheImmediately() {
         console.error('Error parsing cached records:', e);
       }
     }
-
-    // Instantly hydrate projects, sinking funds & claims from local storage
-    loadProjects();
-    loadClaims();
-    renderSinkingFunds();
-    renderClaims();
-    renderBudgetTracker();
   } catch (err) {
     console.warn('Local cache hydration fallback:', err);
   }
@@ -4965,6 +5858,82 @@ async function init() {
     closeAvatarLightbox,
   );
 
+  // Receipt Photo Upload, Preview & Lightbox Event Listeners
+  elements.triggerReceiptUploadBtn?.addEventListener('click', () => {
+    triggerHaptic(8);
+    elements.receiptFileInput?.click();
+  });
+  elements.receiptFileInput?.addEventListener('change', (e) => {
+    if (typeof handleReceiptFileSelected === 'function') {
+      handleReceiptFileSelected(e);
+    }
+  });
+  elements.removeReceiptBtn?.addEventListener('click', () => {
+    if (typeof clearPendingReceipt === 'function') {
+      clearPendingReceipt();
+    }
+  });
+  elements.previewReceiptThumbWrap?.addEventListener('click', () => {
+    if (
+      state.pendingReceiptDataUrl &&
+      typeof openReceiptLightbox === 'function'
+    ) {
+      openReceiptLightbox(
+        state.pendingReceiptDataUrl,
+        t('receipt_attached'),
+        elements.receiptPreviewMeta?.textContent || '',
+      );
+    }
+  });
+  elements.closeReceiptLightboxBtn?.addEventListener('click', () => {
+    if (typeof closeReceiptLightbox === 'function') {
+      closeReceiptLightbox();
+    }
+  });
+  elements.receiptLightboxBackdrop?.addEventListener('click', () => {
+    if (typeof closeReceiptLightbox === 'function') {
+      closeReceiptLightbox();
+    }
+  });
+  elements.downloadReceiptLightboxBtn?.addEventListener('click', async () => {
+    const src = elements.receiptLightboxImg?.src;
+    if (!src) return;
+    triggerHaptic(10);
+    let dlUrl = src;
+    let revokeAfter = false;
+    try {
+      if (src.startsWith('http')) {
+        const res = await fetch(src);
+        if (res.ok) {
+          const blob = await res.blob();
+          dlUrl = URL.createObjectURL(blob);
+          revokeAfter = true;
+        }
+      }
+    } catch (e) {}
+    const a = document.createElement('a');
+    a.href = dlUrl;
+    a.download = `MonetaX_Receipt_${new Date().toISOString().slice(0, 10)}.webp`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    if (revokeAfter) {
+      setTimeout(() => URL.revokeObjectURL(dlUrl), 5000);
+    }
+  });
+  elements.backupAndCleanReceiptsBtn?.addEventListener('click', () => {
+    triggerHaptic(10);
+    if (typeof backupAndCleanExpiredReceipts === 'function') {
+      backupAndCleanExpiredReceipts();
+    }
+  });
+  elements.cleanReceiptsOnlyBtn?.addEventListener('click', () => {
+    triggerHaptic(10);
+    if (typeof purgeExpiredReceiptsOnly === 'function') {
+      purgeExpiredReceiptsOnly();
+    }
+  });
+
   // 11. Export CSV & Retention Modal
   elements.exportCsvBtn?.addEventListener('click', exportToCSV);
   elements.closeModalBtn?.addEventListener('click', closeRetentionModal);
@@ -5102,14 +6071,11 @@ async function init() {
   setAppTheme(savedTheme);
   setAppLanguage(state.lang);
   togglePrivacyMode(state.isPrivacyMode);
+  initReceiptLightboxZoomGestures();
 
-  // Initial data fetch
-  loadSummary();
-  loadRecords();
+  // Render local account picker; cloud data fetch waits for authenticated session
   loadAccounts();
   renderAccountPicker();
-  fetchProjectsFromBackend();
-  fetchClaimsFromBackend();
 
   // Network & Cloud Sync Listeners
   window.addEventListener('online', () => {
@@ -5416,33 +6382,13 @@ function normalizeClaimItem(c) {
 }
 
 async function fetchProjectsFromBackend() {
-  loadProjects();
+  const userId = state.user?.id;
+  if (!userId) return;
+
   const deleted = getDeletedIdsSet(getDeletedProjectsStorageKey());
   const mergedMap = new Map();
 
-  // 1. Seed from user_metadata cloud backup if present
-  const metaProjects = state.user?.user_metadata?.ledger_projects;
-  if (Array.isArray(metaProjects)) {
-    metaProjects.forEach((item) => {
-      const norm = normalizeProjectItem(item);
-      if (norm && !deleted.has(norm.id)) {
-        mergedMap.set(norm.id, norm);
-      }
-    });
-  }
-
-  // 2. Seed from current local state
-  (state.projects || []).forEach((item) => {
-    const norm = normalizeProjectItem(item);
-    if (norm && !deleted.has(norm.id)) {
-      mergedMap.set(norm.id, norm);
-    }
-  });
-
-  const userId = state.user?.id;
-  const supabaseIds = new Set();
-
-  // 3. Fetch from Supabase Cloud Table
+  // Fetch authoritatively from Supabase Cloud Table for current userId
   if (supabaseClient && userId) {
     try {
       const { data, error } = await supabaseClient
@@ -5452,18 +6398,25 @@ async function fetchProjectsFromBackend() {
         .order('created_at', { ascending: false });
       if (!error && Array.isArray(data)) {
         data.forEach((d) => {
+          if (d.user_id && String(d.user_id) !== String(userId)) return;
           const norm = normalizeProjectItem(d);
           if (norm && !deleted.has(norm.id)) {
-            supabaseIds.add(norm.id);
             mergedMap.set(norm.id, norm);
           }
         });
+        const finalProjects = Array.from(mergedMap.values()).sort((a, b) =>
+          String(b.created_at || '').localeCompare(String(a.created_at || '')),
+        );
+        saveProjects(finalProjects, true);
+        renderSinkingFunds();
+        renderBudgetTracker();
+        updateProjectDropdownOptions();
+        return;
       }
     } catch (e) {}
   }
 
-  // 4. Fetch from NestJS Backend API
-  const backendIds = new Set();
+  // Fallback to NestJS Backend API (strictly scoped by x-user-id header)
   try {
     const res = await fetch('/api/projects', {
       headers: getAuthHeaders(),
@@ -5472,12 +6425,11 @@ async function fetchProjectsFromBackend() {
       const data = await res.json();
       if (Array.isArray(data)) {
         data.forEach((d) => {
+          const ownerId = d.user_id || d.userId;
+          if (ownerId && String(ownerId) !== String(userId)) return;
           const norm = normalizeProjectItem(d);
           if (norm && !deleted.has(norm.id)) {
-            backendIds.add(norm.id);
-            if (!mergedMap.has(norm.id)) {
-              mergedMap.set(norm.id, norm);
-            }
+            mergedMap.set(norm.id, norm);
           }
         });
       }
@@ -5492,68 +6444,16 @@ async function fetchProjectsFromBackend() {
   renderSinkingFunds();
   renderBudgetTracker();
   updateProjectDropdownOptions();
-
-  // Backfill any unsynced local projects to Supabase Cloud & Backend API
-  for (const proj of finalProjects) {
-    if (supabaseClient && userId && !supabaseIds.has(proj.id)) {
-      try {
-        await supabaseClient.from('projects').upsert({
-          id: proj.id,
-          user_id: userId,
-          title: proj.title,
-          icon: 'target',
-          target_amount: proj.target_amount,
-          spent_amount: proj.spent_amount,
-          mode: proj.mode,
-          month: proj.month,
-          status: proj.status,
-        });
-      } catch (e) {}
-    }
-    if (!backendIds.has(proj.id)) {
-      fetch('/api/projects', {
-        method: 'POST',
-        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({
-          id: proj.id,
-          title: proj.title,
-          targetAmount: proj.target_amount,
-          mode: proj.mode,
-          month: proj.month,
-        }),
-      }).catch(() => {});
-    }
-  }
 }
 
 async function fetchClaimsFromBackend() {
-  loadClaims();
+  const userId = state.user?.id;
+  if (!userId) return;
+
   const deleted = getDeletedIdsSet(getDeletedClaimsStorageKey());
   const mergedMap = new Map();
 
-  // 1. Seed from user_metadata cloud backup if present
-  const metaClaims = state.user?.user_metadata?.ledger_claims;
-  if (Array.isArray(metaClaims)) {
-    metaClaims.forEach((item) => {
-      const norm = normalizeClaimItem(item);
-      if (norm && !deleted.has(norm.id)) {
-        mergedMap.set(norm.id, norm);
-      }
-    });
-  }
-
-  // 2. Seed from current local state
-  (state.claims || []).forEach((item) => {
-    const norm = normalizeClaimItem(item);
-    if (norm && !deleted.has(norm.id)) {
-      mergedMap.set(norm.id, norm);
-    }
-  });
-
-  const userId = state.user?.id;
-  const supabaseIds = new Set();
-
-  // 3. Fetch from Supabase Cloud Table
+  // Fetch authoritatively from Supabase Cloud Table for current userId
   if (supabaseClient && userId) {
     try {
       const { data, error } = await supabaseClient
@@ -5563,18 +6463,23 @@ async function fetchClaimsFromBackend() {
         .order('created_at', { ascending: false });
       if (!error && Array.isArray(data)) {
         data.forEach((c) => {
+          if (c.user_id && String(c.user_id) !== String(userId)) return;
           const norm = normalizeClaimItem(c);
           if (norm && !deleted.has(norm.id)) {
-            supabaseIds.add(norm.id);
             mergedMap.set(norm.id, norm);
           }
         });
+        const finalClaims = Array.from(mergedMap.values()).sort((a, b) =>
+          String(b.created_at || '').localeCompare(String(a.created_at || '')),
+        );
+        saveClaims(finalClaims, true);
+        renderClaims();
+        return;
       }
     } catch (e) {}
   }
 
-  // 4. Fetch from NestJS Backend API
-  const backendIds = new Set();
+  // Fallback to NestJS Backend API (strictly scoped by x-user-id header)
   try {
     const res = await fetch('/api/claims', {
       headers: getAuthHeaders(),
@@ -5583,12 +6488,11 @@ async function fetchClaimsFromBackend() {
       const data = await res.json();
       if (Array.isArray(data)) {
         data.forEach((c) => {
+          const ownerId = c.user_id || c.userId;
+          if (ownerId && String(ownerId) !== String(userId)) return;
           const norm = normalizeClaimItem(c);
           if (norm && !deleted.has(norm.id)) {
-            backendIds.add(norm.id);
-            if (!mergedMap.has(norm.id)) {
-              mergedMap.set(norm.id, norm);
-            }
+            mergedMap.set(norm.id, norm);
           }
         });
       }
@@ -5601,38 +6505,6 @@ async function fetchClaimsFromBackend() {
 
   saveClaims(finalClaims, false);
   renderClaims();
-
-  // Backfill any unsynced local claims to Supabase Cloud & Backend API
-  for (const claim of finalClaims) {
-    if (supabaseClient && userId && !supabaseIds.has(claim.id)) {
-      try {
-        await supabaseClient.from('claims').upsert({
-          id: claim.id,
-          user_id: userId,
-          title: claim.title,
-          total_amount: claim.total_amount,
-          my_share: claim.my_share,
-          friends: claim.friends,
-          status: claim.status,
-          date: claim.date,
-        });
-      } catch (e) {}
-    }
-    if (!backendIds.has(claim.id)) {
-      fetch('/api/claims', {
-        method: 'POST',
-        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({
-          id: claim.id,
-          title: claim.title,
-          totalAmount: claim.total_amount,
-          myShare: claim.my_share,
-          friends: claim.friends,
-          date: claim.date,
-        }),
-      }).catch(() => {});
-    }
-  }
 }
 
 function renderProjectsView() {

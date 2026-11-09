@@ -6,6 +6,8 @@ import {
   IsNotEmpty,
   IsDateString,
   IsOptional,
+  IsBoolean,
+  Min,
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -73,4 +75,38 @@ export class CreateRecordDto {
   @IsString()
   @MaxLength(255)
   note?: string;
+
+  /**
+   * Optional receipt/purchase photo URL or compressed WebP DataURL
+   */
+  @ApiPropertyOptional({
+    example: 'https://xxx.supabase.co/storage/v1/object/public/receipt-images/user/2026-11/receipt.webp',
+    description: 'Optional receipt image URL or compressed WebP DataURL',
+  })
+  @IsOptional()
+  @IsString()
+  image_url?: string | null;
+
+  /**
+   * Optional compressed receipt image size in KB
+   */
+  @ApiPropertyOptional({
+    example: 68,
+    description: 'Compressed receipt image size in KB',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  image_size_kb?: number;
+
+  /**
+   * Optional flag indicating whether the receipt photo has been archived
+   */
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Whether the receipt photo has been archived after 2-year retention',
+  })
+  @IsOptional()
+  @IsBoolean()
+  image_archived?: boolean;
 }

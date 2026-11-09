@@ -62,6 +62,24 @@ export class Record {
   note?: string;
 
   /**
+   * Optional receipt/purchase photo URL (Supabase Storage URL or compressed WebP DataURL)
+   */
+  @Column({ type: 'text', name: 'image_url', nullable: true })
+  image_url?: string | null;
+
+  /**
+   * Approximate compressed image size in KB
+   */
+  @Column({ type: 'integer', name: 'image_size_kb', nullable: true, default: 0 })
+  image_size_kb?: number;
+
+  /**
+   * Whether the receipt image was archived/cleaned up after the 2-year retention window
+   */
+  @Column({ type: 'boolean', name: 'image_archived', nullable: true, default: false })
+  image_archived?: boolean;
+
+  /**
    * Timestamp when the record was initially inserted
    */
   @CreateDateColumn({ name: 'created_at' })

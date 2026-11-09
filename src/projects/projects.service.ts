@@ -17,11 +17,14 @@ export class ProjectsService {
 
   /**
    * 1. 查询当前用户的所有专款项目 (findAll)
+   * Strict tenant isolation: returns empty array if userId is not provided.
    */
   async findAll(userId?: string): Promise<Project[]> {
-    const whereCondition = userId ? { userId } : {};
+    if (!userId) {
+      return [];
+    }
     return await this.projectRepository.find({
-      where: whereCondition,
+      where: { userId },
       order: { createdAt: 'DESC' },
     });
   }

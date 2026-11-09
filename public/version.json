@@ -1,6 +1,6 @@
 {
-  "version": "1.5.3",
-  "releaseDate": "2026-11-06",
+  "version": "1.5.4",
+  "releaseDate": "2026-11-09",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/MonetaX.apk",
-  "notes": "MonetaX v1.5.3 Release: ⚡ 0ms Instant Cold-Start Hydration (<16ms) eliminating 1~2s startup blank wait; instant offline cache restore for records, summary metrics, and sinking funds; native standalone mobile network bypass for zero-lag launch."
+  "notes": "MonetaX v1.5.4 Release: 📷 Receipt & Purchase Photo Attachment (client-side WebP compression ~60-90KB); 🔍 Full-Screen HD Lightbox with 400% Zoom, Pinch-to-Zoom & Drag Pan; 📦 2-Year Rolling Retention with 7-Day Grace Period & 1-Tap Local ZIP Archive; 🔒 Strict Multi-Tenant User Isolation Hardening."
 }
