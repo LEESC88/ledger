@@ -1,6 +1,6 @@
 {
-  "version": "1.5.4",
-  "releaseDate": "2026-11-09",
+  "version": "1.5.5",
+  "releaseDate": "2026-11-13",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/MonetaX.apk",
-  "notes": "MonetaX v1.5.4 Release: 📷 Receipt & Purchase Photo Attachment (client-side WebP compression ~60-90KB); 🔍 Full-Screen HD Lightbox with 400% Zoom, Pinch-to-Zoom & Drag Pan; 📦 2-Year Rolling Retention with 7-Day Grace Period & 1-Tap Local ZIP Archive; 🔒 Strict Multi-Tenant User Isolation Hardening."
+  "notes": "MonetaX v1.5.5 Release: 📱 Android Native Share Sheet for Receipt .ZIP Archives & Photos (`FileProvider`); ⚡ ObjectURL Memory-Safe Compression + JPEG Fallback; 🚀 0ms Sync Hydration for Sinking Funds, Claims & Budget Top-Ups; 🔄 Sinking Fund Edit Delta Sync, Archived Receipt Badge & Offline Draft Edit Fixes; 🔒 End-to-End Multi-Tenant Isolation Hardening."
 }

@@ -5,7 +5,7 @@
  * ============================================================================
  */
 // Current Client Release Version
-const APP_VERSION = '1.5.4';
+const APP_VERSION = '1.5.5';
 
 // Default BaaS Cloud Configuration (Decoded from safe payload, overridable by window.__ENV__)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -928,11 +928,15 @@ function openEditRecordModal(id) {
   elements.sinkingFundDrawer?.classList.add('hidden');
   elements.splitBillDrawer?.classList.add('hidden');
 
-  // 7b. Pre-fill Receipt Photo Preview if attached
+  // 7b. Pre-fill Receipt Photo Preview if attached (skip archived placeholders)
   if (typeof clearPendingReceipt === 'function') {
     clearPendingReceipt();
   }
-  if (record.image_url && record.image_url !== 'archived') {
+  if (
+    record.image_url &&
+    record.image_url !== 'archived' &&
+    !record.image_archived
+  ) {
     state.pendingReceiptDataUrl = record.image_url;
     state.pendingReceiptSizeKb = record.image_size_kb || 0;
     if (elements.receiptPreviewImg) {
@@ -1232,6 +1236,14 @@ function getOfflineQueueStorageKey() {
   return `ledger_offline_queue_${userKey}`;
 }
 
+function getLocalReceiptMapKey(userId = state.user?.id) {
+  return `ledger_local_receipt_map_${userId || 'guest'}`;
+}
+
+function getReceiptGraceKey(userId = state.user?.id) {
+  return `ledger_receipt_grace_started_at_${userId || 'guest'}`;
+}
+
 function getOfflineQueue() {
   try {
     const raw = localStorage.getItem(getOfflineQueueStorageKey());
@@ -1333,9 +1345,7 @@ async function syncOfflineDrafts() {
           image_size_kb: item.payload.image_size_kb || 0,
         });
         if (error && error.message?.includes('image_')) {
-          const retry = await supabaseClient
-            .from('records')
-            .insert(baseInsert);
+          const retry = await supabaseClient.from('records').insert(baseInsert);
           error = retry.error;
         }
 
@@ -1827,7 +1837,7 @@ async function loadRecords() {
     let localReceipts = {};
     try {
       localReceipts = JSON.parse(
-        localStorage.getItem('ledger_local_receipt_map') || '{}',
+        localStorage.getItem(getLocalReceiptMapKey(requestUserId)) || '{}',
       );
     } catch (e) {}
     return (Array.isArray(list) ? list : [])
@@ -1968,11 +1978,13 @@ function updateMonthFilterDropdown(records) {
  */
 function openReceiptLightboxByRecordId(recordId) {
   const record = state.records.find((r) => String(r.id) === String(recordId));
-  if (!record || !record.image_url) return;
-  if (record.image_url === 'archived') {
+  if (!record) return;
+  if (record.image_archived || record.image_url === 'archived') {
     showToast(t('receipt_archived_toast'));
     return;
   }
+  if (!record.image_url) return;
+
   const sym = state.currency || 'RM';
   const catLabel = getCategoryDisplayLabel(record.category);
   const titleText = `${catLabel} · ${sym} ${formatNumber(record.amount)}`;
@@ -2001,7 +2013,7 @@ function renderRecordRowHtml(record, sym) {
   const accLabel = getAccountDisplayLabel(record.account_name);
 
   let receiptBadgeHtml = '';
-  if (record.image_url === 'archived') {
+  if (record.image_archived || record.image_url === 'archived') {
     receiptBadgeHtml = `<span class="badge-receipt-archived" onclick="event.stopPropagation(); openReceiptLightboxByRecordId('${record.id}')" title="${escapeHtml(t('receipt_archived_toast'))}">${SVG_ICONS.archive}<span>${escapeHtml(t('receipt_archived_tag'))}</span></span>`;
   } else if (record.image_url) {
     receiptBadgeHtml = `<span class="badge-receipt-photo" onclick="event.stopPropagation(); openReceiptLightboxByRecordId('${record.id}')" title="${escapeHtml(t('view_receipt'))}">${SVG_ICONS.receipt}</span>`;
@@ -2276,7 +2288,36 @@ async function executeRecordUpdate(editingId, updatedPayload) {
       state.lang === 'zh' ? '未找到对应账单记录' : 'Record not found',
     );
   const previousImageUrl = record.image_url || null;
+  // Snapshot original type/amount/note and linked sinking fund before mutating record
+  const previousType = record.type;
+  const previousAmount = parseFloat(record.amount) || 0;
+  const previousNote = record.note || '';
 
+  let linkedFund = null;
+  if (record.project_id) {
+    linkedFund = (state.projects || []).find((p) => p.id === record.project_id);
+  } else if (previousNote.includes('[专款:')) {
+    const match = previousNote.match(/\[专款:\s*([^\]]+)\]/);
+    if (match && match[1]) {
+      const title = match[1].trim();
+      linkedFund = (state.projects || []).find((p) => p.title === title);
+    }
+  }
+
+  const tagRegex = new RegExp(
+    '^(\\[(?:🎯|👥|专款:|AA分摊:|代垫:)[^\\]]+\\])\\s*',
+  );
+  const tagMatch = previousNote.match(tagRegex);
+  if (tagMatch) {
+    const rawNewNote = (updatedPayload.note || '').trim();
+    const cleanNewNote =
+      rawNewNote === '—' || rawNewNote === '-' ? '' : rawNewNote;
+    if (!cleanNewNote.startsWith(tagMatch[1])) {
+      updatedPayload.note = cleanNewNote
+        ? `${tagMatch[1]} ${cleanNewNote}`
+        : tagMatch[1];
+    }
+  }
   if (
     updatedPayload.image_url &&
     String(updatedPayload.image_url).startsWith('data:image/') &&
@@ -2301,34 +2342,46 @@ async function executeRecordUpdate(editingId, updatedPayload) {
   record.account_name = updatedPayload.account_name;
   record.date = updatedPayload.date;
   record.note = updatedPayload.note || '';
-  record.image_url =
+  // Reset archived flag when a new receipt photo is attached; otherwise preserve it
+  const nextImageUrl =
     updatedPayload.image_url !== undefined ? updatedPayload.image_url : null;
+  const nextImageArchived = nextImageUrl
+    ? false
+    : Boolean(record.image_archived);
+  record.image_url = nextImageUrl;
   record.image_size_kb = updatedPayload.image_size_kb || 0;
+  record.image_archived = nextImageArchived;
+  updatedPayload.image_archived = nextImageArchived;
 
   try {
+    const receiptMapKey = getLocalReceiptMapKey();
     const localReceipts = JSON.parse(
-      localStorage.getItem('ledger_local_receipt_map') || '{}',
+      localStorage.getItem(receiptMapKey) || '{}',
     );
     const normDate =
       normalizeRecordDateYMD(updatedPayload.date) || updatedPayload.date || '';
     const fallbackKey = `${normDate}_${updatedPayload.type}_${Number(updatedPayload.amount)}_${updatedPayload.category}`;
     if (record.image_url) {
-      localReceipts[String(editingId)] = {
+      const entry = {
         image_url: record.image_url,
         image_size_kb: record.image_size_kb,
+        image_archived: false,
       };
-      localReceipts[fallbackKey] = {
-        image_url: record.image_url,
-        image_size_kb: record.image_size_kb,
+      localReceipts[String(editingId)] = entry;
+      localReceipts[fallbackKey] = entry;
+    } else if (nextImageArchived) {
+      const entry = {
+        image_url: null,
+        image_size_kb: 0,
+        image_archived: true,
       };
+      localReceipts[String(editingId)] = entry;
+      localReceipts[fallbackKey] = entry;
     } else {
       delete localReceipts[String(editingId)];
       delete localReceipts[fallbackKey];
     }
-    localStorage.setItem(
-      'ledger_local_receipt_map',
-      JSON.stringify(localReceipts),
-    );
+    localStorage.setItem(receiptMapKey, JSON.stringify(localReceipts));
   } catch (e) {}
 
   if (String(editingId).startsWith('draft-')) {
@@ -2337,7 +2390,15 @@ async function executeRecordUpdate(editingId, updatedPayload) {
       (item) => String(item.id) === String(editingId),
     );
     if (qIdx !== -1) {
-      queue[qIdx] = { ...queue[qIdx], ...updatedPayload };
+      // Merge edits into nested payload so syncOfflineDrafts() uploads latest values
+      queue[qIdx] = {
+        ...queue[qIdx],
+        payload: {
+          ...(queue[qIdx].payload || {}),
+          ...updatedPayload,
+          note: updatedPayload.note || undefined,
+        },
+      };
       saveOfflineQueue(queue);
     }
   }
@@ -2361,6 +2422,7 @@ async function executeRecordUpdate(editingId, updatedPayload) {
         ...baseUpdate,
         image_url: updatedPayload.image_url || null,
         image_size_kb: updatedPayload.image_size_kb || 0,
+        image_archived: nextImageArchived,
       })
       .eq('id', editingId)
       .eq('user_id', state.user.id);
@@ -2388,6 +2450,39 @@ async function executeRecordUpdate(editingId, updatedPayload) {
     }
   }
 
+  // Sync linked sinking fund `spent_amount` delta if amount or type changed
+  if (linkedFund) {
+    const prevContribution = previousType === 'expense' ? previousAmount : 0;
+    const nextContribution =
+      updatedPayload.type === 'expense'
+        ? parseFloat(updatedPayload.amount) || 0
+        : 0;
+    const delta = Number((nextContribution - prevContribution).toFixed(2));
+    if (delta !== 0) {
+      linkedFund.spent_amount = Math.max(
+        0,
+        Number(((parseFloat(linkedFund.spent_amount) || 0) + delta).toFixed(2)),
+      );
+      saveProjects(state.projects);
+      renderSinkingFunds();
+
+      if (supabaseClient && state.user?.id) {
+        try {
+          await supabaseClient
+            .from('projects')
+            .update({ spent_amount: linkedFund.spent_amount })
+            .eq('id', linkedFund.id)
+            .eq('user_id', state.user.id);
+        } catch (e) {}
+      }
+
+      fetch(`/api/projects/${linkedFund.id}/spent`, {
+        method: 'PATCH',
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ spentAmount: linkedFund.spent_amount }),
+      }).catch(() => {});
+    }
+  }
   renderTable();
   calculateLocalSummaryMetrics();
   renderBudgetTracker();
@@ -2514,7 +2609,7 @@ async function handleRecordSubmit(e) {
     if (isSplitActive) {
       const myShare = parseFloat(elements.splitMyShareInput?.value) || 0;
       finalAmount = myShare;
-      finalNote = `[AA分摊: 总付 RM ${payload.amount}] ${finalNote}`.trim();
+      finalNote = `[AA分摊: 总付 ${state.currency || 'RM'} ${payload.amount}] ${finalNote}`.trim();
 
       // Collect friend rows
       const friendRows =
@@ -2656,8 +2751,9 @@ async function handleRecordSubmit(e) {
     // Persist receipt photo locally (Phase 1 local bridge before Phase 2 Supabase Storage sync)
     if (payload.image_url) {
       try {
+        const receiptMapKey = getLocalReceiptMapKey();
         const localReceipts = JSON.parse(
-          localStorage.getItem('ledger_local_receipt_map') || '{}',
+          localStorage.getItem(receiptMapKey) || '{}',
         );
         const normDate =
           normalizeRecordDateYMD(payload.date) || payload.date || '';
@@ -2666,10 +2762,7 @@ async function handleRecordSubmit(e) {
           image_url: payload.image_url,
           image_size_kb: payload.image_size_kb || 0,
         };
-        localStorage.setItem(
-          'ledger_local_receipt_map',
-          JSON.stringify(localReceipts),
-        );
+        localStorage.setItem(receiptMapKey, JSON.stringify(localReceipts));
       } catch (e) {}
     }
 
@@ -2809,8 +2902,9 @@ window.handleDelete = function (id) {
           deleteReceiptFromCloud(recordToDelete.image_url).catch(() => {});
         }
         try {
+          const receiptMapKey = getLocalReceiptMapKey();
           const localReceipts = JSON.parse(
-            localStorage.getItem('ledger_local_receipt_map') || '{}',
+            localStorage.getItem(receiptMapKey) || '{}',
           );
           const normDate =
             normalizeRecordDateYMD(recordToDelete.date) ||
@@ -2819,10 +2913,7 @@ window.handleDelete = function (id) {
           const fallbackKey = `${normDate}_${recordToDelete.type}_${Number(recordToDelete.amount)}_${recordToDelete.category}`;
           delete localReceipts[String(id)];
           delete localReceipts[fallbackKey];
-          localStorage.setItem(
-            'ledger_local_receipt_map',
-            JSON.stringify(localReceipts),
-          );
+          localStorage.setItem(receiptMapKey, JSON.stringify(localReceipts));
         } catch (e) {}
       }
       const previousRecords = [...state.records];
@@ -3188,20 +3279,59 @@ function calculateDailySpendingTrend(records, currentMonth) {
 }
 
 /**
- * Save file via Native OS File Picker if supported (allowing custom folder/file selection),
- * or fallback to standard browser download
+ * Save file via Native OS File Picker or Android native share sheet if supported,
+ * falling back to standard browser download.
  * @param {Blob} blob - The file blob
  * @param {string} defaultFileName - Suggested file name
  * @param {string} fileDescription - Description of file type for OS dialog
- * @returns {Promise<{ success?: boolean, canceled?: boolean, fileName: string, isNativePicker?: boolean }>}
+ * @param {string} mimeType - MIME type of the file
+ * @param {string[]} extensions - Accepted file extensions for showSaveFilePicker
+ * @returns {Promise<{ success?: boolean, canceled?: boolean, fileName: string, isNativePicker?: boolean, isNativeShare?: boolean }>}
  */
 async function saveBlobWithPicker(
   blob,
   defaultFileName,
   fileDescription = 'CSV 表格文件 (*.csv)',
+  mimeType = 'text/csv;charset=utf-8',
+  extensions = ['.csv'],
 ) {
+  const baseMime = String(mimeType || 'application/octet-stream')
+    .split(';')[0]
+    .trim();
+
   // 1. Android Native APK Share & Save Sheet (FileProvider + Intent.ACTION_SEND)
   if (
+    window.NativeUpdater &&
+    typeof window.NativeUpdater.shareBinaryFile === 'function'
+  ) {
+    try {
+      const base64Data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const resultStr = String(reader.result || '');
+          const commaIdx = resultStr.indexOf(',');
+          resolve(commaIdx !== -1 ? resultStr.slice(commaIdx + 1) : resultStr);
+        };
+        reader.onerror = () =>
+          reject(reader.error || new Error('FileReader failed'));
+        reader.readAsDataURL(blob);
+      });
+      window.NativeUpdater.shareBinaryFile(
+        defaultFileName,
+        base64Data,
+        baseMime,
+        fileDescription,
+      );
+      return {
+        success: true,
+        fileName: defaultFileName,
+        isNativeShare: true,
+      };
+    } catch (err) {
+      console.warn('NativeUpdater.shareBinaryFile failed:', err);
+    }
+  } else if (
+    baseMime === 'text/csv' &&
     window.NativeUpdater &&
     typeof window.NativeUpdater.shareCsvFile === 'function'
   ) {
@@ -3232,12 +3362,12 @@ async function saveBlobWithPicker(
     typeof navigator.canShare === 'function'
   ) {
     try {
-      const csvFile = new File([blob], defaultFileName, {
-        type: 'text/csv;charset=utf-8',
+      const shareFile = new File([blob], defaultFileName, {
+        type: baseMime,
       });
-      if (navigator.canShare({ files: [csvFile] })) {
+      if (navigator.canShare({ files: [shareFile] })) {
         await navigator.share({
-          files: [csvFile],
+          files: [shareFile],
           title: defaultFileName,
         });
         return {
@@ -3257,12 +3387,16 @@ async function saveBlobWithPicker(
   // 3. Desktop OS Save File Picker (Chrome / Edge Desktop)
   if (typeof window.showSaveFilePicker === 'function') {
     try {
+      const acceptedExts =
+        Array.isArray(extensions) && extensions.length > 0
+          ? extensions
+          : ['.bin'];
       const handle = await window.showSaveFilePicker({
         suggestedName: defaultFileName,
         types: [
           {
             description: fileDescription,
-            accept: { 'text/csv': ['.csv'] },
+            accept: { [baseMime]: acceptedExts },
           },
         ],
       });
@@ -4314,39 +4448,42 @@ function closeAvatarLightbox(fromPopState = false) {
 // ============================================================================
 
 /**
- * Compress a receipt/purchase image client-side using HTML5 Canvas to WebP (~60-90KB).
+ * Compress a receipt/purchase image client-side using ObjectURL + HTML5 Canvas to WebP (with JPEG fallback).
  */
 async function compressReceiptImage(file, maxDimension = 1080, quality = 0.78) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Failed to read image file'));
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onerror = () => reject(new Error('Failed to decode image'));
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxDimension || height > maxDimension) {
-          if (width > height) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
-          } else {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
-          }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL('image/webp', quality);
-        const approxBytes = Math.round((dataUrl.length * 3) / 4);
-        const sizeKb = Math.max(1, Math.round(approxBytes / 1024));
-        resolve({ dataUrl, sizeKb, width, height });
-      };
-      img.src = e.target.result;
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Failed to decode image'));
     };
-    reader.readAsDataURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      let { width, height } = img;
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
+        } else {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      let dataUrl = canvas.toDataURL('image/webp', quality);
+      if (!dataUrl.startsWith('data:image/webp')) {
+        dataUrl = canvas.toDataURL('image/jpeg', quality);
+      }
+      const approxBytes = Math.round((dataUrl.length * 3) / 4);
+      const sizeKb = Math.max(1, Math.round(approxBytes / 1024));
+      resolve({ dataUrl, sizeKb, width, height });
+    };
+    img.src = objectUrl;
   });
 }
 
@@ -4369,7 +4506,10 @@ async function handleReceiptFileSelected(e) {
     state.pendingReceiptSizeKb = sizeKb;
     if (elements.receiptPreviewImg) elements.receiptPreviewImg.src = dataUrl;
     if (elements.receiptPreviewMeta) {
-      elements.receiptPreviewMeta.textContent = `WebP · ${width}×${height} · ~${sizeKb} KB`;
+      const formatLabel = dataUrl.startsWith('data:image/webp')
+        ? 'WebP'
+        : 'JPEG';
+      elements.receiptPreviewMeta.textContent = `${formatLabel} · ${width}×${height} · ~${sizeKb} KB`;
     }
     elements.receiptPreviewDrawer?.classList.remove('hidden');
     elements.triggerReceiptUploadBtn?.classList.add('active');
@@ -4706,7 +4846,7 @@ function getExpiredReceiptRecords(retentionDays = 730) {
  */
 function checkTwoYearReceiptRetention() {
   const expiredList = getExpiredReceiptRecords(730);
-  const graceKey = 'ledger_receipt_grace_started_at';
+  const graceKey = getReceiptGraceKey();
   if (expiredList.length === 0) {
     localStorage.removeItem(graceKey);
     elements.receiptRetentionBanner?.classList.add('hidden');
@@ -4737,10 +4877,7 @@ function checkTwoYearReceiptRetention() {
 /**
  * Purge expired receipt photos from cloud & local storage while keeping bill text & amounts forever.
  */
-async function purgeExpiredReceiptsOnly(
-  expiredRecords,
-  isAutoSilent = false,
-) {
+async function purgeExpiredReceiptsOnly(expiredRecords, isAutoSilent = false) {
   const targetList = Array.isArray(expiredRecords)
     ? expiredRecords
     : getExpiredReceiptRecords(730);
@@ -4749,7 +4886,7 @@ async function purgeExpiredReceiptsOnly(
   let localReceipts = {};
   try {
     localReceipts = JSON.parse(
-      localStorage.getItem('ledger_local_receipt_map') || '{}',
+      localStorage.getItem(getLocalReceiptMapKey()) || '{}',
     );
   } catch (e) {}
 
@@ -4805,10 +4942,10 @@ async function purgeExpiredReceiptsOnly(
 
   try {
     localStorage.setItem(
-      'ledger_local_receipt_map',
+      getLocalReceiptMapKey(),
       JSON.stringify(localReceipts),
     );
-    localStorage.removeItem('ledger_receipt_grace_started_at');
+    localStorage.removeItem(getReceiptGraceKey());
   } catch (e) {}
 
   elements.receiptRetentionBanner?.classList.add('hidden');
@@ -4867,14 +5004,15 @@ async function backupAndCleanExpiredReceipts() {
 
     folder.file('receipt_manifest.csv', '\uFEFF' + csvLines.join('\n'));
     const zipBlob = await zip.generateAsync({ type: 'blob' });
-    const dlUrl = URL.createObjectURL(zipBlob);
-    const a = document.createElement('a');
-    a.href = dlUrl;
-    a.download = `MonetaX_Receipts_Archive_${new Date().toISOString().slice(0, 10)}.zip`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(dlUrl), 5000);
+    const fileName = `MonetaX_Receipts_Archive_${new Date().toISOString().slice(0, 10)}.zip`;
+    const saveRes = await saveBlobWithPicker(
+      zipBlob,
+      fileName,
+      'ZIP 凭证归档包 (*.zip)',
+      'application/zip',
+      ['.zip'],
+    );
+    if (saveRes?.canceled) return;
 
     await purgeExpiredReceiptsOnly(expiredList, false);
   } catch (err) {
@@ -4885,7 +5023,6 @@ async function backupAndCleanExpiredReceipts() {
     }
   }
 }
-
 
 // ============================================================================
 // Module: Streak Counter & Motivation Badges
@@ -5680,9 +5817,44 @@ function hydrateLocalCacheImmediately() {
     localStorage.removeItem('ledger_cached_records_guest');
     localStorage.removeItem('ledger_projects_guest');
     localStorage.removeItem('ledger_claims_guest');
+    localStorage.removeItem('ledger_local_receipt_map');
+    localStorage.removeItem('ledger_receipt_grace_started_at');
 
     const userKey = localStorage.getItem('ledger_last_active_user_id');
     if (!userKey) return;
+
+    // Synchronously hydrate projects, claims, and budget top-ups before metric/budget render
+    try {
+      const rawProjects = localStorage.getItem(`ledger_projects_${userKey}`);
+      const parsedProjects = rawProjects ? JSON.parse(rawProjects) : [];
+      const deletedProjects = getDeletedIdsSet(
+        `ledger_deleted_projects_${userKey}`,
+      );
+      if (Array.isArray(parsedProjects)) {
+        state.projects = parsedProjects.filter(
+          (p) => p && p.id && !deletedProjects.has(String(p.id)),
+        );
+      }
+    } catch (e) {}
+
+    try {
+      const rawClaims = localStorage.getItem(`ledger_claims_${userKey}`);
+      const parsedClaims = rawClaims ? JSON.parse(rawClaims) : [];
+      const deletedClaims = getDeletedIdsSet(`ledger_deleted_claims_${userKey}`);
+      if (Array.isArray(parsedClaims)) {
+        state.claims = parsedClaims.filter(
+          (c) => c && c.id && !deletedClaims.has(String(c.id)),
+        );
+      }
+    } catch (e) {}
+
+    try {
+      const rawTopUps = localStorage.getItem(`ledger_budget_topups_${userKey}`);
+      const parsedTopUps = rawTopUps ? JSON.parse(rawTopUps) : null;
+      if (parsedTopUps && typeof parsedTopUps === 'object') {
+        state.budgetTopUps = parsedTopUps;
+      }
+    } catch (e) {}
 
     const cacheKey = `ledger_cached_records_${userKey}`;
     const raw = localStorage.getItem(cacheKey);
@@ -5705,6 +5877,9 @@ function hydrateLocalCacheImmediately() {
         console.error('Error parsing cached records:', e);
       }
     }
+    if (typeof renderBudgetTracker === 'function') renderBudgetTracker();
+    if (typeof renderSinkingFunds === 'function') renderSinkingFunds();
+    if (typeof renderClaims === 'function') renderClaims();
   } catch (err) {
     console.warn('Local cache hydration fallback:', err);
   }
@@ -5899,27 +6074,27 @@ async function init() {
     const src = elements.receiptLightboxImg?.src;
     if (!src) return;
     triggerHaptic(10);
-    let dlUrl = src;
-    let revokeAfter = false;
+    let blob = null;
     try {
-      if (src.startsWith('http')) {
+      if (src.startsWith('data:image/')) {
+        blob = dataUrlToBlob(src);
+      } else {
         const res = await fetch(src);
-        if (res.ok) {
-          const blob = await res.blob();
-          dlUrl = URL.createObjectURL(blob);
-          revokeAfter = true;
-        }
+        if (res.ok) blob = await res.blob();
       }
     } catch (e) {}
-    const a = document.createElement('a');
-    a.href = dlUrl;
-    a.download = `MonetaX_Receipt_${new Date().toISOString().slice(0, 10)}.webp`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    if (revokeAfter) {
-      setTimeout(() => URL.revokeObjectURL(dlUrl), 5000);
-    }
+    if (!blob) return;
+
+    const mime = blob.type || 'image/webp';
+    const ext = mime.includes('png')
+      ? '.png'
+      : mime.includes('jpeg') || mime.includes('jpg')
+        ? '.jpg'
+        : '.webp';
+    const fileName = `MonetaX_Receipt_${new Date().toISOString().slice(0, 10)}${ext}`;
+    await saveBlobWithPicker(blob, fileName, `Receipt Image (${ext})`, mime, [
+      ext,
+    ]);
   });
   elements.backupAndCleanReceiptsBtn?.addEventListener('click', () => {
     triggerHaptic(10);
@@ -7317,7 +7492,7 @@ function addSplitFriendRow(defaultName = '', defaultAmount = '') {
   row.innerHTML = `
     <input type="text" placeholder="${t('friend_name_placeholder')}" value="${escapeHtml(defaultName)}" class="clean-form-input friend-name-input" style="flex: 2;" required />
     <div style="display: flex; align-items: center; gap: 4px; flex: 1.5;">
-      <span class="currency-sym">RM</span>
+      <span class="currency-sym">${escapeHtml(state.currency || 'RM')}</span>
       <input type="number" step="0.01" min="0" placeholder="0.00" value="${defaultAmount}" class="clean-form-input friend-amount-input" required />
     </div>
     <button type="button" class="btn-friend-delete" title="Remove">&times;</button>

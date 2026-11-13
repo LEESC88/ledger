@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Budget } from './entities/budget.entity.js';
 import { SetBudgetDto } from './dto/set-budget.dto.js';
 
@@ -15,9 +15,12 @@ export class BudgetsService {
    * Retrieves budget for a given month and user, falling back to 'default' budget.
    */
   async getBudget(month: string, userId?: string): Promise<Budget | null> {
+    if (!userId) {
+      return null;
+    }
     const whereCondition: any = {
       month,
-      userId: userId ? userId : IsNull(),
+      userId,
     };
 
     let budget = await this.budgetRepository.findOne({ where: whereCondition });
@@ -26,7 +29,7 @@ export class BudgetsService {
     if (!budget && month !== 'default') {
       const defaultWhere: any = {
         month: 'default',
-        userId: userId ? userId : IsNull(),
+        userId,
       };
       budget = await this.budgetRepository.findOne({ where: defaultWhere });
     }
@@ -38,13 +41,18 @@ export class BudgetsService {
    * Persists or updates budget target for a user and month.
    */
   async setBudget(dto: SetBudgetDto, userId?: string): Promise<Budget> {
+    if (!userId) {
+      throw new UnauthorizedException('User ID required');
+    }
     const month = dto.month || 'default';
     const whereCondition: any = {
       month,
-      userId: userId ? userId : IsNull(),
+      userId,
     };
 
-    let existing = await this.budgetRepository.findOne({ where: whereCondition });
+    let existing = await this.budgetRepository.findOne({
+      where: whereCondition,
+    });
     if (existing) {
       existing.amount = dto.amount;
       return await this.budgetRepository.save(existing);

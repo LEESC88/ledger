@@ -34,12 +34,13 @@ Install and run **MonetaX** directly on your Android phone without needing to ho
 
 ---
 
-## 🆕 What's New in v1.5.4 (Receipt Photo Vault, HD Zoom Lightbox & 2-Year Lifecycle)
+## 🆕 What's New in v1.5.5 (Android Native Receipt Sharing, 0ms Vault Hydration & Isolation Hardening)
 
-* 📷 **Receipt & Purchase Photo Attachment**: Snap a receipt with your camera or pick from your album when recording or editing any transaction. Built-in client-side HTML5 Canvas WebP compression (`1080px` max edge, `0.78` quality) shrinks `5–8MB` photos down to `~60–90KB` (`98%` savings) before syncing to Supabase Storage (`receipt-images`) and local SQLite.
-* 🔍 **Full-Screen HD Zoomable Lightbox**: Tap any receipt thumbnail or timeline badge to open the full-screen viewer featuring `100%`–`400%` interactive zoom controls, double-tap/click quick zoom (`100%` ↔ `225%`), touch pinch-to-zoom, mouse wheel zoom, drag-to-pan, one-tap download, and automatic 360° Privacy Mode blur shielding.
-* 📦 **2-Year Rolling Retention & 1-Tap Local ZIP Archive**: Automatically detects receipt images older than 2 years (`730` days) and displays a **7-day grace period countdown banner**. Download all expiring photos + `receipt_manifest.csv` as a single local `.zip` package (`JSZip`) in one tap while freeing cloud storage—preserving **100% of your transaction amounts, categories, and notes forever**.
-* 🔒 **Hardened Multi-Tenant User Isolation & v1.5.3 0ms Cold-Start Hydration**: Strict backend & client-side `user_id` isolation guards combined with `<16ms` synchronous local cache hydration on cold launch.
+* 📱 **Android Native Share Sheet for Receipt `.zip` & Photos (`shareBinaryFile`)**: Generalized `saveBlobWithPicker()` and added `NativeUpdater.shareBinaryFile` (`FileProvider` + `Intent.ACTION_SEND`) in [MainActivity.java](android/app/src/main/java/com/leesc88/ledger/MainActivity.java), so both single receipt images and 2-year `.zip` archives export cleanly inside the Android APK as well as mobile/desktop browsers.
+* 📸 **Low-Memory Camera Photo Compression + JPEG Fallback**: Switched receipt compression to `URL.createObjectURL` with immediate memory release (`URL.revokeObjectURL`), with automatic JPEG fallback on legacy WebViews that lack WebP canvas encoding.
+* ⚡ **0ms Cold-Start Hydration for Sinking Funds, Claims & Budget Top-Ups**: Synchronously restores `projects`, `claims`, and `budgetTopUps` alongside `records` on frame 0—eliminating budget progress flicker before async auth finishes.
+* 🛠️ **Reliability, Multi-Currency & Full-Stack Tenant Isolation Fixes**: Fixed `[收据已归档]` badge rendering & `image_archived` reset on re-upload, offline `draft-*` nested payload edits, Sinking Fund `spent_amount` delta sync when editing linked bills, dynamic currency symbols in Split Bill rows/notes, per-user `localStorage` isolation for receipt caches & 2-year grace timers, and strict `!userId` guards across all NestJS write endpoints (`RecordsService`, `ProjectsService`, `ClaimsService`, `BudgetsService`).
+* 📜 **v1.5.4 Foundation**: Client-side WebP receipt vault, 400% zoomable lightbox, 2-year rolling retention with 7-day grace banner & 1-tap `JSZip` export.
 
 ---
 
@@ -76,7 +77,7 @@ Built on a **Local-First + Direct Supabase Cloud (PostgreSQL)** architecture, Mo
 MonetaX follows a clean **Three-Tier Local-First + Dual-Track Persistence** architecture, designed for maximum resilience, sub-millisecond tactile responsiveness, and complete multi-tenant cloud isolation:
 
 1. **Client Runtime & Local-First Engine Layer (终端与 Local-First 引擎层)**
-   * **Android Native Shell (`Capacitor 6`)**: Native WebView wrapper with deep-link OAuth callback (`com.leesc88.ledger://oauth`), native CSV `FileProvider` share intent, and `NativeUpdater` in-app APK installer.
+   * **Android Native Shell (`Capacitor 6`)**: Native WebView wrapper with deep-link OAuth callback (`com.leesc88.ledger://oauth`), native `FileProvider` share intent (`CSV` / `ZIP` / Receipt Images), and `NativeUpdater` in-app APK installer.
    * **In-App OTA Engine (`NativeUpdaterInterface`)**: Automated background version polling against `version.json`, real-time download percentage bridge, and package installer invocation.
    * **Responsive SPA UI (`Vanilla ES2022`)**: Lightweight `<3.8MB` zero-virtual-DOM single-page architecture featuring fluid drag physics, 360° Anti-Peeking privacy mode, Chart.js 4 visual analytics, and modular i18n (`zh-CN`, `en`, `ms`).
    * **Local-First Financial Engine**: Instant optimistic transaction CRUD, sub-`16ms` single-tap record deletion, and calendar month auto-rollover (`YYYY-MM`).
@@ -253,7 +254,7 @@ MonetaX 整体遵循 **“三层拓扑 · 本地优先 · 存储双轨 · 零延
 
 #### 架构三层核心划分：
 1. **终端与 Local-First 引擎层 (`Client Runtime`)**：
-   * **Android 原生容器 (`Capacitor 6`)**：托管原生 WebView，封装 `com.leesc88.ledger://oauth` 深度链接唤醒、原生 CSV `FileProvider` 分享 Intent 及 `NativeUpdater` 原生安装器桥接。
+   * **Android 原生容器 (`Capacitor 6`)**：托管原生 WebView，封装 `com.leesc88.ledger://oauth` 深度链接唤醒、原生 `FileProvider` 分享 Intent（支持 CSV / ZIP / 收据原图）及 `NativeUpdater` 原生安装器桥接。
    * **端内 OTA 更新引擎 (`NativeUpdaterInterface`)**：轮询 `version.json`，实时计算并回传 APK 下载百分比，智能引导 Android 8.0+ 未知应用安装权限。
    * **MonetaX 响应式视图 (`Vanilla ES2022`)**：轻量级 `<3.8MB` 单页应用，包含 `#pageLedger`、`#pageProjects`、`#pageAnalytics`、`#pageSettings` 四大视图、360° 防窥私密模式 (`👁️`)、Chart.js 4 图表与中/英/马三语字典。
    * **Local-First 财务引擎**：实现账单 CRUD、`<16ms` 乐观 UI 单击秒删、自然月跨月自动切换与重置（`YYYY-MM`）及离线重放状态机。

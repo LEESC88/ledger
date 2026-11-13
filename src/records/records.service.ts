@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Record } from './entities/record.entity.js';
@@ -24,13 +29,15 @@ export class RecordsService {
     createRecordDto: CreateRecordDto,
     userId?: string,
   ): Promise<Record> {
-    if (userId) {
-      const userCount = await this.recordRepository.count({ where: { userId } });
-      if (userCount >= 50000) {
-        throw new BadRequestException(
-          'Single account record storage limit (50,000) reached. Please backup and purge older records.',
-        );
-      }
+    if (!userId) {
+      throw new UnauthorizedException('User ID required');
+    }
+
+    const userCount = await this.recordRepository.count({ where: { userId } });
+    if (userCount >= 50000) {
+      throw new BadRequestException(
+        'Single account record storage limit (50,000) reached. Please backup and purge older records.',
+      );
     }
 
     const newRecord = this.recordRepository.create({
@@ -58,11 +65,10 @@ export class RecordsService {
    * Deletes a transaction record by its unique ID, verifying owner if userId provided.
    */
   async remove(id: number, userId?: string): Promise<void> {
-    const whereCondition: any = { id };
-    if (userId) {
-      whereCondition.userId = userId;
+    if (!userId) {
+      throw new UnauthorizedException('User ID required');
     }
-    const result = await this.recordRepository.delete(whereCondition);
+    const result = await this.recordRepository.delete({ id, userId });
     if (result.affected === 0) {
       throw new NotFoundException(`Record with ID ${id} not found`);
     }
@@ -76,12 +82,11 @@ export class RecordsService {
     updateRecordDto: UpdateRecordDto,
     userId?: string,
   ): Promise<Record> {
-    const whereCondition: any = { id };
-    if (userId) {
-      whereCondition.userId = userId;
+    if (!userId) {
+      throw new UnauthorizedException('User ID required');
     }
     const record = await this.recordRepository.findOne({
-      where: whereCondition,
+      where: { id, userId },
     });
     if (!record) {
       throw new NotFoundException(`Record with ID ${id} not found`);

@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import androidx.core.content.FileProvider;
@@ -182,6 +183,24 @@ public class MainActivity extends BridgeActivity {
             });
         }
 
+        private void launchShareSheet(File targetFile, String mimeType, String subject, String chooserTitle) {
+            Uri fileUri = FileProvider.getUriForFile(
+                MainActivity.this,
+                getPackageName() + ".fileprovider",
+                targetFile
+            );
+
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType(mimeType);
+            shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            Intent chooser = Intent.createChooser(shareIntent, chooserTitle);
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(chooser);
+        }
+
         @JavascriptInterface
         public void shareCsvFile(String fileName, String csvContent, String chooserTitle) {
             if (csvContent == null) return;
@@ -195,7 +214,6 @@ public class MainActivity extends BridgeActivity {
 
             runOnUiThread(() -> {
                 try {
-                    Context context = MainActivity.this;
                     File csvFile = new File(getCacheDir(), finalFileName);
                     try (FileOutputStream fos = new FileOutputStream(csvFile, false)) {
                         if (!csvContent.startsWith("\uFEFF")) {
@@ -204,24 +222,42 @@ public class MainActivity extends BridgeActivity {
                         fos.write(csvContent.getBytes(StandardCharsets.UTF_8));
                         fos.flush();
                     }
-
-                    Uri fileUri = FileProvider.getUriForFile(
-                        context,
-                        getPackageName() + ".fileprovider",
-                        csvFile
-                    );
-
-                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                    shareIntent.setType("text/csv");
-                    shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
-                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, finalFileName);
-                    shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                    Intent chooser = Intent.createChooser(shareIntent, title);
-                    chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(chooser);
+                    launchShareSheet(csvFile, "text/csv", finalFileName, title);
                 } catch (Exception e) {
                     notifyDownloadError("CSV export failed: " + e.getMessage());
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void shareBinaryFile(String fileName, String base64Content, String mimeType, String chooserTitle) {
+            if (base64Content == null || base64Content.trim().isEmpty()) return;
+            final String safeName = (fileName != null && !fileName.trim().isEmpty())
+                ? fileName.replaceAll("[^a-zA-Z0-9._\\-\\u4e00-\\u9fa5]", "_")
+                : "monetax_export.bin";
+            final String mime = (mimeType != null && !mimeType.trim().isEmpty())
+                ? mimeType
+                : "application/octet-stream";
+            final String title = (chooserTitle != null && !chooserTitle.trim().isEmpty())
+                ? chooserTitle
+                : "Share File";
+
+            final int commaIdx = base64Content.indexOf(',');
+            final String rawBase64 = (base64Content.startsWith("data:") && commaIdx != -1)
+                ? base64Content.substring(commaIdx + 1)
+                : base64Content;
+
+            runOnUiThread(() -> {
+                try {
+                    byte[] bytes = Base64.decode(rawBase64, Base64.DEFAULT);
+                    File outFile = new File(getCacheDir(), safeName);
+                    try (FileOutputStream fos = new FileOutputStream(outFile, false)) {
+                        fos.write(bytes);
+                        fos.flush();
+                    }
+                    launchShareSheet(outFile, mime, safeName, title);
+                } catch (Exception e) {
+                    notifyDownloadError("File export failed: " + e.getMessage());
                 }
             });
         }

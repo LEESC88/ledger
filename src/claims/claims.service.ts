@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Claim } from './entities/claim.entity.js';
@@ -36,6 +40,9 @@ export class ClaimsService {
     createClaimDto: CreateClaimDto,
     userId?: string,
   ): Promise<Claim> {
+    if (!userId) {
+      throw new UnauthorizedException('User ID required');
+    }
     const id = createClaimDto.id || 'claim_' + Date.now();
     const friendsWithStatus = (createClaimDto.friends || []).map((f) => ({
       name: f.name,
@@ -63,8 +70,11 @@ export class ClaimsService {
     friendIndex: number,
     userId?: string,
   ): Promise<Claim> {
+    if (!userId) {
+      throw new UnauthorizedException('User ID required');
+    }
     const claim = await this.claimRepository.findOne({
-      where: userId ? { id, userId } : { id },
+      where: { id, userId },
     });
     if (!claim) throw new NotFoundException('Claim not found');
     if (claim.friends && claim.friends[friendIndex]) {
@@ -79,8 +89,11 @@ export class ClaimsService {
    * 4. 全员结清并归档 (settleAll)
    */
   async settleAll(id: string, userId?: string): Promise<Claim> {
+    if (!userId) {
+      throw new UnauthorizedException('User ID required');
+    }
     const claim = await this.claimRepository.findOne({
-      where: userId ? { id, userId } : { id },
+      where: { id, userId },
     });
     if (!claim) throw new NotFoundException('Claim not found');
     if (Array.isArray(claim.friends)) {
@@ -96,8 +109,11 @@ export class ClaimsService {
    * 5. 删除账单 (remove)
    */
   async remove(id: string, userId?: string): Promise<{ success: boolean }> {
+    if (!userId) {
+      throw new UnauthorizedException('User ID required');
+    }
     const claim = await this.claimRepository.findOne({
-      where: userId ? { id, userId } : { id },
+      where: { id, userId },
     });
     if (!claim) throw new NotFoundException('Claim not found');
     await this.claimRepository.remove(claim);

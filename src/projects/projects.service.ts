@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project } from './entities/project.entity.js';
@@ -36,6 +40,9 @@ export class ProjectsService {
     createProjectDto: CreateProjectDto,
     userId?: string,
   ): Promise<Project | null> {
+    if (!userId) {
+      throw new UnauthorizedException('User ID required');
+    }
     const id = createProjectDto.id || 'proj_' + Date.now();
     const d = new Date();
     const currentMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -58,8 +65,11 @@ export class ProjectsService {
    * 3. 专款结案平账 (settle)
    */
   async settle(id: string, userId?: string): Promise<Project | null> {
+    if (!userId) {
+      throw new UnauthorizedException('User ID required');
+    }
     const project = await this.projectRepository.findOne({
-      where: userId ? { id, userId } : { id },
+      where: { id, userId },
     });
     if (!project) throw new NotFoundException('Project not found');
     project.status = 'settled';
@@ -70,8 +80,11 @@ export class ProjectsService {
    * 4. 提前释放结余资金回日常预算 (release)
    */
   async release(id: string, userId?: string): Promise<Project | null> {
+    if (!userId) {
+      throw new UnauthorizedException('User ID required');
+    }
     const project = await this.projectRepository.findOne({
-      where: userId ? { id, userId } : { id },
+      where: { id, userId },
     });
     if (!project) throw new NotFoundException('Project not found');
     project.targetAmount = project.spentAmount;
@@ -83,8 +96,11 @@ export class ProjectsService {
    * 5. 撤销 / 删除专款 (remove)
    */
   async remove(id: string, userId?: string): Promise<{ success: boolean }> {
+    if (!userId) {
+      throw new UnauthorizedException('User ID required');
+    }
     const project = await this.projectRepository.findOne({
-      where: userId ? { id, userId } : { id },
+      where: { id, userId },
     });
     if (!project) throw new NotFoundException('Project not found');
     await this.projectRepository.remove(project);
@@ -99,8 +115,11 @@ export class ProjectsService {
     spentAmount: number,
     userId?: string,
   ): Promise<Project | null> {
+    if (!userId) {
+      throw new UnauthorizedException('User ID required');
+    }
     const project = await this.projectRepository.findOne({
-      where: userId ? { id, userId } : { id },
+      where: { id, userId },
     });
     if (!project) throw new NotFoundException('Project not found');
     project.spentAmount = spentAmount;
