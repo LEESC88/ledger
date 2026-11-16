@@ -1,10 +1,11 @@
-const CACHE_NAME = 'monetax-cache-v1.5.5';
+const CACHE_NAME = 'monetax-cache-v1.5.6';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/style.css',
   '/i18n.js',
   '/app.js',
+  '/vendor/jszip.min.js',
   '/manifest.json',
   '/icon.svg',
   '/version.json',
@@ -12,20 +13,22 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)),
   );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    )
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key)),
+        ),
+      ),
   );
   self.clients.claim();
 });
@@ -37,9 +40,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   // Always network-first for version.json and API requests
   if (url.pathname === '/version.json' || url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(request).catch(() => caches.match(request))
-    );
+    event.respondWith(fetch(request).catch(() => caches.match(request)));
     return;
   }
 
@@ -47,13 +48,17 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (response && response.status === 200 && url.origin === self.location.origin) {
+        if (
+          response &&
+          response.status === 200 &&
+          url.origin === self.location.origin
+        ) {
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
         }
         return response;
       })
-      .catch(() => caches.match(request))
+      .catch(() => caches.match(request)),
   );
 });
 

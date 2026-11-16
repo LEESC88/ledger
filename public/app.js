@@ -5,7 +5,7 @@
  * ============================================================================
  */
 // Current Client Release Version
-const APP_VERSION = '1.5.5';
+const APP_VERSION = '1.5.6';
 
 // Default BaaS Cloud Configuration (Decoded from safe payload, overridable by window.__ENV__)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -2609,7 +2609,8 @@ async function handleRecordSubmit(e) {
     if (isSplitActive) {
       const myShare = parseFloat(elements.splitMyShareInput?.value) || 0;
       finalAmount = myShare;
-      finalNote = `[AA分摊: 总付 ${state.currency || 'RM'} ${payload.amount}] ${finalNote}`.trim();
+      finalNote =
+        `[AA分摊: 总付 ${state.currency || 'RM'} ${payload.amount}] ${finalNote}`.trim();
 
       // Collect friend rows
       const friendRows =
@@ -4767,8 +4768,15 @@ function dataUrlToBlob(dataUrl) {
   return new Blob([byteArray], { type: mimeType });
 }
 
+function getReceiptExtFromMime(mime) {
+  const lower = String(mime || '').toLowerCase();
+  if (lower.includes('png')) return '.png';
+  if (lower.includes('jpeg') || lower.includes('jpg')) return '.jpg';
+  return '.webp';
+}
+
 /**
- * Upload compressed WebP receipt image to Supabase Storage bucket `receipt-images`,
+ * Upload compressed receipt image to Supabase Storage bucket `receipt-images`,
  * falling back to the compressed DataURL when offline or in local SQLite mode.
  */
 async function uploadReceiptToCloud(dataUrl) {
@@ -4779,13 +4787,15 @@ async function uploadReceiptToCloud(dataUrl) {
   }
   try {
     const blob = dataUrlToBlob(dataUrl);
+    const contentType = blob.type || 'image/webp';
+    const ext = getReceiptExtFromMime(contentType);
     const yearMonth = new Date().toISOString().slice(0, 7);
     const rand = Math.random().toString(36).slice(2, 7);
-    const filePath = `${userId}/${yearMonth}/${Date.now()}_${rand}.webp`;
+    const filePath = `${userId}/${yearMonth}/${Date.now()}_${rand}${ext}`;
     const { error: uploadError } = await supabaseClient.storage
       .from('receipt-images')
       .upload(filePath, blob, {
-        contentType: 'image/webp',
+        contentType,
         upsert: false,
       });
     if (uploadError) return dataUrl;
@@ -4985,7 +4995,6 @@ async function backupAndCleanExpiredReceipts() {
         /[^a-zA-Z0-9_\u4e00-\u9fa5-]/g,
         '_',
       );
-      const fileName = `${rec.date || 'unknown'}_${safeCat}_${rec.amount}_${i + 1}.webp`;
       let blob = null;
       if (String(rec.image_url).startsWith('data:image/')) {
         blob = dataUrlToBlob(rec.image_url);
@@ -4993,6 +5002,14 @@ async function backupAndCleanExpiredReceipts() {
         const res = await fetch(rec.image_url);
         if (res.ok) blob = await res.blob();
       }
+      const lowerUrl = String(rec.image_url || '').toLowerCase();
+      const mimeHint =
+        blob?.type ||
+        (lowerUrl.includes('.jpg') || lowerUrl.includes('.jpeg')
+          ? 'image/jpeg'
+          : 'image/webp');
+      const fileName = `${rec.date || 'unknown'}_${safeCat}_${rec.amount}_${i + 1}${getReceiptExtFromMime(mimeHint)}`;
+
       if (blob) {
         folder.file(fileName, blob);
       }
@@ -5840,7 +5857,9 @@ function hydrateLocalCacheImmediately() {
     try {
       const rawClaims = localStorage.getItem(`ledger_claims_${userKey}`);
       const parsedClaims = rawClaims ? JSON.parse(rawClaims) : [];
-      const deletedClaims = getDeletedIdsSet(`ledger_deleted_claims_${userKey}`);
+      const deletedClaims = getDeletedIdsSet(
+        `ledger_deleted_claims_${userKey}`,
+      );
       if (Array.isArray(parsedClaims)) {
         state.claims = parsedClaims.filter(
           (c) => c && c.id && !deletedClaims.has(String(c.id)),
@@ -6086,11 +6105,7 @@ async function init() {
     if (!blob) return;
 
     const mime = blob.type || 'image/webp';
-    const ext = mime.includes('png')
-      ? '.png'
-      : mime.includes('jpeg') || mime.includes('jpg')
-        ? '.jpg'
-        : '.webp';
+    const ext = getReceiptExtFromMime(mime);
     const fileName = `MonetaX_Receipt_${new Date().toISOString().slice(0, 10)}${ext}`;
     await saveBlobWithPicker(blob, fileName, `Receipt Image (${ext})`, mime, [
       ext,

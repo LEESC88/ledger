@@ -1,6 +1,6 @@
 {
-  "version": "1.5.5",
-  "releaseDate": "2026-11-13",
+  "version": "1.5.6",
+  "releaseDate": "2026-11-16",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/MonetaX.apk",
-  "notes": "MonetaX v1.5.5 Release: 📱 Android Native Share Sheet for Receipt .ZIP Archives & Photos (`FileProvider`); ⚡ ObjectURL Memory-Safe Compression + JPEG Fallback; 🚀 0ms Sync Hydration for Sinking Funds, Claims & Budget Top-Ups; 🔄 Sinking Fund Edit Delta Sync, Archived Receipt Badge & Offline Draft Edit Fixes; 🔒 End-to-End Multi-Tenant Isolation Hardening."
+  "notes": "MonetaX v1.5.6 Release: 📦 Bundled Offline JSZip (/vendor/jszip.min.js) + PWA Service Worker Precache; 🖼️ Dynamic JPEG/WebP MIME & File Extension Sync Across Cloud Upload, ZIP Archive & Lightbox Export; ✅ Full Type-Safe Vitest Multi-Tenant Service Test Suite & Clean TS Check."
 }

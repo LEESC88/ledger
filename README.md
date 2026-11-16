@@ -34,13 +34,12 @@ Install and run **MonetaX** directly on your Android phone without needing to ho
 
 ---
 
-## 🆕 What's New in v1.5.5 (Android Native Receipt Sharing, 0ms Vault Hydration & Isolation Hardening)
+## 🆕 What's New in v1.5.6 (100% Offline JSZip Vault, Dynamic Receipt MIME Sync & Unit Test Suite)
 
-* 📱 **Android Native Share Sheet for Receipt `.zip` & Photos (`shareBinaryFile`)**: Generalized `saveBlobWithPicker()` and added `NativeUpdater.shareBinaryFile` (`FileProvider` + `Intent.ACTION_SEND`) in [MainActivity.java](android/app/src/main/java/com/leesc88/ledger/MainActivity.java), so both single receipt images and 2-year `.zip` archives export cleanly inside the Android APK as well as mobile/desktop browsers.
-* 📸 **Low-Memory Camera Photo Compression + JPEG Fallback**: Switched receipt compression to `URL.createObjectURL` with immediate memory release (`URL.revokeObjectURL`), with automatic JPEG fallback on legacy WebViews that lack WebP canvas encoding.
-* ⚡ **0ms Cold-Start Hydration for Sinking Funds, Claims & Budget Top-Ups**: Synchronously restores `projects`, `claims`, and `budgetTopUps` alongside `records` on frame 0—eliminating budget progress flicker before async auth finishes.
-* 🛠️ **Reliability, Multi-Currency & Full-Stack Tenant Isolation Fixes**: Fixed `[收据已归档]` badge rendering & `image_archived` reset on re-upload, offline `draft-*` nested payload edits, Sinking Fund `spent_amount` delta sync when editing linked bills, dynamic currency symbols in Split Bill rows/notes, per-user `localStorage` isolation for receipt caches & 2-year grace timers, and strict `!userId` guards across all NestJS write endpoints (`RecordsService`, `ProjectsService`, `ClaimsService`, `BudgetsService`).
-* 📜 **v1.5.4 Foundation**: Client-side WebP receipt vault, 400% zoomable lightbox, 2-year rolling retention with 7-day grace banner & 1-tap `JSZip` export.
+* 📦 **100% Offline JSZip Archive Engine**: Bundled `jszip@3.10.1` locally into [public/vendor/jszip.min.js](public/vendor/jszip.min.js) and added `/vendor/jszip.min.js` to the PWA Service Worker (`sw.js`) precache list, ensuring 2-year receipt `.zip` exports work reliably inside the Android APK and offline PWAs without external CDN requests.
+* 🖼️ **End-to-End Dynamic Receipt MIME & Extension Sync**: Unified `getReceiptExtFromMime()` across Supabase Storage uploads (`uploadReceiptToCloud`), `.zip` archive filenames, and lightbox exports—ensuring legacy WebViews that fall back from WebP to JPEG upload and archive with `.jpg` / `image/jpeg` cleanly.
+* ✅ **Multi-Tenant Isolation Test Suite & Clean TypeScript Check**: Added Vitest coverage for `RecordsService`, `ProjectsService`, `ClaimsService`, and `BudgetsService` (`src/services.tenant-isolation.spec.ts`) verifying strict `!userId` guards and core summary/settlement/budget-fallback behavior, alongside `nodenext` type-import fixes in [test/app.e2e-spec.ts](test/app.e2e-spec.ts).
+* 📜 **v1.5.5 & v1.5.4 Foundation**: Android native `FileProvider` share sheet (`shareBinaryFile` for `.zip` & photos), `ObjectURL` camera compression, 0ms cold-start hydration for Projects/Claims/Top-Ups, multi-currency Split Bills, 400% zoomable lightbox, and 2-year rolling retention.
 
 ---
 
