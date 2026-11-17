@@ -5,7 +5,7 @@
  * ============================================================================
  */
 // Current Client Release Version
-const APP_VERSION = '1.5.6';
+const APP_VERSION = '1.5.7';
 
 // Default BaaS Cloud Configuration (Decoded from safe payload, overridable by window.__ENV__)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -547,7 +547,8 @@ function triggerHaptic(duration = 10) {
   try {
     if (
       typeof navigator !== 'undefined' &&
-      typeof navigator.vibrate === 'function'
+      typeof navigator.vibrate === 'function' &&
+      (!navigator.userActivation || navigator.userActivation.hasBeenActive)
     ) {
       navigator.vibrate(duration);
     }
@@ -986,7 +987,8 @@ function initBottomSheetGestures() {
   let isDragging = false;
 
   const onTouchStart = (e) => {
-    if (dialog.scrollTop > 0) return;
+    const formEl = dialog.querySelector('.create-sheet-form');
+    if (dialog.scrollTop > 0 || (formEl && formEl.scrollTop > 0)) return;
     startY = e.touches[0].clientY;
     currentDeltaY = 0;
     isDragging = true;
@@ -2222,6 +2224,20 @@ function renderTable() {
 
   if (filtered.length === 0) {
     elements.recordsTbody.innerHTML = '';
+    const isFiltered = Boolean(
+      state.searchQuery ||
+      (state.selectedAccountFilter && state.selectedAccountFilter !== 'all'),
+    );
+    const emptyTextEl = elements.emptyState?.querySelector('.empty-text');
+    if (emptyTextEl) {
+      emptyTextEl.textContent = isFiltered
+        ? state.lang === 'zh'
+          ? '未找到匹配的账单'
+          : 'No matching records found'
+        : t('empty_records');
+    }
+    elements.emptyCreateBtn?.classList.toggle('hidden', isFiltered);
+
     elements.emptyState?.classList.remove('hidden');
     return;
   }
@@ -4988,6 +5004,8 @@ async function backupAndCleanExpiredReceipts() {
     const zip = new window.JSZip();
     const folder = zip.folder('MonetaX_Receipts_Archive');
     const csvLines = ['Date,Type,Category,Account,Amount,Note,Filename'];
+    const packedRecords = [];
+    let failedCount = 0;
 
     for (let i = 0; i < expiredList.length; i++) {
       const rec = expiredList[i];
@@ -4996,11 +5014,17 @@ async function backupAndCleanExpiredReceipts() {
         '_',
       );
       let blob = null;
-      if (String(rec.image_url).startsWith('data:image/')) {
-        blob = dataUrlToBlob(rec.image_url);
-      } else {
-        const res = await fetch(rec.image_url);
-        if (res.ok) blob = await res.blob();
+      try {
+        if (String(rec.image_url).startsWith('data:image/')) {
+          blob = dataUrlToBlob(rec.image_url);
+        } else {
+          const res = await fetch(rec.image_url);
+          if (res.ok) blob = await res.blob();
+        }
+      } catch (e) {}
+      if (!blob) {
+        failedCount++;
+        continue;
       }
       const lowerUrl = String(rec.image_url || '').toLowerCase();
       const mimeHint =
@@ -5009,14 +5033,22 @@ async function backupAndCleanExpiredReceipts() {
           ? 'image/jpeg'
           : 'image/webp');
       const fileName = `${rec.date || 'unknown'}_${safeCat}_${rec.amount}_${i + 1}${getReceiptExtFromMime(mimeHint)}`;
-
-      if (blob) {
-        folder.file(fileName, blob);
-      }
+      folder.file(fileName, blob);
+      packedRecords.push(rec);
       const safeNote = String(rec.note || '').replace(/"/g, '""');
       csvLines.push(
         `${rec.date},${rec.type},"${rec.category}","${rec.account_name || 'Cash'}",${rec.amount},"${safeNote}","${fileName}"`,
       );
+    }
+
+    if (packedRecords.length === 0) {
+      showToast(
+        state.lang === 'zh'
+          ? '收据图片获取失败，已取消清理以防数据丢失'
+          : 'Failed to fetch receipts; cleanup aborted',
+        true,
+      );
+      return;
     }
 
     folder.file('receipt_manifest.csv', '\uFEFF' + csvLines.join('\n'));
@@ -5031,7 +5063,15 @@ async function backupAndCleanExpiredReceipts() {
     );
     if (saveRes?.canceled) return;
 
-    await purgeExpiredReceiptsOnly(expiredList, false);
+    await purgeExpiredReceiptsOnly(packedRecords, false);
+    if (failedCount > 0) {
+      showToast(
+        state.lang === 'zh'
+          ? `有 ${failedCount} 张图片未成功导出，已保留在云端`
+          : `${failedCount} receipt(s) failed to export and were kept`,
+        true,
+      );
+    }
   } catch (err) {
     showToast(err.message || 'ZIP backup failed', true);
   } finally {
@@ -5910,7 +5950,13 @@ function hydrateLocalCacheImmediately() {
 async function init() {
   // 0. Instant Local Cache Hydration (<16ms 0-delay first render)
   hydrateLocalCacheImmediately();
-
+  const versionText = `v${APP_VERSION}`;
+  if (elements.appVersionBadge) {
+    elements.appVersionBadge.textContent = versionText;
+  }
+  if (elements.inAppUpdateVersionBadge) {
+    elements.inAppUpdateVersionBadge.textContent = versionText;
+  }
   // 1. Multi-Page Navigation Listeners
   elements.bottomNavItems.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -5992,9 +6038,14 @@ async function init() {
   });
 
   // 9. Search Input and Clear Button
+  let searchDebounceTimer = null;
   elements.searchInput?.addEventListener('input', (e) => {
-    state.searchQuery = e.target.value.trim();
-    renderTable();
+    const query = e.target.value.trim();
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      state.searchQuery = query;
+      renderTable();
+    }, 150);
   });
 
   elements.clearSearchBtn?.addEventListener('click', () => {
@@ -6005,13 +6056,29 @@ async function init() {
   });
 
   // 10. Refresh button & Privacy Mode Toggle
-  elements.refreshBtn?.addEventListener('click', () => {
-    loadSummary();
-    loadRecords();
-    loadAccounts();
-    fetchProjectsFromBackend();
-    fetchClaimsFromBackend();
-    showToast(state.lang === 'zh' ? '数据已刷新' : 'MonetaX data synced');
+  elements.refreshBtn?.addEventListener('click', async () => {
+    if (elements.refreshBtn) elements.refreshBtn.disabled = true;
+    try {
+      await Promise.allSettled([
+        loadSummary(),
+        loadRecords(),
+        loadAccounts(),
+        fetchProjectsFromBackend(),
+        fetchClaimsFromBackend(),
+      ]);
+      showToast(
+        navigator.onLine
+          ? state.lang === 'zh'
+            ? '数据已刷新'
+            : 'MonetaX data synced'
+          : state.lang === 'zh'
+            ? '当前离线，显示本地缓存'
+            : 'Offline: showing local cache',
+        !navigator.onLine,
+      );
+    } finally {
+      if (elements.refreshBtn) elements.refreshBtn.disabled = false;
+    }
   });
 
   elements.privacyToggleBtn?.addEventListener('click', () => {
@@ -7553,16 +7620,31 @@ function setupProjectsModuleEventListeners() {
   });
   elements.saveNewProjectBtn?.addEventListener('click', saveNewProject);
 
+  const updateProjectModeTip = (mode) => {
+    if (!elements.projectModeTip) return;
+    const isZh = state.lang === 'zh';
+    elements.projectModeTip.textContent =
+      mode === 'budget_deduct'
+        ? isZh
+          ? '将从本月总预算中锁定预留这部分额度，防止日常消费超支。'
+          : 'Locks this amount from your monthly budget to prevent overspending.'
+        : isZh
+          ? '作为独立额外资金池追踪，不占用本月日常预算。'
+          : 'Tracked separately without reducing your monthly daily budget.';
+  };
+  updateProjectModeTip('budget_deduct');
   elements.btnModeBudgetDeduct?.addEventListener('click', () => {
     triggerHaptic(8);
     elements.btnModeBudgetDeduct.classList.add('active');
     elements.btnModeExtraFund?.classList.remove('active');
+    updateProjectModeTip('budget_deduct');
   });
 
   elements.btnModeExtraFund?.addEventListener('click', () => {
     triggerHaptic(8);
     elements.btnModeExtraFund.classList.add('active');
     elements.btnModeBudgetDeduct?.classList.remove('active');
+    updateProjectModeTip('extra');
   });
 
   // 3. Budget Top-up Triggers

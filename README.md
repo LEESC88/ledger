@@ -34,12 +34,13 @@ Install and run **MonetaX** directly on your Android phone without needing to ho
 
 ---
 
-## 🆕 What's New in v1.5.6 (100% Offline JSZip Vault, Dynamic Receipt MIME Sync & Unit Test Suite)
+## 🆕 What's New in v1.5.7 (Mobile Ergonomics, Dark-Mode Contrast & Safe Sync Polish)
 
-* 📦 **100% Offline JSZip Archive Engine**: Bundled `jszip@3.10.1` locally into [public/vendor/jszip.min.js](public/vendor/jszip.min.js) and added `/vendor/jszip.min.js` to the PWA Service Worker (`sw.js`) precache list, ensuring 2-year receipt `.zip` exports work reliably inside the Android APK and offline PWAs without external CDN requests.
-* 🖼️ **End-to-End Dynamic Receipt MIME & Extension Sync**: Unified `getReceiptExtFromMime()` across Supabase Storage uploads (`uploadReceiptToCloud`), `.zip` archive filenames, and lightbox exports—ensuring legacy WebViews that fall back from WebP to JPEG upload and archive with `.jpg` / `image/jpeg` cleanly.
-* ✅ **Multi-Tenant Isolation Test Suite & Clean TypeScript Check**: Added Vitest coverage for `RecordsService`, `ProjectsService`, `ClaimsService`, and `BudgetsService` (`src/services.tenant-isolation.spec.ts`) verifying strict `!userId` guards and core summary/settlement/budget-fallback behavior, alongside `nodenext` type-import fixes in [test/app.e2e-spec.ts](test/app.e2e-spec.ts).
-* 📜 **v1.5.5 & v1.5.4 Foundation**: Android native `FileProvider` share sheet (`shareBinaryFile` for `.zip` & photos), `ObjectURL` camera compression, 0ms cold-start hydration for Projects/Claims/Top-Ups, multi-currency Split Bills, 400% zoomable lightbox, and 2-year rolling retention.
+* 🎨 **High-Contrast Dark Mode & Complete Theme Tokens**: Added `--on-accent` (`#0f172a` in dark mode / `#ffffff` in light mode) across all solid brand/semantic buttons and mapped legacy CSS token aliases (`--bg-card`, `--border-subtle`, `--color-primary/success/danger`, `--accent-emerald/rose`) cleanly in `:root`.
+* 👁️ **Privacy Mode Receipt Shielding**: Aligned receipt preview & lightbox blur selectors with `body.privacy-active` (plus press/hover-to-peek) so receipt photos stay masked alongside financial amounts.
+* 📱 **Mobile Safe-Area, Touch Targets & Gesture Polish**: Scoped desktop modal overrides behind `@media (min-width: 641px)` to restore full-width mobile bottom sheets with `env(safe-area-inset-bottom)`, expanded `.btn-icon-header` hit targets to `44px` vertically without crowding the header, prevented accidental swipe-close while scrolling long forms, and gated `navigator.vibrate` behind `userActivation`.
+* 🛡️ **Safe ZIP Cleanup, Real Async Refresh & Search UX**: Only purges cloud receipts that were successfully packed into the `.zip` archive, awaits all 5 sync requests in `#refreshBtn`, adds `150ms` search debouncing + filtered empty states, restores `#projectModeTip` funding-mode descriptions, and syncs `APP_VERSION` badges immediately at boot.
+* 📜 **v1.5.6 – v1.5.4 Foundation**: Bundled offline `JSZip` precache, dynamic JPEG/WebP MIME upload/archive sync, Android native `FileProvider` `.zip` & photo sharing, 0ms cold-start hydration, 400% zoomable lightbox, and multi-tenant isolation test suite.
 
 ---
 
