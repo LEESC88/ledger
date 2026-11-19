@@ -1,4 +1,4 @@
-const CACHE_NAME = 'monetax-cache-v1.5.7';
+const CACHE_NAME = 'monetax-cache-v1.5.8';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

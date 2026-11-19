@@ -12,6 +12,10 @@ import {
 import { ApiTags, ApiOperation, ApiParam, ApiHeader } from '@nestjs/swagger';
 import { ClaimsService } from './claims.service.js';
 import { CreateClaimDto } from './dto/create-claim.dto.js';
+import {
+  UpdateClaimDto,
+  SettleClaimReceiveDto,
+} from './dto/update-claim.dto.js';
 
 /**
  * ClaimsController
@@ -46,6 +50,21 @@ export class ClaimsController {
   }
 
   /**
+   * PATCH /api/claims/:id - 更新代垫账单内容与分摊明细
+   */
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update a claim / split bill' })
+  @ApiParam({ name: 'id', description: 'Claim ID' })
+  @ApiHeader({ name: 'x-user-id', required: false })
+  async update(
+    @Param('id') id: string,
+    @Body() updateClaimDto: UpdateClaimDto,
+    @Headers('x-user-id') userId?: string,
+  ) {
+    return await this.claimsService.update(id, updateClaimDto, userId);
+  }
+
+  /**
    * PATCH /api/claims/:id/friend/:index - 切换某位朋友还款状态
    */
   @Patch(':id/friend/:index')
@@ -56,8 +75,14 @@ export class ClaimsController {
     @Param('id') id: string,
     @Param('index', ParseIntPipe) index: number,
     @Headers('x-user-id') userId?: string,
+    @Body() body?: SettleClaimReceiveDto,
   ) {
-    return await this.claimsService.toggleFriendPaid(id, index, userId);
+    return await this.claimsService.toggleFriendPaid(
+      id,
+      index,
+      userId,
+      body?.paid_via,
+    );
   }
 
   /**
@@ -69,8 +94,9 @@ export class ClaimsController {
   async settleAll(
     @Param('id') id: string,
     @Headers('x-user-id') userId?: string,
+    @Body() body?: SettleClaimReceiveDto,
   ) {
-    return await this.claimsService.settleAll(id, userId);
+    return await this.claimsService.settleAll(id, userId, body?.paid_via);
   }
 
   /**

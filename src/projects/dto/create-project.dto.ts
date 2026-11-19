@@ -5,14 +5,18 @@ import {
   IsPositive,
   IsOptional,
   IsIn,
+  IsBoolean,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 /**
- * Data Transfer Object for creating a new Sinking Fund / Project.
+ * Data Transfer Object for creating a new Sinking Fund / Project Budget Card.
  */
 export class CreateProjectDto {
-  @ApiPropertyOptional({ example: 'proj_1730000000000', description: 'Client-generated unique ID' })
+  @ApiPropertyOptional({
+    example: 'proj_1730000000000',
+    description: 'Client-generated unique ID',
+  })
   @IsString()
   @IsOptional()
   id?: string;
@@ -27,13 +31,13 @@ export class CreateProjectDto {
   @IsOptional()
   icon?: string;
 
-  @ApiProperty({ example: 500, description: 'Target reserved monetary amount' })
+  @ApiProperty({ example: 500, description: 'Target budget monetary amount' })
   @IsNumber()
   @IsPositive()
   targetAmount: number;
 
   @ApiPropertyOptional({
-    example: 'budget_deduct',
+    example: 'extra',
     enum: ['budget_deduct', 'extra'],
     description: 'Funding mode',
   })
@@ -42,8 +46,40 @@ export class CreateProjectDto {
   @IsIn(['budget_deduct', 'extra'])
   mode?: string;
 
-  @ApiPropertyOptional({ example: '2026-10', description: 'Target month' })
+  @ApiPropertyOptional({ example: '2026-11', description: 'Target month' })
   @IsString()
   @IsOptional()
   month?: string;
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Include in monthly budget monitor',
+  })
+  @IsBoolean()
+  @IsOptional()
+  includeInBudget?: boolean;
+
+  @ApiPropertyOptional({
+    example: 'indefinite',
+    enum: ['indefinite', '2w', 'this_month', '1m', '3m', 'custom'],
+    description: 'Custom timeframe preset',
+  })
+  @IsString()
+  @IsOptional()
+  @IsIn(['indefinite', '2w', 'this_month', '1m', '3m', 'custom'])
+  timeframeType?: string;
+
+  @ApiPropertyOptional({ example: '2026-11-18', description: 'Start date (YYYY-MM-DD)' })
+  @IsString()
+  @IsOptional()
+  startDate?: string;
+
+  @ApiPropertyOptional({
+    example: '2026-12-02',
+    nullable: true,
+    description: 'Optional deadline (YYYY-MM-DD)',
+  })
+  @IsString()
+  @IsOptional()
+  deadline?: string | null;
 }

@@ -5,7 +5,7 @@
  * ============================================================================
  */
 // Current Client Release Version
-const APP_VERSION = '1.5.7';
+const APP_VERSION = '1.5.8';
 
 // Default BaaS Cloud Configuration (Decoded from safe payload, overridable by window.__ENV__)
 const SUPABASE_DEFAULT_CONFIG = {
@@ -79,6 +79,7 @@ const SVG_ICONS = {
   receipt: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>`,
   download: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`,
   archive: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"></rect><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"></path><path d="M10 12h4"></path></svg>`,
+  copy: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>`,
 };
 
 // Visual Category Metadata (Line Icons, High-Contrast Palette Colors & Bilingual Labels)
@@ -201,6 +202,20 @@ let state = {
   claims: [],
   budgetTopUps: {},
   activeProjectTab: 'sinking',
+  activeProjectId: null,
+  editingProjectEntryId: null,
+  selectedProjectEntryCategory: 'Food & Dining',
+  selectedProjectEntryAccount: 'Cash',
+  pendingProjectReceiptDataUrl: null,
+  pendingProjectReceiptSizeKb: 0,
+  entryDestination: 'daily',
+  selectedEntryFundId: null,
+  newProjectTimeframe: 'indefinite',
+  editProjectTimeframe: 'indefinite',
+  editingClaimId: null,
+  claimsSettledExpanded: false,
+  lastClaimReceiveMethod: 'eWallet',
+  pendingClaimReceiveAction: null,
   selectedAccountsMonth: 'current',
   editingRecordId: null,
   pendingReceiptDataUrl: null,
@@ -337,6 +352,18 @@ const elements = {
   budgetFormulaRow: document.getElementById('budgetFormulaRow'),
   budgetFormulaText: document.getElementById('budgetFormulaText'),
   budgetLockedBar: document.getElementById('budgetLockedBar'),
+  budgetCombinedOverview: document.getElementById('budgetCombinedOverview'),
+  budgetCombinedFormula: document.getElementById('budgetCombinedFormula'),
+  budgetCombinedUsage: document.getElementById('budgetCombinedUsage'),
+  budgetFundsSection: document.getElementById('budgetFundsSection'),
+  budgetFundsCountBadge: document.getElementById('budgetFundsCountBadge'),
+  budgetFundsSummaryText: document.getElementById('budgetFundsSummaryText'),
+  budgetFundsList: document.getElementById('budgetFundsList'),
+  entryDestinationWrap: document.getElementById('entryDestinationWrap'),
+  btnDestDaily: document.getElementById('btnDestDaily'),
+  btnDestFund: document.getElementById('btnDestFund'),
+  entryFundTargetPicker: document.getElementById('entryFundTargetPicker'),
+  entryFundCardsGrid: document.getElementById('entryFundCardsGrid'),
   topupBudgetModal: document.getElementById('topupBudgetModal'),
   closeTopupBudgetModalBtn: document.getElementById('closeTopupBudgetModalBtn'),
   cancelTopupBudgetBtn: document.getElementById('cancelTopupBudgetBtn'),
@@ -351,9 +378,97 @@ const elements = {
   saveNewProjectBtn: document.getElementById('saveNewProjectBtn'),
   projectInputTitle: document.getElementById('projectInputTitle'),
   projectInputAmount: document.getElementById('projectInputAmount'),
-  btnModeBudgetDeduct: document.getElementById('btnModeBudgetDeduct'),
-  btnModeExtraFund: document.getElementById('btnModeExtraFund'),
-  projectModeTip: document.getElementById('projectModeTip'),
+  newProjectIncludeBudgetCheck: document.getElementById(
+    'newProjectIncludeBudgetCheck',
+  ),
+  newProjectTimeframePills: document.getElementById('newProjectTimeframePills'),
+  newProjectDatesRow: document.getElementById('newProjectDatesRow'),
+  newProjectStartInput: document.getElementById('newProjectStartInput'),
+  newProjectDeadlineInput: document.getElementById('newProjectDeadlineInput'),
+  newProjectTimeframeHint: document.getElementById('newProjectTimeframeHint'),
+  projectDetailModal: document.getElementById('projectDetailModal'),
+  closeProjectDetailModalBtn: document.getElementById(
+    'closeProjectDetailModalBtn',
+  ),
+  projectDetailTitle: document.getElementById('projectDetailTitle'),
+  projectDetailStatusBadge: document.getElementById('projectDetailStatusBadge'),
+  toggleEditProjectMetaBtn: document.getElementById('toggleEditProjectMetaBtn'),
+  projectMetaEditPanel: document.getElementById('projectMetaEditPanel'),
+  projectDetailEditTitle: document.getElementById('projectDetailEditTitle'),
+  projectDetailEditTarget: document.getElementById('projectDetailEditTarget'),
+  editProjectIncludeBudgetCheck: document.getElementById(
+    'editProjectIncludeBudgetCheck',
+  ),
+  editProjectTimeframePills: document.getElementById(
+    'editProjectTimeframePills',
+  ),
+  editProjectDatesRow: document.getElementById('editProjectDatesRow'),
+  editProjectStartInput: document.getElementById('editProjectStartInput'),
+  editProjectDeadlineInput: document.getElementById('editProjectDeadlineInput'),
+  cancelProjectMetaBtn: document.getElementById('cancelProjectMetaBtn'),
+  saveProjectMetaBtn: document.getElementById('saveProjectMetaBtn'),
+  projectDetailTargetVal: document.getElementById('projectDetailTargetVal'),
+  projectDetailSpentVal: document.getElementById('projectDetailSpentVal'),
+  projectDetailOutcomeLabel: document.getElementById(
+    'projectDetailOutcomeLabel',
+  ),
+  projectDetailOutcomeVal: document.getElementById('projectDetailOutcomeVal'),
+  projectDetailProgressFill: document.getElementById(
+    'projectDetailProgressFill',
+  ),
+  projectEntryForm: document.getElementById('projectEntryForm'),
+  projectEntryCategoryGrid: document.getElementById('projectEntryCategoryGrid'),
+  projectEntryAccountGrid: document.getElementById('projectEntryAccountGrid'),
+  projectEntryTitleInput: document.getElementById('projectEntryTitleInput'),
+  projectEntryAmountInput: document.getElementById('projectEntryAmountInput'),
+  projectEntryDateInput: document.getElementById('projectEntryDateInput'),
+  triggerProjectReceiptBtn: document.getElementById('triggerProjectReceiptBtn'),
+  projectReceiptFileInput: document.getElementById('projectReceiptFileInput'),
+  projectReceiptPreviewDrawer: document.getElementById(
+    'projectReceiptPreviewDrawer',
+  ),
+  previewProjectReceiptThumbWrap: document.getElementById(
+    'previewProjectReceiptThumbWrap',
+  ),
+  projectReceiptPreviewImg: document.getElementById('projectReceiptPreviewImg'),
+  projectReceiptPreviewMeta: document.getElementById(
+    'projectReceiptPreviewMeta',
+  ),
+  removeProjectReceiptBtn: document.getElementById('removeProjectReceiptBtn'),
+  cancelProjectEntryEditBtn: document.getElementById(
+    'cancelProjectEntryEditBtn',
+  ),
+  saveProjectEntryBtn: document.getElementById('saveProjectEntryBtn'),
+  projectSettledNotice: document.getElementById('projectSettledNotice'),
+  projectEntriesCountLabel: document.getElementById('projectEntriesCountLabel'),
+  projectEntriesList: document.getElementById('projectEntriesList'),
+  detailDeleteProjectBtn: document.getElementById('detailDeleteProjectBtn'),
+  detailCompleteProjectBtn: document.getElementById('detailCompleteProjectBtn'),
+  detailResumeProjectBtn: document.getElementById('detailResumeProjectBtn'),
+
+  // Edit Claim Modal Elements
+  editClaimModal: document.getElementById('editClaimModal'),
+  closeEditClaimModalBtn: document.getElementById('closeEditClaimModalBtn'),
+  editClaimTitleInput: document.getElementById('editClaimTitleInput'),
+  editClaimTotalInput: document.getElementById('editClaimTotalInput'),
+  editClaimDateInput: document.getElementById('editClaimDateInput'),
+  editClaimFriendsList: document.getElementById('editClaimFriendsList'),
+  editClaimSplitEvenlyBtn: document.getElementById('editClaimSplitEvenlyBtn'),
+  addEditClaimFriendBtn: document.getElementById('addEditClaimFriendBtn'),
+  editClaimMyShareInput: document.getElementById('editClaimMyShareInput'),
+  editClaimOverSumWarn: document.getElementById('editClaimOverSumWarn'),
+  deleteClaimInModalBtn: document.getElementById('deleteClaimInModalBtn'),
+  cancelEditClaimBtn: document.getElementById('cancelEditClaimBtn'),
+  saveEditClaimBtn: document.getElementById('saveEditClaimBtn'),
+
+  // Claim Receive Method Modal Elements
+  claimReceiveModal: document.getElementById('claimReceiveModal'),
+  closeClaimReceiveModalBtn: document.getElementById(
+    'closeClaimReceiveModalBtn',
+  ),
+  claimReceiveModalSub: document.getElementById('claimReceiveModalSub'),
+  claimReceiveMethodGrid: document.getElementById('claimReceiveMethodGrid'),
+  confirmClaimReceiveBtn: document.getElementById('confirmClaimReceiveBtn'),
 
   // Confirmation Modal Elements
   confirmActionModal: document.getElementById('confirmActionModal'),
@@ -366,12 +481,12 @@ const elements = {
   confirmModalDesc: document.getElementById('confirmModalDesc'),
 
   // Advanced Create Record Toggles & Drawers
-  toggleFundLinkBtn: document.getElementById('toggleFundLinkBtn'),
   toggleSplitBillBtn: document.getElementById('toggleSplitBillBtn'),
-  sinkingFundDrawer: document.getElementById('sinkingFundDrawer'),
   splitBillDrawer: document.getElementById('splitBillDrawer'),
-  entryProjectSelect: document.getElementById('entryProjectSelect'),
   splitMyShareInput: document.getElementById('splitMyShareInput'),
+  splitCalcFormula: document.getElementById('splitCalcFormula'),
+  splitOverSumWarn: document.getElementById('splitOverSumWarn'),
+  splitEvenlyBtn: document.getElementById('splitEvenlyBtn'),
   addFriendRowBtn: document.getElementById('addFriendRowBtn'),
   splitFriendsList: document.getElementById('splitFriendsList'),
 
@@ -604,16 +719,26 @@ function setAppLanguage(lang) {
     }
   });
 
+  // Translate all [data-i18n-title] tooltips safely
+  document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+    const key = el.getAttribute('data-i18n-title');
+    const translated = key ? t(key) : '';
+    if (translated) {
+      el.setAttribute('title', translated);
+    }
+  });
+
   // Re-render dynamic components with new language
   renderCategoryGrid(state.currentType);
   renderAccountPicker();
+  renderEntryFundCardsPicker();
+  recalcSplitBillMyShare();
   updateMonthFilterDropdown(state.records);
   renderTable();
   renderBudgetTracker();
   renderSinkingFunds();
   renderClaims();
   renderBudgetTopupHistory();
-  updateProjectDropdownOptions();
   updateSyncStatusUI();
   updateAccountModalData();
   renderAccountsCenter();
@@ -637,8 +762,11 @@ function hasAnyOpenModal() {
     elements.receiptLightboxModal,
     elements.avatarLightboxModal,
     elements.confirmActionModal,
+    elements.claimReceiveModal,
     elements.inAppUpdateModal,
     elements.topupBudgetModal,
+    elements.editClaimModal,
+    elements.projectDetailModal,
     elements.newProjectModal,
     elements.budgetModal,
     elements.retentionModal,
@@ -694,9 +822,17 @@ function closeTopmostActiveModal(fromPopState = false) {
     return true;
   }
   if (
+    elements.claimReceiveModal &&
+    !elements.claimReceiveModal.classList.contains('hidden')
+  ) {
+    closeClaimReceiveModal(fromPopState);
+    return true;
+  }
+  if (
     elements.inAppUpdateModal &&
     !elements.inAppUpdateModal.classList.contains('hidden')
   ) {
+    if (isForceUpdateRequired) return true;
     closeInAppUpdateModal(fromPopState);
     return true;
   }
@@ -705,6 +841,20 @@ function closeTopmostActiveModal(fromPopState = false) {
     !elements.topupBudgetModal.classList.contains('hidden')
   ) {
     closeTopupBudgetModal(fromPopState);
+    return true;
+  }
+  if (
+    elements.editClaimModal &&
+    !elements.editClaimModal.classList.contains('hidden')
+  ) {
+    closeEditClaimModal(fromPopState);
+    return true;
+  }
+  if (
+    elements.projectDetailModal &&
+    !elements.projectDetailModal.classList.contains('hidden')
+  ) {
+    closeProjectDetailModal(fromPopState);
     return true;
   }
   if (
@@ -819,7 +969,6 @@ function openCreateModal() {
   triggerHaptic(10);
   state.editingRecordId = null;
   closeProfileDropdown();
-  updateProjectDropdownOptions();
 
   // Reset Modal Header and Button
   if (elements.createModalTitle) {
@@ -840,13 +989,11 @@ function openCreateModal() {
   }
 
   // Reset Advanced Toggles & Drawers
-  if (elements.toggleFundLinkBtn)
-    elements.toggleFundLinkBtn.classList.remove('active');
   if (elements.toggleSplitBillBtn)
     elements.toggleSplitBillBtn.classList.remove('active');
-  elements.sinkingFundDrawer?.classList.add('hidden');
   elements.splitBillDrawer?.classList.add('hidden');
-  if (elements.entryProjectSelect) elements.entryProjectSelect.value = '';
+  elements.splitCalcFormula?.classList.add('hidden');
+  elements.splitOverSumWarn?.classList.add('hidden');
   if (elements.splitMyShareInput) elements.splitMyShareInput.value = '';
   if (elements.splitFriendsList) elements.splitFriendsList.innerHTML = '';
   if (typeof clearPendingReceipt === 'function') {
@@ -855,6 +1002,13 @@ function openCreateModal() {
 
   renderCategoryGrid(state.currentType);
   renderAccountPicker();
+  if (typeof setEntryDestination === 'function') {
+    setEntryDestination('daily');
+  }
+  elements.entryDestinationWrap?.classList.toggle(
+    'hidden',
+    state.currentType !== 'expense',
+  );
   elements.createEntryModal?.classList.remove('hidden');
   pushModalHistoryState();
   setTimeout(() => {
@@ -869,7 +1023,6 @@ function openEditRecordModal(id) {
 
   state.editingRecordId = record.id;
   closeProfileDropdown();
-  updateProjectDropdownOptions();
 
   // 1. Update Title and Button for Editing
   if (elements.createModalTitle) {
@@ -921,13 +1074,12 @@ function openEditRecordModal(id) {
     elements.inputNote.value = formatRecordCleanNote(record.note || '');
   }
 
-  // 7. Hide Project & Split Drawers during basic edit for clarity
-  if (elements.toggleFundLinkBtn)
-    elements.toggleFundLinkBtn.classList.remove('active');
+  // 7. Hide Split Drawer & Destination Selector during basic edit for clarity
   if (elements.toggleSplitBillBtn)
     elements.toggleSplitBillBtn.classList.remove('active');
-  elements.sinkingFundDrawer?.classList.add('hidden');
   elements.splitBillDrawer?.classList.add('hidden');
+  elements.entryDestinationWrap?.classList.add('hidden');
+  state.entryDestination = 'daily';
 
   // 7b. Pre-fill Receipt Photo Preview if attached (skip archived placeholders)
   if (typeof clearPendingReceipt === 'function') {
@@ -1216,7 +1368,106 @@ function setEntryType(type) {
     elements.btnTypeIncome?.classList.add('active');
     elements.btnTypeExpense?.classList.remove('active');
   }
+  const showDestSwitch = type === 'expense' && !state.editingRecordId;
+  elements.entryDestinationWrap?.classList.toggle('hidden', !showDestSwitch);
+  if (!showDestSwitch && typeof setEntryDestination === 'function') {
+    setEntryDestination('daily');
+  }
+  const canShowSplit =
+    type === 'expense' &&
+    !state.editingRecordId &&
+    state.entryDestination !== 'fund';
+  elements.toggleSplitBillBtn?.classList.toggle('hidden', !canShowSplit);
+  if (!canShowSplit) {
+    elements.toggleSplitBillBtn?.classList.remove('active');
+    elements.splitBillDrawer?.classList.add('hidden');
+  }
   renderCategoryGrid(type);
+}
+
+function renderEntryFundCardsPicker() {
+  const container = elements.entryFundCardsGrid;
+  if (!container) return;
+
+  const isZh = state.lang === 'zh';
+  const sym = state.currency || 'RM';
+  const activeFunds = (state.projects || []).filter(
+    (p) => p.status === 'active',
+  );
+
+  if (activeFunds.length === 0) {
+    state.selectedEntryFundId = null;
+    container.innerHTML = `
+      <div class="entry-fund-empty-hint" style="grid-column: 1 / -1;">
+        <span>${isZh ? '暂无进行中的专款卡片' : 'No active dedicated funds'}</span>
+        <button type="button" class="btn-modal-secondary" onclick="closeCreateModal(); switchAppPage('projects'); openNewProjectModal();">
+          ${t('btn_new_project')}
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  if (
+    !state.selectedEntryFundId ||
+    !activeFunds.some((f) => String(f.id) === String(state.selectedEntryFundId))
+  ) {
+    state.selectedEntryFundId = String(activeFunds[0].id);
+  }
+
+  container.innerHTML = activeFunds
+    .map((fund) => {
+      const isSelected = String(fund.id) === String(state.selectedEntryFundId);
+      const target = parseFloat(fund.target_amount) || 0;
+      const spent = getProjectSpentAmount(fund);
+      const outcome = formatProjectOutcomeSummary(target, spent, false);
+      const tf = formatProjectTimeframeBadge(fund);
+      return `
+        <button
+          type="button"
+          class="entry-fund-card-btn ${isSelected ? 'active' : ''}"
+          data-entry-fund-id="${fund.id}"
+        >
+          <span class="entry-fund-card-name"><span class="inline-svg-icon">${SVG_ICONS.target}</span><span>${escapeHtml(fund.title)}</span></span>
+          <span class="entry-fund-card-meta ${outcome.isOverBudget ? 'is-over-budget' : ''}">
+            ${outcome.label} ${sym} ${outcome.absAmount} · ${tf.text}
+          </span>
+        </button>
+      `;
+    })
+    .join('');
+
+  container.querySelectorAll('.entry-fund-card-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const chosenId = btn.getAttribute('data-entry-fund-id');
+      if (chosenId) {
+        state.selectedEntryFundId = chosenId;
+      }
+      container
+        .querySelectorAll('.entry-fund-card-btn')
+        .forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+}
+
+function setEntryDestination(dest) {
+  const targetDest = dest === 'fund' ? 'fund' : 'daily';
+  state.entryDestination = targetDest;
+  const isFund = targetDest === 'fund';
+
+  elements.btnDestDaily?.classList.toggle('active', !isFund);
+  elements.btnDestFund?.classList.toggle('active', isFund);
+  elements.entryFundTargetPicker?.classList.toggle('hidden', !isFund);
+
+  if (isFund) {
+    elements.toggleSplitBillBtn?.classList.remove('active');
+    elements.toggleSplitBillBtn?.classList.add('hidden');
+    elements.splitBillDrawer?.classList.add('hidden');
+    renderEntryFundCardsPicker();
+  } else {
+    elements.toggleSplitBillBtn?.classList.remove('hidden');
+  }
 }
 
 /**
@@ -1733,6 +1984,10 @@ function renderBudgetTracker() {
       elements.budgetRemainingLabel.textContent = `${t('remaining')}: ${sym} ${formatNumber(remaining)}`;
     }
   }
+
+  if (typeof renderBudgetFundsSection === 'function') {
+    renderBudgetFundsSection(targetMonth, totalExpense, budgetLimit);
+  }
 }
 
 function openBudgetModal() {
@@ -1954,6 +2209,13 @@ function updateMonthFilterDropdown(records) {
     records.forEach((r) => {
       if (r.date && r.date.length >= 7) {
         months.add(r.date.substring(0, 7));
+      }
+    });
+  }
+  if (Array.isArray(state.claims)) {
+    state.claims.forEach((c) => {
+      if (c.date && c.date.length >= 7) {
+        months.add(c.date.substring(0, 7));
       }
     });
   }
@@ -2304,21 +2566,7 @@ async function executeRecordUpdate(editingId, updatedPayload) {
       state.lang === 'zh' ? '未找到对应账单记录' : 'Record not found',
     );
   const previousImageUrl = record.image_url || null;
-  // Snapshot original type/amount/note and linked sinking fund before mutating record
-  const previousType = record.type;
-  const previousAmount = parseFloat(record.amount) || 0;
   const previousNote = record.note || '';
-
-  let linkedFund = null;
-  if (record.project_id) {
-    linkedFund = (state.projects || []).find((p) => p.id === record.project_id);
-  } else if (previousNote.includes('[专款:')) {
-    const match = previousNote.match(/\[专款:\s*([^\]]+)\]/);
-    if (match && match[1]) {
-      const title = match[1].trim();
-      linkedFund = (state.projects || []).find((p) => p.title === title);
-    }
-  }
 
   const tagRegex = new RegExp(
     '^(\\[(?:🎯|👥|专款:|AA分摊:|代垫:)[^\\]]+\\])\\s*',
@@ -2466,39 +2714,6 @@ async function executeRecordUpdate(editingId, updatedPayload) {
     }
   }
 
-  // Sync linked sinking fund `spent_amount` delta if amount or type changed
-  if (linkedFund) {
-    const prevContribution = previousType === 'expense' ? previousAmount : 0;
-    const nextContribution =
-      updatedPayload.type === 'expense'
-        ? parseFloat(updatedPayload.amount) || 0
-        : 0;
-    const delta = Number((nextContribution - prevContribution).toFixed(2));
-    if (delta !== 0) {
-      linkedFund.spent_amount = Math.max(
-        0,
-        Number(((parseFloat(linkedFund.spent_amount) || 0) + delta).toFixed(2)),
-      );
-      saveProjects(state.projects);
-      renderSinkingFunds();
-
-      if (supabaseClient && state.user?.id) {
-        try {
-          await supabaseClient
-            .from('projects')
-            .update({ spent_amount: linkedFund.spent_amount })
-            .eq('id', linkedFund.id)
-            .eq('user_id', state.user.id);
-        } catch (e) {}
-      }
-
-      fetch(`/api/projects/${linkedFund.id}/spent`, {
-        method: 'PATCH',
-        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ spentAmount: linkedFund.spent_amount }),
-      }).catch(() => {});
-    }
-  }
   renderTable();
   calculateLocalSummaryMetrics();
   renderBudgetTracker();
@@ -2572,6 +2787,90 @@ async function handleRecordSubmit(e) {
     return;
   }
 
+  // Branch: Expense logged directly into a Dedicated Project Fund (Plan 1: kept strictly separate from daily records)
+  if (state.currentType === 'expense' && state.entryDestination === 'fund') {
+    const isZh = state.lang === 'zh';
+    const targetFund = (state.projects || []).find(
+      (p) =>
+        p.status === 'active' &&
+        String(p.id) === String(state.selectedEntryFundId),
+    );
+    if (!targetFund) {
+      showToast(
+        isZh
+          ? '请先选择或创建一个进行中的专款对象'
+          : 'Please select or create an active dedicated fund first',
+        true,
+      );
+      return;
+    }
+
+    try {
+      elements.submitBtn.disabled = true;
+      elements.submitBtn.style.opacity = '0.7';
+
+      let nextImageUrl = payload.image_url || null;
+      const nextImageSizeKb = payload.image_size_kb || 0;
+      if (
+        nextImageUrl &&
+        String(nextImageUrl).startsWith('data:image/') &&
+        typeof uploadReceiptToCloud === 'function'
+      ) {
+        nextImageUrl = await uploadReceiptToCloud(nextImageUrl);
+      }
+
+      const entries = normalizeProjectEntries(targetFund.entries);
+      if (
+        entries.length === 0 &&
+        (parseFloat(targetFund.spent_amount) || 0) > 0
+      ) {
+        entries.push({
+          id: 'pentry_legacy_' + Date.now(),
+          title: isZh ? '历史已用金额' : 'Previous Spent Balance',
+          category: 'Other Expense',
+          account_name: 'Cash',
+          amount: Number((parseFloat(targetFund.spent_amount) || 0).toFixed(2)),
+          date: getLocalDateString(),
+          created_at: targetFund.created_at || new Date().toISOString(),
+        });
+      }
+
+      entries.unshift({
+        id:
+          'pentry_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        title: (payload.note || '').trim(),
+        category: payload.category || 'Other Expense',
+        account_name: payload.account_name || 'Cash',
+        amount: Number((parseFloat(payload.amount) || 0).toFixed(2)),
+        date: payload.date || getLocalDateString(),
+        image_url: nextImageUrl,
+        image_size_kb: nextImageSizeKb,
+        created_at: new Date().toISOString(),
+      });
+
+      targetFund.entries = entries;
+      targetFund.spent_amount = getProjectSpentAmount(targetFund);
+
+      saveProjects(state.projects);
+      renderSinkingFunds();
+      renderBudgetTracker();
+      closeCreateModal();
+      triggerHaptic(15);
+      showToast(
+        isZh
+          ? `已记入专款【${targetFund.title}】`
+          : `Added to "${targetFund.title}"`,
+      );
+      await syncProjectChangeToCloud(targetFund);
+    } catch (err) {
+      showToast(err.message || 'Save failed', true);
+    } finally {
+      elements.submitBtn.disabled = false;
+      elements.submitBtn.style.opacity = '1';
+    }
+    return;
+  }
+
   if (!navigator.onLine) {
     saveOfflineRecord(payload);
     return;
@@ -2584,64 +2883,67 @@ async function handleRecordSubmit(e) {
     const userId = state.user?.id;
     let created = false;
 
-    // Check Project & Split Bill Associations
-    const selectedProjectId = elements.entryProjectSelect?.value;
+    // Check Split Bill Association
     const isSplitActive =
       elements.toggleSplitBillBtn?.classList.contains('active');
 
     let finalAmount = payload.amount;
     let finalNote = payload.note || '';
 
-    if (selectedProjectId) {
-      const fund = (state.projects || []).find(
-        (p) => p.id === selectedProjectId,
-      );
-      if (fund) {
-        fund.spent_amount =
-          (parseFloat(fund.spent_amount) || 0) + payload.amount;
-        saveProjects(state.projects);
-        finalNote = `[专款: ${fund.title}] ${finalNote}`.trim();
-
-        // Sync updated spent_amount to Supabase Cloud
-        if (supabaseClient && state.user?.id) {
-          try {
-            await supabaseClient
-              .from('projects')
-              .update({ spent_amount: fund.spent_amount })
-              .eq('id', fund.id)
-              .eq('user_id', state.user.id);
-          } catch (e) {}
-        }
-
-        // Sync updated spent_amount to NestJS backend API
-        fetch(`/api/projects/${fund.id}/spent`, {
-          method: 'PATCH',
-          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ spentAmount: fund.spent_amount }),
-        }).catch(() => {});
-      }
-    }
-
     if (isSplitActive) {
-      const myShare = parseFloat(elements.splitMyShareInput?.value) || 0;
-      finalAmount = myShare;
-      finalNote =
-        `[AA分摊: 总付 ${state.currency || 'RM'} ${payload.amount}] ${finalNote}`.trim();
-
-      // Collect friend rows
+      // Collect friend rows first so we can validate against total paid amount
       const friendRows =
         elements.splitFriendsList?.querySelectorAll('.split-friend-row') || [];
       const friends = [];
+      let rawFriendsSum = 0;
+      let hasUnnamedAmountRow = false;
       friendRows.forEach((row) => {
         const name = (
           row.querySelector('.friend-name-input')?.value || ''
         ).trim();
         const amt =
           parseFloat(row.querySelector('.friend-amount-input')?.value) || 0;
+        if (!name && amt > 0) {
+          hasUnnamedAmountRow = true;
+          return;
+        }
         if (name && amt > 0) {
-          friends.push({ name, amount: amt, paid: false });
+          rawFriendsSum += amt;
+          friends.push({ name, amount: Number(amt.toFixed(2)), paid: false });
         }
       });
+
+      if (hasUnnamedAmountRow) {
+        showToast(
+          state.lang === 'zh'
+            ? '请填写分摊对象的名称'
+            : 'Please enter a name for each split amount',
+          true,
+        );
+        return;
+      }
+      if (friends.length === 0) {
+        showToast(
+          state.lang === 'zh'
+            ? '请至少填写一位有效分摊对象及金额'
+            : 'Please add at least one valid split party',
+          true,
+        );
+        return;
+      }
+
+      if (rawFriendsSum > payload.amount + 0.001) {
+        showToast(t('split_over_sum_warn'), true);
+        return;
+      }
+
+      const rawMyShare = parseFloat(elements.splitMyShareInput?.value);
+      const myShare = Number.isNaN(rawMyShare)
+        ? Math.max(0, Number((payload.amount - rawFriendsSum).toFixed(2)))
+        : Math.max(0, Number(rawMyShare.toFixed(2)));
+      finalAmount = myShare;
+      finalNote =
+        `[AA分摊: 总付 ${state.currency || 'RM'} ${payload.amount}] ${finalNote}`.trim();
 
       if (friends.length > 0) {
         const claim = {
@@ -2686,14 +2988,29 @@ async function handleRecordSubmit(e) {
             date: claim.date,
           }),
         }).catch(() => {});
+
+        // Pure advance payment (personal share = 0): do not insert a 0-amount expense record
+        if (finalAmount <= 0) {
+          state.pendingReceiptDataUrl = null;
+          state.pendingReceiptSizeKb = 0;
+          if (elements.inputAmount) elements.inputAmount.value = '';
+          if (elements.inputNote) elements.inputNote.value = '';
+          updateMonthFilterDropdown(state.records);
+          renderClaims();
+          closeCreateModal();
+          triggerHaptic(15);
+          showToast(
+            state.lang === 'zh'
+              ? `已生成全额代垫账单 ${state.currency} ${formatNumber(amount)}`
+              : `Advance claim recorded (${state.currency} ${formatNumber(amount)})`,
+          );
+          return;
+        }
       }
     }
 
     payload.amount = finalAmount;
     payload.note = finalNote;
-    if (selectedProjectId) {
-      payload.project_id = selectedProjectId;
-    }
 
     if (
       payload.image_url &&
@@ -2841,60 +3158,12 @@ window.handleDelete = function (id) {
     subtitle: descText,
     desc:
       state.lang === 'zh'
-        ? '确定要删除这条账单记录吗？若关联了专款预留池，已用金额将自动退回。'
-        : 'Are you sure you want to delete this transaction? Any allocated sinking fund spent amount will be restored.',
+        ? '确定要删除这条账单记录吗？删除后将同步更新当月支出统计。'
+        : 'Are you sure you want to delete this transaction?',
     confirmText: state.lang === 'zh' ? '确认删除' : 'Delete',
     danger: true,
     onConfirm: async () => {
       triggerHaptic(12);
-
-      // Rollback linked sinking fund spent amount if applicable
-      if (recordToDelete && recordToDelete.type === 'expense') {
-        let linkedFund = null;
-        if (recordToDelete.project_id) {
-          linkedFund = (state.projects || []).find(
-            (p) => p.id === recordToDelete.project_id,
-          );
-        } else if (
-          recordToDelete.note &&
-          recordToDelete.note.includes('[专款:')
-        ) {
-          const match = recordToDelete.note.match(/\[专款:\s*([^\]]+)\]/);
-          if (match && match[1]) {
-            const title = match[1].trim();
-            linkedFund = (state.projects || []).find((p) => p.title === title);
-          }
-        }
-
-        if (linkedFund) {
-          const rollbackAmount = parseFloat(recordToDelete.amount) || 0;
-          linkedFund.spent_amount = Math.max(
-            0,
-            (parseFloat(linkedFund.spent_amount) || 0) - rollbackAmount,
-          );
-          saveProjects(state.projects);
-          renderSinkingFunds();
-          renderBudgetTracker();
-
-          // Sync rolled back spent_amount to Supabase Cloud
-          if (supabaseClient && state.user?.id) {
-            try {
-              await supabaseClient
-                .from('projects')
-                .update({ spent_amount: linkedFund.spent_amount })
-                .eq('id', linkedFund.id)
-                .eq('user_id', state.user.id);
-            } catch (e) {}
-          }
-
-          // Sync to NestJS backend
-          fetch(`/api/projects/${linkedFund.id}/spent`, {
-            method: 'PATCH',
-            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ spentAmount: linkedFund.spent_amount }),
-          }).catch(() => {});
-        }
-      }
 
       if (isDraft) {
         let queue = getOfflineQueue();
@@ -3713,11 +3982,11 @@ function updateRetentionDropdownLabels() {
   const currentVal = elements.retentionYearsSelect.value || 'current_year';
 
   elements.retentionYearsSelect.innerHTML = `
-    <option value="current_year">${isZh ? `📅 本年度账单 (${currentYear}年)` : `📅 Current Year (${currentYear})`}</option>
-    <option value="1">${isZh ? '⏳ 1 年前历史数据 (> 1年)' : '> 1 Year (365 Days)'}</option>
-    <option value="2">${isZh ? '⏳ 2 年前历史数据 (> 2年)' : '> 2 Years (730 Days)'}</option>
-    <option value="3">${isZh ? '⏳ 3 年前历史数据 (> 3年推荐)' : '> 3 Years (1095 Days)'}</option>
-    <option value="5">${isZh ? '⏳ 5 年前历史数据 (> 5年)' : '> 5 Years (1825 Days)'}</option>
+    <option value="current_year">${isZh ? `本年度账单 (${currentYear}年)` : `Current Year (${currentYear})`}</option>
+    <option value="1">${isZh ? '1 年前历史数据 (> 1年)' : '> 1 Year (365 Days)'}</option>
+    <option value="2">${isZh ? '2 年前历史数据 (> 2年)' : '> 2 Years (730 Days)'}</option>
+    <option value="3">${isZh ? '3 年前历史数据 (> 3年推荐)' : '> 3 Years (1095 Days)'}</option>
+    <option value="5">${isZh ? '5 年前历史数据 (> 5年)' : '> 5 Years (1825 Days)'}</option>
   `;
   elements.retentionYearsSelect.value = currentVal;
 }
@@ -5603,9 +5872,35 @@ async function registerServiceWorker() {
 let pendingUpdateVersion = null;
 let pendingApkDownloadUrl =
   'https://github.com/LEESC88/ledger/releases/latest/download/MonetaX.apk';
+let isForceUpdateRequired = false;
+let lastAutoUpdateCheckAt = 0;
+const AUTO_UPDATE_CHECK_COOLDOWN_MS = 15 * 60 * 1000;
 
-function openInAppUpdateModal() {
+function compareSemver(a, b) {
+  const pa = String(a || '')
+    .replace(/^v/i, '')
+    .split('.')
+    .map((n) => parseInt(n, 10) || 0);
+  const pb = String(b || '')
+    .replace(/^v/i, '')
+    .split('.')
+    .map((n) => parseInt(n, 10) || 0);
+  const len = Math.max(pa.length, pb.length, 3);
+  for (let i = 0; i < len; i++) {
+    const x = pa[i] || 0;
+    const y = pb[i] || 0;
+    if (x > y) return 1;
+    if (x < y) return -1;
+  }
+  return 0;
+}
+
+function openInAppUpdateModal(forceMode = isForceUpdateRequired) {
   elements.updateDownloadProgressArea?.classList.add('hidden');
+  elements.inAppUpdateModal?.classList.toggle(
+    'is-force-update',
+    Boolean(forceMode),
+  );
   if (elements.startInAppUpdateBtn) {
     elements.startInAppUpdateBtn.disabled = false;
   }
@@ -5616,14 +5911,21 @@ function openInAppUpdateModal() {
   pushModalHistoryState();
 }
 
-function closeInAppUpdateModal() {
+function closeInAppUpdateModal(fromPopState = false) {
+  if (isForceUpdateRequired) return;
   elements.inAppUpdateModal?.classList.add('hidden');
-  popModalHistoryIfCleared();
+  popModalHistoryIfCleared(fromPopState === true);
 }
 
-function showUpdateAvailablePrompt(versionLabel, apkUrl, notes) {
+function showUpdateAvailablePrompt(
+  versionLabel,
+  apkUrl,
+  notes,
+  isForced = false,
+) {
   pendingUpdateVersion = versionLabel;
   if (apkUrl) pendingApkDownloadUrl = apkUrl;
+  isForceUpdateRequired = Boolean(isForced);
 
   if (elements.inAppUpdateVersionBadge) {
     elements.inAppUpdateVersionBadge.textContent = `v${versionLabel}`;
@@ -5639,9 +5941,13 @@ function showUpdateAvailablePrompt(versionLabel, apkUrl, notes) {
   if (elements.updateBannerText) {
     elements.updateBannerText.textContent =
       state.lang === 'zh'
-        ? `发现新版本 (v${versionLabel})！点击立即更新。`
-        : `New update available (v${versionLabel})! Tap Update Now.`;
+        ? `目前有最新版本 (v${versionLabel})，点击前往更新。`
+        : `Latest version available (v${versionLabel}). Tap Go Update.`;
   }
+  elements.updateBannerDismissBtn?.classList.toggle(
+    'hidden',
+    isForceUpdateRequired,
+  );
   elements.updateNotificationBanner?.classList.remove('hidden');
   if (elements.updateStatusText) {
     elements.updateStatusText.textContent = `v${versionLabel} ready!`;
@@ -5650,7 +5956,9 @@ function showUpdateAvailablePrompt(versionLabel, apkUrl, notes) {
     elements.checkUpdateBtnText.textContent = `Update v${versionLabel}`;
   }
 
-  openInAppUpdateModal();
+  if (isForceUpdateRequired) {
+    openInAppUpdateModal(true);
+  }
 }
 
 /**
@@ -5738,6 +6046,7 @@ async function applyAppUpdate() {
 }
 
 async function checkForAppUpdates(isManual = false) {
+  lastAutoUpdateCheckAt = Date.now();
   if (elements.appVersionBadge) {
     elements.appVersionBadge.textContent = `v${APP_VERSION}`;
   }
@@ -5825,14 +6134,20 @@ async function checkForAppUpdates(isManual = false) {
     if (remoteData) {
       const remoteVersion = remoteData.version || APP_VERSION;
       const apkUrl = remoteData.apkUrl || pendingApkDownloadUrl;
+      const notes = remoteData.notes || '';
+      const hasNewerVersion = compareSemver(remoteVersion, APP_VERSION) > 0;
+      const hasSwUpdate = Boolean(swRegistration && swRegistration.waiting);
+      const minSupported = remoteData.minSupportedVersion || '';
+      const isForced =
+        Boolean(remoteData.forceUpdate) ||
+        (Boolean(minSupported) &&
+          compareSemver(APP_VERSION, minSupported) < 0) ||
+        /\[FORCE\]/i.test(notes);
 
-      if (
-        remoteVersion !== APP_VERSION ||
-        (swRegistration && swRegistration.waiting)
-      ) {
-        showUpdateAvailablePrompt(remoteVersion, apkUrl);
+      if (hasNewerVersion || hasSwUpdate) {
+        showUpdateAvailablePrompt(remoteVersion, apkUrl, notes, isForced);
         if (isManual) {
-          await applyAppUpdate();
+          openInAppUpdateModal(isForced);
         }
         return;
       }
@@ -6034,6 +6349,7 @@ async function init() {
     state.currentMonth = e.target.value;
     loadSummary();
     renderTable();
+    renderClaims();
     updateDailySpendingTrend();
   });
 
@@ -6303,7 +6619,9 @@ async function init() {
   );
   elements.startInAppUpdateBtn?.addEventListener('click', applyAppUpdate);
   elements.inAppUpdateModal?.addEventListener('click', (e) => {
-    if (e.target === elements.inAppUpdateModal) closeInAppUpdateModal();
+    if (e.target === elements.inAppUpdateModal && !isForceUpdateRequired) {
+      closeInAppUpdateModal();
+    }
   });
 
   // Tucked-away Logout Button inside Settings
@@ -6469,11 +6787,59 @@ function loadProjects() {
   }
 }
 
+function normalizeProjectEntries(rawEntries) {
+  let list = rawEntries;
+  if (typeof list === 'string') {
+    try {
+      list = JSON.parse(list);
+    } catch (e) {
+      list = [];
+    }
+  }
+  if (!Array.isArray(list)) return [];
+  return list
+    .filter((item) => item && item.id)
+    .map((item) => ({
+      id: String(item.id),
+      title: String(item.title || '').trim(),
+      category: item.category || 'Other Expense',
+      account_name: item.account_name || item.accountName || 'Cash',
+      amount: Number((parseFloat(item.amount) || 0).toFixed(2)),
+      date: item.date || getLocalDateString(),
+      image_url: item.image_url || item.imageUrl || null,
+      image_size_kb: Number(item.image_size_kb ?? item.imageSizeKb) || 0,
+      created_at: item.created_at || item.createdAt || new Date().toISOString(),
+    }))
+    .filter((item) => item.amount > 0);
+}
+
+function getProjectSpentAmount(project) {
+  if (!project) return 0;
+  const entries = normalizeProjectEntries(project.entries);
+  if (entries.length > 0) {
+    return Number(
+      entries.reduce((sum, item) => sum + item.amount, 0).toFixed(2),
+    );
+  }
+  return Number((parseFloat(project.spent_amount) || 0).toFixed(2));
+}
+
 function saveProjects(projects, syncCloudMeta = true) {
   const deleted = getDeletedIdsSet(getDeletedProjectsStorageKey());
-  const clean = (Array.isArray(projects) ? projects : []).filter(
-    (p) => p && p.id && !deleted.has(String(p.id)),
-  );
+  const clean = (Array.isArray(projects) ? projects : [])
+    .filter((p) => p && p.id && !deleted.has(String(p.id)))
+    .map((p) => {
+      const entries = normalizeProjectEntries(p.entries);
+      const spentAmount =
+        entries.length > 0
+          ? Number(entries.reduce((sum, e) => sum + e.amount, 0).toFixed(2))
+          : Number((parseFloat(p.spent_amount) || 0).toFixed(2));
+      return {
+        ...p,
+        entries,
+        spent_amount: spentAmount,
+      };
+    });
   state.projects = clean;
   try {
     localStorage.setItem(getProjectsStorageKey(), JSON.stringify(clean));
@@ -6485,9 +6851,20 @@ function saveProjects(projects, syncCloudMeta = true) {
         title: p.title,
         target_amount: p.target_amount,
         spent_amount: p.spent_amount,
-        mode: p.mode,
+        mode: p.mode || 'extra',
         month: p.month,
         status: p.status,
+        include_in_budget: Boolean(p.include_in_budget),
+        timeframe_type: p.timeframe_type || 'indefinite',
+        start_date: p.start_date || null,
+        deadline: p.deadline || null,
+        entries: (p.entries || []).map((e) => ({
+          ...e,
+          image_url:
+            e.image_url && !String(e.image_url).startsWith('data:image/')
+              ? e.image_url
+              : null,
+        })),
         created_at: p.created_at,
       })),
     });
@@ -6550,22 +6927,9 @@ function getBudgetTopUpTotal(month) {
   return list.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
 }
 
-function getLockedSinkingFundAmount(month) {
-  if (!month || month === 'all') month = getCurrentMonthKey();
-  if (!Array.isArray(state.projects)) return 0;
-  return state.projects
-    .filter(
-      (p) =>
-        p.status === 'active' &&
-        p.mode === 'budget_deduct' &&
-        (!p.month || p.month === month),
-    )
-    .reduce((sum, p) => {
-      const target = parseFloat(p.target_amount) || 0;
-      const spent = parseFloat(p.spent_amount) || 0;
-      const lockedRemaining = Math.max(0, target - spent);
-      return sum + lockedRemaining;
-    }, 0);
+function getLockedSinkingFundAmount() {
+  // Independent project budget cards no longer lock or deduct from monthly daily budget
+  return 0;
 }
 
 function renderRecordSourceBadgeHtml(record) {
@@ -6601,15 +6965,30 @@ function formatRecordCleanNote(note) {
 
 function normalizeProjectItem(d) {
   if (!d || !d.id) return null;
+  const entries = normalizeProjectEntries(d.entries);
+  const rawSpent = parseFloat(d.spent_amount ?? d.spentAmount) || 0;
+  const spent =
+    entries.length > 0
+      ? Number(entries.reduce((sum, e) => sum + e.amount, 0).toFixed(2))
+      : Number(rawSpent.toFixed(2));
+  const rawCreatedDate =
+    d.created_at || d.createdAt
+      ? String(d.created_at || d.createdAt).slice(0, 10)
+      : getLocalDateString();
   return {
     id: String(d.id),
     title: d.title || '',
     icon: SVG_ICONS.target,
     target_amount: parseFloat(d.target_amount ?? d.targetAmount) || 0,
-    spent_amount: parseFloat(d.spent_amount ?? d.spentAmount) || 0,
-    mode: d.mode || 'budget_deduct',
+    spent_amount: spent,
+    mode: d.mode || 'extra',
     month: d.month || getCurrentMonthKey(),
     status: d.status || 'active',
+    include_in_budget: Boolean(d.include_in_budget ?? d.includeInBudget),
+    timeframe_type: d.timeframe_type || d.timeframeType || 'indefinite',
+    start_date: d.start_date || d.startDate || rawCreatedDate,
+    deadline: d.deadline || null,
+    entries,
     created_at: d.created_at || d.createdAt || new Date().toISOString(),
   };
 }
@@ -6626,12 +7005,22 @@ function normalizeClaimItem(c) {
       friends = [];
     }
   }
+  const normalizedFriends = (Array.isArray(friends) ? friends : []).map((f) => {
+    const paid = Boolean(f && f.paid);
+    const paidVia = paid && f.paid_via ? String(f.paid_via).trim() : '';
+    return {
+      name: String((f && f.name) || ''),
+      amount: Number((parseFloat(f && f.amount) || 0).toFixed(2)),
+      paid,
+      ...(paidVia ? { paid_via: paidVia } : {}),
+    };
+  });
   return {
     id: String(c.id),
     title: c.title || '',
     total_amount: parseFloat(c.total_amount ?? c.totalAmount) || 0,
     my_share: parseFloat(c.my_share ?? c.myShare) || 0,
-    friends: friends,
+    friends: normalizedFriends,
     status: c.status || 'active',
     date: c.date || getLocalDateString(),
     created_at: c.created_at || c.createdAt || new Date().toISOString(),
@@ -6643,7 +7032,58 @@ async function fetchProjectsFromBackend() {
   if (!userId) return;
 
   const deleted = getDeletedIdsSet(getDeletedProjectsStorageKey());
+  const existingById = new Map();
+
+  // Seed migration fallback from user_metadata snapshot first, then localStorage cache (local takes priority)
+  const metaProjects = state.user?.user_metadata?.ledger_projects;
+  if (Array.isArray(metaProjects)) {
+    metaProjects.forEach((mp) => {
+      const norm = normalizeProjectItem(mp);
+      if (norm && !deleted.has(norm.id)) {
+        existingById.set(norm.id, norm);
+      }
+    });
+  }
+  (state.projects || []).forEach((lp) => {
+    const norm = normalizeProjectItem(lp);
+    if (norm && !deleted.has(norm.id)) {
+      existingById.set(norm.id, norm);
+    }
+  });
+
   const mergedMap = new Map();
+  const projectsNeedingCloudBackfill = [];
+
+  const mergeWithLocalFallback = (norm) => {
+    const prev = existingById.get(norm.id);
+    let needsBackfill = false;
+    if (prev) {
+      if (norm.entries.length === 0 && prev.entries?.length > 0) {
+        norm.entries = normalizeProjectEntries(prev.entries);
+        norm.spent_amount = getProjectSpentAmount(norm);
+        needsBackfill = true;
+      }
+      if (!norm.include_in_budget && prev.include_in_budget) {
+        norm.include_in_budget = prev.include_in_budget;
+        needsBackfill = true;
+      }
+      if (
+        norm.timeframe_type === 'indefinite' &&
+        !norm.deadline &&
+        (prev.deadline ||
+          (prev.timeframe_type && prev.timeframe_type !== 'indefinite'))
+      ) {
+        norm.timeframe_type = prev.timeframe_type;
+        norm.start_date = prev.start_date;
+        norm.deadline = prev.deadline;
+        needsBackfill = true;
+      }
+    }
+    if (needsBackfill) {
+      projectsNeedingCloudBackfill.push(norm);
+    }
+    return norm;
+  };
 
   // Fetch authoritatively from Supabase Cloud Table for current userId
   if (supabaseClient && userId) {
@@ -6658,16 +7098,31 @@ async function fetchProjectsFromBackend() {
           if (d.user_id && String(d.user_id) !== String(userId)) return;
           const norm = normalizeProjectItem(d);
           if (norm && !deleted.has(norm.id)) {
-            mergedMap.set(norm.id, norm);
+            mergedMap.set(norm.id, mergeWithLocalFallback(norm));
           }
         });
+        // Preserve & promote any local/metadata projects created before Supabase sync
+        existingById.forEach((localProj, id) => {
+          if (!mergedMap.has(id) && !deleted.has(id)) {
+            mergedMap.set(id, localProj);
+            projectsNeedingCloudBackfill.push(localProj);
+          }
+        });
+
         const finalProjects = Array.from(mergedMap.values()).sort((a, b) =>
           String(b.created_at || '').localeCompare(String(a.created_at || '')),
         );
         saveProjects(finalProjects, true);
         renderSinkingFunds();
         renderBudgetTracker();
-        updateProjectDropdownOptions();
+
+        if (projectsNeedingCloudBackfill.length > 0) {
+          Promise.allSettled(
+            projectsNeedingCloudBackfill.map((p) =>
+              syncProjectChangeToCloud(p),
+            ),
+          ).catch(() => {});
+        }
         return;
       }
     } catch (e) {}
@@ -6686,12 +7141,18 @@ async function fetchProjectsFromBackend() {
           if (ownerId && String(ownerId) !== String(userId)) return;
           const norm = normalizeProjectItem(d);
           if (norm && !deleted.has(norm.id)) {
-            mergedMap.set(norm.id, norm);
+            mergedMap.set(norm.id, mergeWithLocalFallback(norm));
           }
         });
       }
     }
   } catch (e) {}
+
+  existingById.forEach((localProj, id) => {
+    if (!mergedMap.has(id) && !deleted.has(id)) {
+      mergedMap.set(id, localProj);
+    }
+  });
 
   const finalProjects = Array.from(mergedMap.values()).sort((a, b) =>
     String(b.created_at || '').localeCompare(String(a.created_at || '')),
@@ -6700,7 +7161,6 @@ async function fetchProjectsFromBackend() {
   saveProjects(finalProjects, false);
   renderSinkingFunds();
   renderBudgetTracker();
-  updateProjectDropdownOptions();
 }
 
 async function fetchClaimsFromBackend() {
@@ -6708,6 +7168,19 @@ async function fetchClaimsFromBackend() {
   if (!userId) return;
 
   const deleted = getDeletedIdsSet(getDeletedClaimsStorageKey());
+  const existingById = new Map();
+  const metaClaims = state.user?.user_metadata?.ledger_claims;
+  if (Array.isArray(metaClaims)) {
+    metaClaims.forEach((mc) => {
+      const norm = normalizeClaimItem(mc);
+      if (norm && !deleted.has(norm.id)) existingById.set(norm.id, norm);
+    });
+  }
+  (state.claims || []).forEach((lc) => {
+    const norm = normalizeClaimItem(lc);
+    if (norm && !deleted.has(norm.id)) existingById.set(norm.id, norm);
+  });
+
   const mergedMap = new Map();
 
   // Fetch authoritatively from Supabase Cloud Table for current userId
@@ -6726,10 +7199,16 @@ async function fetchClaimsFromBackend() {
             mergedMap.set(norm.id, norm);
           }
         });
+        existingById.forEach((localClaim, id) => {
+          if (!mergedMap.has(id) && !deleted.has(id)) {
+            mergedMap.set(id, localClaim);
+          }
+        });
         const finalClaims = Array.from(mergedMap.values()).sort((a, b) =>
           String(b.created_at || '').localeCompare(String(a.created_at || '')),
         );
         saveClaims(finalClaims, true);
+        updateMonthFilterDropdown(state.records);
         renderClaims();
         return;
       }
@@ -6755,12 +7234,17 @@ async function fetchClaimsFromBackend() {
       }
     }
   } catch (e) {}
-
+  existingById.forEach((localClaim, id) => {
+    if (!mergedMap.has(id) && !deleted.has(id)) {
+      mergedMap.set(id, localClaim);
+    }
+  });
   const finalClaims = Array.from(mergedMap.values()).sort((a, b) =>
     String(b.created_at || '').localeCompare(String(a.created_at || '')),
   );
 
   saveClaims(finalClaims, false);
+  updateMonthFilterDropdown(state.records);
   renderClaims();
 }
 
@@ -6776,11 +7260,297 @@ function renderProjectsView() {
   fetchClaimsFromBackend();
 }
 
+function formatProjectOutcomeSummary(target, spent, isSettled) {
+  const sym = state.currency || 'RM';
+  const diff = Number((target - spent).toFixed(2));
+  const isOverBudget = diff < 0;
+  const absAmount = formatNumber(Math.abs(diff));
+  const label = isOverBudget ? t('fund_over_budget') : t('fund_remaining');
+  const fullText = isSettled
+    ? `${t('fund_settled')} · ${label} ${sym} ${absAmount}`
+    : `${label} ${sym} ${absAmount}`;
+  return { diff, isOverBudget, absAmount, label, fullText };
+}
+
+function formatLocalDateObj(dateObj) {
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function parseLocalDateStr(dateStr) {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  const parts = dateStr.split('-').map(Number);
+  if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return null;
+  return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
+function addMonthsSafe(dateObj, months) {
+  const targetMonth = dateObj.getMonth() + months;
+  const targetYear = dateObj.getFullYear() + Math.floor(targetMonth / 12);
+  const normMonth = ((targetMonth % 12) + 12) % 12;
+  const lastDayOfTargetMonth = new Date(targetYear, normMonth + 1, 0).getDate();
+  return new Date(
+    targetYear,
+    normMonth,
+    Math.min(dateObj.getDate(), lastDayOfTargetMonth),
+  );
+}
+
+function computeTimeframeDates(
+  timeframeType,
+  startStr,
+  currentDeadlineStr = null,
+) {
+  const startDate = parseLocalDateStr(startStr) || new Date();
+  const normalizedStart = formatLocalDateObj(startDate);
+
+  if (timeframeType === 'indefinite') {
+    return { start_date: normalizedStart, deadline: null };
+  }
+  if (timeframeType === '2w') {
+    const end = new Date(startDate);
+    end.setDate(end.getDate() + 14);
+    return { start_date: normalizedStart, deadline: formatLocalDateObj(end) };
+  }
+  if (timeframeType === 'this_month') {
+    const end = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+    return { start_date: normalizedStart, deadline: formatLocalDateObj(end) };
+  }
+  if (timeframeType === '1m') {
+    return {
+      start_date: normalizedStart,
+      deadline: formatLocalDateObj(addMonthsSafe(startDate, 1)),
+    };
+  }
+  if (timeframeType === '3m') {
+    return {
+      start_date: normalizedStart,
+      deadline: formatLocalDateObj(addMonthsSafe(startDate, 3)),
+    };
+  }
+  // Custom timeframe
+  let deadline = currentDeadlineStr;
+  if (!deadline || !parseLocalDateStr(deadline)) {
+    const fallbackEnd = new Date(startDate);
+    fallbackEnd.setDate(fallbackEnd.getDate() + 14);
+    deadline = formatLocalDateObj(fallbackEnd);
+  }
+  return { start_date: normalizedStart, deadline };
+}
+
+function applyProjectTimeframeUI(prefix, timeframeType, startVal, deadlineVal) {
+  const isNew = prefix === 'new';
+  const pillsEl = isNew
+    ? elements.newProjectTimeframePills
+    : elements.editProjectTimeframePills;
+  const datesRowEl = isNew
+    ? elements.newProjectDatesRow
+    : elements.editProjectDatesRow;
+  const startInput = isNew
+    ? elements.newProjectStartInput
+    : elements.editProjectStartInput;
+  const deadlineInput = isNew
+    ? elements.newProjectDeadlineInput
+    : elements.editProjectDeadlineInput;
+
+  const tf = timeframeType || 'indefinite';
+  if (isNew) {
+    state.newProjectTimeframe = tf;
+  } else {
+    state.editProjectTimeframe = tf;
+  }
+
+  pillsEl?.querySelectorAll('.timeframe-pill-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.getAttribute('data-timeframe') === tf);
+  });
+
+  const computed = computeTimeframeDates(tf, startVal, deadlineVal);
+  if (startInput) startInput.value = computed.start_date;
+  if (deadlineInput) deadlineInput.value = computed.deadline || '';
+
+  const isIndefinite = tf === 'indefinite';
+  datesRowEl?.classList.toggle('hidden', isIndefinite);
+  if (isNew && elements.newProjectTimeframeHint) {
+    elements.newProjectTimeframeHint.classList.toggle('hidden', !isIndefinite);
+  }
+}
+
+function formatProjectTimeframeBadge(fund) {
+  const isZh = state.lang === 'zh';
+  const deadline = fund?.deadline || null;
+  if (!deadline || fund?.timeframe_type === 'indefinite') {
+    return {
+      text: isZh ? '长期未定' : 'Flexible',
+      isOverdue: false,
+    };
+  }
+
+  if (fund.status === 'settled') {
+    return {
+      text: isZh ? `期限至 ${deadline}` : `Due ${deadline}`,
+      isOverdue: false,
+    };
+  }
+
+  const today = parseLocalDateStr(getLocalDateString());
+  const due = parseLocalDateStr(deadline);
+  if (!today || !due) {
+    return { text: deadline, isOverdue: false };
+  }
+  const diffDays = Math.round((due.getTime() - today.getTime()) / 86400000);
+  if (diffDays > 0) {
+    return {
+      text: isZh
+        ? `剩 ${diffDays} 天 (${deadline.slice(5)})`
+        : `${diffDays}d left (${deadline.slice(5)})`,
+      isOverdue: false,
+    };
+  }
+  if (diffDays === 0) {
+    return {
+      text: isZh ? '今日到期' : 'Due today',
+      isOverdue: false,
+    };
+  }
+  return {
+    text: isZh
+      ? `已超期 ${Math.abs(diffDays)} 天`
+      : `${Math.abs(diffDays)}d overdue`,
+    isOverdue: true,
+  };
+}
+
+function isProjectVisibleInBudgetMonth(fund, targetMonth) {
+  if (!fund || fund.status !== 'active' || !fund.include_in_budget) {
+    return false;
+  }
+  if (!fund.deadline || fund.timeframe_type === 'indefinite') {
+    // Active ongoing dedicated funds stay visible every month until completed
+    return true;
+  }
+  const monthKey =
+    !targetMonth || targetMonth === 'all' ? getCurrentMonthKey() : targetMonth;
+  const parts = monthKey.split('-').map(Number);
+  if (parts.length !== 2 || parts.some((n) => Number.isNaN(n))) return true;
+  const monthStart = `${parts[0]}-${String(parts[1]).padStart(2, '0')}-01`;
+  const lastDay = new Date(parts[0], parts[1], 0).getDate();
+  const monthEnd = `${parts[0]}-${String(parts[1]).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+  const startStr = fund.start_date || monthStart;
+  // Overlaps viewed calendar month, OR still active/overdue in current real month
+  const overlapsMonth = startStr <= monthEnd && fund.deadline >= monthStart;
+  const isCurrentRealMonth = monthKey === getCurrentMonthKey();
+  return overlapsMonth || isCurrentRealMonth;
+}
+
+function renderBudgetFundsSection(
+  targetMonth,
+  dailyExpense = 0,
+  dailyBudget = 0,
+) {
+  const section = elements.budgetFundsSection;
+  const listEl = elements.budgetFundsList;
+  const overviewEl = elements.budgetCombinedOverview;
+  if (!section || !listEl) return;
+
+  const includedFunds = (state.projects || []).filter((p) =>
+    isProjectVisibleInBudgetMonth(p, targetMonth),
+  );
+
+  if (includedFunds.length === 0) {
+    section.classList.add('hidden');
+    overviewEl?.classList.add('hidden');
+    listEl.innerHTML = '';
+    return;
+  }
+
+  section.classList.remove('hidden');
+  const sym = state.currency || 'RM';
+  const isZh = state.lang === 'zh';
+
+  let totalTarget = 0;
+  let totalSpent = 0;
+  includedFunds.forEach((f) => {
+    totalTarget += parseFloat(f.target_amount) || 0;
+    totalSpent += getProjectSpentAmount(f);
+  });
+
+  if (overviewEl) {
+    overviewEl.classList.remove('hidden');
+    const combinedBudget = Number((dailyBudget + totalTarget).toFixed(2));
+    const combinedSpent = Number((dailyExpense + totalSpent).toFixed(2));
+    if (elements.budgetCombinedFormula) {
+      elements.budgetCombinedFormula.textContent = isZh
+        ? `日常 ${sym} ${formatNumber(dailyBudget)} + 专款 ${sym} ${formatNumber(totalTarget)} = ${sym} ${formatNumber(combinedBudget)}`
+        : `Daily ${sym} ${formatNumber(dailyBudget)} + Funds ${sym} ${formatNumber(totalTarget)} = ${sym} ${formatNumber(combinedBudget)}`;
+    }
+    if (elements.budgetCombinedUsage) {
+      elements.budgetCombinedUsage.textContent = isZh
+        ? `总已用 ${sym} ${formatNumber(combinedSpent)} / ${sym} ${formatNumber(combinedBudget)}`
+        : `Total Spent ${sym} ${formatNumber(combinedSpent)} / ${sym} ${formatNumber(combinedBudget)}`;
+    }
+  }
+
+  if (elements.budgetFundsCountBadge) {
+    elements.budgetFundsCountBadge.textContent = isZh
+      ? `${includedFunds.length} 项进行中`
+      : `${includedFunds.length} active`;
+  }
+  if (elements.budgetFundsSummaryText) {
+    elements.budgetFundsSummaryText.textContent = isZh
+      ? `专款已用 ${sym} ${formatNumber(totalSpent)} / ${sym} ${formatNumber(totalTarget)}`
+      : `Spent ${sym} ${formatNumber(totalSpent)} / ${sym} ${formatNumber(totalTarget)}`;
+  }
+
+  listEl.innerHTML = includedFunds
+    .map((fund) => {
+      const target = parseFloat(fund.target_amount) || 0;
+      const spent = getProjectSpentAmount(fund);
+      const pctBar =
+        target > 0 ? Math.min(100, Math.round((spent / target) * 100)) : 0;
+      const outcome = formatProjectOutcomeSummary(target, spent, false);
+      const tf = formatProjectTimeframeBadge(fund);
+
+      return `
+        <div
+          class="budget-fund-row"
+          role="button"
+          tabindex="0"
+          onclick="openProjectDetailModal('${fund.id}')"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openProjectDetailModal('${fund.id}');}"
+        >
+          <div class="budget-fund-row-top">
+            <div class="budget-fund-row-left">
+              <span class="budget-fund-row-title"><span class="inline-svg-icon">${SVG_ICONS.target}</span><span>${escapeHtml(fund.title)}</span></span>
+              <span class="project-badge-timeframe ${tf.isOverdue ? 'is-overdue' : ''}">${escapeHtml(tf.text)}</span>
+            </div>
+            <div class="budget-fund-row-right">
+              <span class="budget-fund-numbers">${sym} ${formatNumber(spent)} / ${sym} ${formatNumber(target)}</span>
+              <span class="budget-fund-outcome ${outcome.isOverBudget ? 'is-over-budget' : 'is-remaining'}">
+                ${outcome.label} ${sym} ${outcome.absAmount}
+              </span>
+            </div>
+          </div>
+          <div class="budget-fund-bar-track">
+            <div
+              class="budget-fund-bar-fill ${outcome.isOverBudget ? 'is-over-budget' : ''}"
+              style="width: ${pctBar}%;"
+            ></div>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+}
+
 function renderSinkingFunds() {
   const container = elements.sinkingFundsList;
   if (!container) return;
 
   const sym = state.currency || 'RM';
+  const isZh = state.lang === 'zh';
   const activeFunds = (state.projects || []).filter(
     (p) => p.status === 'active',
   );
@@ -6788,7 +7558,7 @@ function renderSinkingFunds() {
     (p) => p.status === 'settled',
   );
 
-  if (state.projects.length === 0) {
+  if (!state.projects || state.projects.length === 0) {
     container.innerHTML = `
       <div class="empty-state-card" style="text-align: center; padding: 36px 16px; background: var(--bg-surface); border: 1px dashed var(--border-card); border-radius: 16px;">
         <div class="empty-icon-wrap" style="display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: var(--brand-cyan-subtle); color: var(--brand-cyan); margin-bottom: 12px;">
@@ -6804,80 +7574,101 @@ function renderSinkingFunds() {
   container.innerHTML = allFunds
     .map((fund) => {
       const target = parseFloat(fund.target_amount) || 0;
-      const spent = parseFloat(fund.spent_amount) || 0;
-      const remaining = Math.max(0, target - spent);
-      const pct =
-        target > 0 ? Math.min(100, Math.round((spent / target) * 100)) : 0;
+      const entries = normalizeProjectEntries(fund.entries);
+      const spent = getProjectSpentAmount(fund);
       const isSettled = fund.status === 'settled';
-      const isBudgetMode = fund.mode === 'budget_deduct';
-
-      const modePill = isBudgetMode
-        ? `<span class="project-mode-pill mode-budget">${t('fund_mode_budget')}</span>`
-        : `<span class="project-mode-pill mode-extra">${t('fund_mode_extra')}</span>`;
+      const pctRaw = target > 0 ? Math.round((spent / target) * 100) : 0;
+      const pctBar = Math.min(100, Math.max(0, pctRaw));
+      const outcome = formatProjectOutcomeSummary(target, spent, isSettled);
+      const tf = formatProjectTimeframeBadge(fund);
 
       const statusPill = isSettled
-        ? `<span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(34, 197, 94, 0.1); color: #16a34a; font-weight: 600;">${t('fund_settled')}</span>`
-        : `<span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(13, 148, 136, 0.1); color: var(--brand-cyan); font-weight: 600;">${t('fund_status_active')}</span>`;
+        ? `<span class="project-status-badge status-completed">${t('fund_settled')}</span>`
+        : `<span class="project-status-badge status-active">${t('fund_status_active')}</span>`;
 
-      // Equation breakdown
-      const isZh = state.lang === 'zh';
-      let equationText = '';
-      if (spent > 0) {
-        const remLabel = isZh ? '待结算' : 'Remaining';
-        equationText = `${t('fund_target')} ${sym} ${formatNumber(target)} - ${t('fund_spent')} ${sym} ${formatNumber(spent)} = ${remLabel} ${sym} ${formatNumber(remaining)}`;
-      } else if (isBudgetMode) {
-        const base = Number(state.monthlyBudget || 3000);
-        equationText = isZh
-          ? `日常可用 ${sym} ${formatNumber(base - target)} + 专款 ${sym} ${formatNumber(target)} = 总基准 ${sym} ${formatNumber(base)}`
-          : `Daily Avail ${sym} ${formatNumber(base - target)} + Fund ${sym} ${formatNumber(target)} = Base ${sym} ${formatNumber(base)}`;
-      } else {
-        equationText = isZh
-          ? `预定储备 ${sym} ${formatNumber(target)} (不占用日常预算)`
-          : `Reserved ${sym} ${formatNumber(target)} (Outside monthly budget)`;
-      }
-
-      const releaseBtn =
-        !isSettled && remaining > 0 && isBudgetMode
-          ? `<button type="button" class="btn-card-action" onclick="releaseFundRemainingToBudget('${fund.id}')">${t('btn_release_to_budget')}</button>`
-          : '';
-
-      const settleBtn = !isSettled
-        ? `<button type="button" class="btn-card-action btn-action-settle" onclick="settleFund('${fund.id}')">${t('btn_settle_fund')}</button>`
+      const scopePill = fund.include_in_budget
+        ? `<span class="project-badge-included">${t('badge_in_monthly_budget')}</span>`
         : '';
 
+      const timeframePill = `<span class="project-badge-timeframe ${tf.isOverdue ? 'is-overdue' : ''}">${escapeHtml(tf.text)}</span>`;
+
+      const entryCountText = isZh
+        ? `${entries.length} ${t('project_entry_count_suffix')}`
+        : `${entries.length} ${entries.length === 1 ? 'entry' : t('project_entry_count_suffix')}`;
+
+      const equationText = `${t('fund_target')} ${sym} ${formatNumber(target)} · ${t('fund_spent')} ${sym} ${formatNumber(spent)} · ${entryCountText}`;
+
+      const actionBtn = isSettled
+        ? `<button type="button" class="btn-card-action" onclick="event.stopPropagation(); resumeProject('${fund.id}')">${t('btn_resume_fund')}</button>`
+        : `<button type="button" class="btn-card-action btn-action-settle" onclick="event.stopPropagation(); completeProject('${fund.id}')">${t('btn_complete_fund')}</button>`;
+
       return `
-      <div class="project-card" data-fund-id="${fund.id}">
+      <div
+        class="project-card is-clickable ${isSettled ? 'is-completed' : ''}"
+        data-fund-id="${fund.id}"
+        tabindex="0"
+        role="button"
+        aria-label="${escapeHtml(fund.title)}"
+        onclick="openProjectDetailModal('${fund.id}')"
+        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openProjectDetailModal('${fund.id}');}"
+      >
         <div class="project-card-header">
           <div class="project-title-group">
             <div class="project-icon-badge">${SVG_ICONS.target}</div>
             <div>
               <h4 class="project-name-text">${escapeHtml(fund.title)}</h4>
-              <div style="display: flex; gap: 6px; align-items: center; margin-top: 2px;">
-                ${modePill}
+              <div class="project-card-top-badges" style="margin-top: 4px; flex-wrap: wrap;">
                 ${statusPill}
+                ${scopePill}
+                ${timeframePill}
               </div>
             </div>
           </div>
-          <button type="button" class="btn-del" onclick="deleteProject('${fund.id}')" title="Delete">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-          </button>
+          <div class="project-card-header-actions">
+            ${
+              !isSettled
+                ? `<button
+                    type="button"
+                    class="btn-card-edit-icon"
+                    onclick="event.stopPropagation(); openProjectSettingsEdit('${fund.id}')"
+                    title="${t('project_edit_meta')}"
+                    aria-label="${t('project_edit_meta')}"
+                  >✎</button>`
+                : ''
+            }
+            <button
+              type="button"
+              class="btn-del"
+              onclick="event.stopPropagation(); deleteProject('${fund.id}')"
+              title="${t('btn_delete_project')}"
+              aria-label="${t('btn_delete_project')}"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+          </div>
         </div>
 
         <div class="project-math-equation">${equationText}</div>
 
         <div class="project-progress-track">
-          <div class="project-progress-spent" style="width: ${pct}%; background: ${pct > 100 ? '#ef4444' : 'var(--brand-cyan)'};"></div>
+          <div
+            class="project-progress-spent ${outcome.isOverBudget ? 'is-over-budget' : ''}"
+            style="width: ${pctBar}%;"
+          ></div>
         </div>
 
         <div class="project-card-stats">
-          <span>${t('fund_spent')}: <strong>${sym} ${formatNumber(spent)}</strong></span>
-          <span>${pct}%</span>
-          <span>${t('fund_remaining')}: <strong>${sym} ${formatNumber(remaining)}</strong></span>
+          <span class="project-outcome-pill ${outcome.isOverBudget ? 'is-over-budget' : 'is-remaining'}">
+            ${outcome.fullText}
+          </span>
+          <span class="mono-amount">${pctRaw}%</span>
         </div>
 
-        <div class="project-card-actions">
-          ${releaseBtn}
-          ${settleBtn}
+        <div class="project-card-footer-meta">
+          <span class="project-card-hint">${t('project_card_tap_hint')}</span>
+          <div class="project-card-actions" style="margin-top: 0;">
+            ${actionBtn}
+          </div>
         </div>
       </div>
     `;
@@ -6885,53 +7676,37 @@ function renderSinkingFunds() {
     .join('');
 }
 
-function renderClaims() {
-  const container = elements.claimsList;
-  if (!container) return;
-
+function renderClaimCardHtml(claim) {
   const sym = state.currency || 'RM';
-  const claims = state.claims || [];
+  const totalAmount = parseFloat(claim.total_amount) || 0;
+  const myShare = parseFloat(claim.my_share) || 0;
+  const friends = claim.friends || [];
+  const allPaid = friends.length > 0 && friends.every((f) => f.paid);
+  const paidCount = friends.filter((f) => f.paid).length;
+  const pendingAmt = friends.reduce(
+    (sum, f) => sum + (f.paid ? 0 : parseFloat(f.amount) || 0),
+    0,
+  );
 
-  // Compute total pending across all unpaid friend shares
-  let totalPending = 0;
-  claims.forEach((claim) => {
-    (claim.friends || []).forEach((f) => {
-      if (!f.paid) totalPending += parseFloat(f.amount) || 0;
-    });
-  });
+  const isZh = state.lang === 'zh';
+  const progressText =
+    friends.length > 0
+      ? isZh
+        ? allPaid
+          ? `已全额收回 (${paidCount}/${friends.length})`
+          : `已收 ${paidCount}/${friends.length} · 待收 ${sym} ${formatNumber(pendingAmt)}`
+        : allPaid
+          ? `All paid (${paidCount}/${friends.length})`
+          : `Paid ${paidCount}/${friends.length} · Pending ${sym} ${formatNumber(pendingAmt)}`
+      : '';
+  const friendsHtml = friends
+    .map((f, idx) => {
+      const isPaid = f.paid;
+      const statusBtn = isPaid
+        ? `<button type="button" class="btn-mark-paid paid" onclick="event.stopPropagation(); toggleClaimFriendPaid('${claim.id}', ${idx})">${isZh ? '已收回' : 'Paid'}</button>`
+        : `<button type="button" class="btn-mark-paid" onclick="event.stopPropagation(); toggleClaimFriendPaid('${claim.id}', ${idx})">${isZh ? '点我收款' : 'Mark Paid'}</button>`;
 
-  if (elements.claimsPendingTotalVal) {
-    elements.claimsPendingTotalVal.textContent = `${sym} ${formatNumber(totalPending)}`;
-  }
-
-  if (claims.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state-card" style="text-align: center; padding: 36px 16px; background: var(--bg-surface); border: 1px dashed var(--border-card); border-radius: 16px;">
-        <div class="empty-icon-wrap" style="display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: var(--brand-cyan-subtle); color: var(--brand-cyan); margin-bottom: 12px;">
-          ${SVG_ICONS.claims}
-        </div>
-        <h4 style="font-weight: 700; color: var(--text-primary); margin: 0;">${t('claims_empty')}</h4>
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = claims
-    .map((claim) => {
-      const totalAmount = parseFloat(claim.total_amount) || 0;
-      const myShare = parseFloat(claim.my_share) || 0;
-      const friends = claim.friends || [];
-      const allPaid = friends.length > 0 && friends.every((f) => f.paid);
-
-      const isZh = state.lang === 'zh';
-      const friendsHtml = friends
-        .map((f, idx) => {
-          const isPaid = f.paid;
-          const statusBtn = isPaid
-            ? `<button type="button" class="btn-mark-paid paid" onclick="toggleClaimFriendPaid('${claim.id}', ${idx})">${isZh ? '已收回' : 'Paid'}</button>`
-            : `<button type="button" class="btn-mark-paid" onclick="toggleClaimFriendPaid('${claim.id}', ${idx})">${isZh ? '点我收款' : 'Mark Paid'}</button>`;
-
-          return `
+      return `
         <div class="claim-friend-row">
           <div class="claim-friend-info">
             <span class="claim-friend-avatar" style="display: inline-flex; align-items: center; color: var(--text-secondary);">${SVG_ICONS.users}</span>
@@ -6943,23 +7718,38 @@ function renderClaims() {
           </div>
         </div>
       `;
-        })
-        .join('');
+    })
+    .join('');
 
-      const settleAllBtn = !allPaid
-        ? `<button type="button" class="btn-card-action btn-action-settle" onclick="settleAllClaim('${claim.id}')">${t('btn_all_settled')}</button>`
-        : `<span style="font-size: 0.78rem; font-weight: 700; color: #16a34a; background: rgba(34, 197, 94, 0.1); padding: 4px 10px; border-radius: 9999px;">${isZh ? '全员结清归档' : 'All Settled'}</span>`;
+  const settleAllBtn = !allPaid
+    ? `<button type="button" class="btn-card-action btn-action-settle" onclick="event.stopPropagation(); settleAllClaim('${claim.id}')">${t('btn_all_settled')}</button>`
+    : `<span style="font-size: 0.78rem; font-weight: 700; color: #16a34a; background: rgba(34, 197, 94, 0.1); padding: 4px 10px; border-radius: 9999px;">${isZh ? '全员结清归档' : 'All Settled'}</span>`;
 
-      return `
-      <div class="claim-card" data-claim-id="${claim.id}">
+  return `
+      <div
+        class="claim-card is-clickable"
+        data-claim-id="${claim.id}"
+        tabindex="0"
+        role="button"
+        aria-label="${escapeHtml(claim.title)}"
+        onclick="openEditClaimModal('${claim.id}')"
+        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openEditClaimModal('${claim.id}');}"
+      >
         <div class="claim-card-header">
           <div>
             <h4 class="claim-title-text">${escapeHtml(claim.title)}</h4>
-            <span style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(claim.date || '')} · ${isZh ? '我自己消费' : 'My Share'}: ${sym} ${formatNumber(myShare)}</span>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(claim.date || '')} · ${isZh ? '我自己消费' : 'My Share'}: ${sym} ${formatNumber(myShare)}${progressText ? ` · ${progressText}` : ''}</span>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <span class="claim-total-badge">${isZh ? '垫付总额' : 'Advanced'}: ${sym} ${formatNumber(totalAmount - myShare)}</span>
-            <button type="button" class="btn-del" onclick="deleteClaim('${claim.id}')" title="Delete">
+            <button
+              type="button"
+              class="btn-card-edit-icon"
+              onclick="event.stopPropagation(); openEditClaimModal('${claim.id}')"
+              title="${isZh ? '编辑代垫' : 'Edit Claim'}"
+              aria-label="${isZh ? '编辑代垫' : 'Edit Claim'}"
+            >✎</button>
+            <button type="button" class="btn-del" onclick="event.stopPropagation(); deleteClaim('${claim.id}')" title="Delete">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             </button>
           </div>
@@ -6970,16 +7760,184 @@ function renderClaims() {
         </div>
 
         <div class="project-card-actions">
+          <button
+            type="button"
+            class="btn-card-action"
+            onclick="event.stopPropagation(); copyClaimReminder('${claim.id}')"
+          >
+            ${SVG_ICONS.copy}
+            <span>${t('btn_copy_claim_text')}</span>
+          </button>
           ${settleAllBtn}
         </div>
       </div>
     `;
-    })
-    .join('');
+}
+
+function renderClaims() {
+  const container = elements.claimsList;
+  if (!container) return;
+
+  const sym = state.currency || 'RM';
+  const allClaims = state.claims || [];
+  const activeMonth = state.currentMonth || 'all';
+  const filteredClaims =
+    activeMonth === 'all'
+      ? allClaims
+      : allClaims.filter((c) => (c.date || '').startsWith(activeMonth));
+
+  // Compute total pending across unpaid friend shares for the active period
+  let totalPending = 0;
+  filteredClaims.forEach((claim) => {
+    (claim.friends || []).forEach((f) => {
+      if (!f.paid) totalPending += parseFloat(f.amount) || 0;
+    });
+  });
+
+  if (elements.claimsPendingTotalVal) {
+    elements.claimsPendingTotalVal.textContent = `${sym} ${formatNumber(totalPending)}`;
+  }
+
+  if (filteredClaims.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state-card" style="text-align: center; padding: 36px 16px; background: var(--bg-surface); border: 1px dashed var(--border-card); border-radius: 16px;">
+        <div class="empty-icon-wrap" style="display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: var(--brand-cyan-subtle); color: var(--brand-cyan); margin-bottom: 12px;">
+          ${SVG_ICONS.claims}
+        </div>
+        <h4 style="font-weight: 700; color: var(--text-primary); margin: 0;">${t('claims_empty')}</h4>
+      </div>
+    `;
+    return;
+  }
+
+  const activeClaims = [];
+  const settledClaims = [];
+  filteredClaims.forEach((claim) => {
+    const friends = Array.isArray(claim.friends) ? claim.friends : [];
+    const isSettled =
+      friends.length > 0 && friends.every((f) => Boolean(f.paid));
+    if (isSettled) {
+      settledClaims.push(claim);
+    } else {
+      activeClaims.push(claim);
+    }
+  });
+
+  const activeHtml =
+    activeClaims.length > 0
+      ? activeClaims.map(renderClaimCardHtml).join('')
+      : `<div class="claims-active-empty-banner">${escapeHtml(t('claims_active_empty'))}</div>`;
+
+  let settledGroupHtml = '';
+  if (settledClaims.length > 0) {
+    const isExpanded = Boolean(state.claimsSettledExpanded);
+    const chevronSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
+    settledGroupHtml = `
+      <div class="claims-settled-group">
+        <button
+          type="button"
+          class="claims-settled-toggle ${isExpanded ? 'is-expanded' : ''}"
+          aria-expanded="${isExpanded}"
+          onclick="toggleClaimsSettledSection()"
+        >
+          <span class="claims-settled-toggle-left">
+            <span class="claims-settled-chevron">${chevronSvg}</span>
+            <span>${escapeHtml(t('claims_settled_group'))} (${settledClaims.length})</span>
+          </span>
+          <span class="claims-settled-toggle-hint">${escapeHtml(
+            isExpanded ? t('tap_to_collapse') : t('tap_to_expand'),
+          )}</span>
+        </button>
+        <div class="claims-settled-body ${isExpanded ? '' : 'hidden'}">
+          ${settledClaims.map(renderClaimCardHtml).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = activeHtml + settledGroupHtml;
+}
+
+function toggleClaimsSettledSection() {
+  triggerHaptic(8);
+  state.claimsSettledExpanded = !state.claimsSettledExpanded;
+  renderClaims();
+}
+
+async function copyClaimReminder(claimId) {
+  const claim = (state.claims || []).find(
+    (c) => String(c.id) === String(claimId),
+  );
+  if (!claim) return;
+
+  const sym = state.currency || 'RM';
+  const isZh = state.lang === 'zh';
+  const totalAmount = parseFloat(claim.total_amount) || 0;
+  const myShare = parseFloat(claim.my_share) || 0;
+  const friends = Array.isArray(claim.friends) ? claim.friends : [];
+  const pendingAmt = friends.reduce(
+    (sum, f) => sum + (f.paid ? 0 : parseFloat(f.amount) || 0),
+    0,
+  );
+
+  const lines = [
+    `${claim.title}${claim.date ? ` (${claim.date})` : ''}`,
+    isZh
+      ? `总付 ${sym} ${formatNumber(totalAmount)}，自付 ${sym} ${formatNumber(myShare)}`
+      : `Total ${sym} ${formatNumber(totalAmount)}, My share ${sym} ${formatNumber(myShare)}`,
+    ...friends.map((f) => {
+      const statusTxt = isZh
+        ? f.paid
+          ? '已付'
+          : '待付'
+        : f.paid
+          ? 'Paid'
+          : 'Pending';
+      return `${f.name}: ${sym} ${formatNumber(f.amount)} (${statusTxt})`;
+    }),
+    isZh
+      ? pendingAmt > 0
+        ? `待收回：${sym} ${formatNumber(pendingAmt)}`
+        : '已全员结清'
+      : pendingAmt > 0
+        ? `Pending: ${sym} ${formatNumber(pendingAmt)}`
+        : 'All settled',
+  ];
+  const text = lines.join('\n');
+
+  let copied = false;
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      copied = true;
+    } catch (e) {}
+  }
+  if (!copied) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      copied = document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  if (copied) {
+    triggerHaptic(12);
+    showToast(t('toast_claim_copied'));
+  } else {
+    showToast(isZh ? '复制失败，请手动复制' : 'Copy failed', true);
+  }
 }
 
 // Open Transaction Modal specifically in Split mode
 function openCreateModalWithSplit() {
+  if (state.currentType !== 'expense') {
+    setEntryType('expense');
+  }
   openCreateModal();
   if (
     elements.toggleSplitBillBtn &&
@@ -6995,21 +7953,34 @@ function openNewProjectModal() {
   if (!elements.newProjectModal) return;
   if (elements.projectInputTitle) elements.projectInputTitle.value = '';
   if (elements.projectInputAmount) elements.projectInputAmount.value = '500';
+  if (elements.newProjectIncludeBudgetCheck) {
+    elements.newProjectIncludeBudgetCheck.checked = false;
+  }
+  applyProjectTimeframeUI('new', 'indefinite', getLocalDateString(), null);
   elements.newProjectModal.classList.remove('hidden');
   pushModalHistoryState();
 }
 
-function closeNewProjectModal() {
+function closeNewProjectModal(fromPopState = false) {
   triggerHaptic(10);
   elements.newProjectModal?.classList.add('hidden');
-  popModalHistoryIfCleared();
+  popModalHistoryIfCleared(fromPopState === true);
 }
 
 async function saveNewProject() {
   const title = (elements.projectInputTitle?.value || '').trim();
   const amount = parseFloat(elements.projectInputAmount?.value) || 0;
-  const isBudget = elements.btnModeBudgetDeduct?.classList.contains('active');
-  const mode = isBudget ? 'budget_deduct' : 'extra';
+  const includeInBudget = Boolean(
+    elements.newProjectIncludeBudgetCheck?.checked,
+  );
+  const timeframeType = state.newProjectTimeframe || 'indefinite';
+  const startStr = elements.newProjectStartInput?.value || getLocalDateString();
+  const rawDeadlineStr = elements.newProjectDeadlineInput?.value || null;
+  const computedDates = computeTimeframeDates(
+    timeframeType,
+    startStr,
+    rawDeadlineStr,
+  );
   const isZh = state.lang === 'zh';
 
   if (!title) {
@@ -7022,7 +7993,19 @@ async function saveNewProject() {
   }
   if (amount <= 0) {
     return showToast(
-      isZh ? '请输入有效的预留金额' : 'Please enter a valid target amount',
+      isZh ? '请输入有效的专款预算金额' : 'Please enter a valid budget amount',
+      true,
+    );
+  }
+  if (
+    timeframeType !== 'indefinite' &&
+    computedDates.deadline &&
+    computedDates.deadline < computedDates.start_date
+  ) {
+    return showToast(
+      isZh
+        ? '截止日期不能早于开始日期'
+        : 'Deadline cannot be earlier than start date',
       true,
     );
   }
@@ -7033,9 +8016,14 @@ async function saveNewProject() {
     icon: SVG_ICONS.target,
     target_amount: amount,
     spent_amount: 0,
-    mode: mode,
+    mode: includeInBudget ? 'budget_deduct' : 'extra',
+    include_in_budget: includeInBudget,
+    timeframe_type: timeframeType,
+    start_date: computedDates.start_date,
+    deadline: computedDates.deadline,
     month: getCurrentMonthKey(),
     status: 'active',
+    entries: [],
     created_at: new Date().toISOString(),
   };
 
@@ -7044,15 +8032,10 @@ async function saveNewProject() {
   saveProjects(list);
   renderSinkingFunds();
   renderBudgetTracker();
-  updateProjectDropdownOptions();
 
   triggerHaptic(15);
   closeNewProjectModal();
-  showToast(
-    state.lang === 'zh'
-      ? `专款【${title}】建立成功`
-      : `Project ${title} created!`,
-  );
+  showToast(isZh ? `专款【${title}】建立成功` : `Project "${title}" created!`);
 
   // Sync to Supabase Cloud
   if (supabaseClient && state.user?.id) {
@@ -7067,6 +8050,11 @@ async function saveNewProject() {
         mode: newProject.mode,
         month: newProject.month,
         status: newProject.status,
+        include_in_budget: Boolean(newProject.include_in_budget),
+        timeframe_type: newProject.timeframe_type || 'indefinite',
+        start_date: newProject.start_date || null,
+        deadline: newProject.deadline || null,
+        entries: normalizeProjectEntries(newProject.entries),
       });
     } catch (e) {}
   }
@@ -7082,171 +8070,1022 @@ async function saveNewProject() {
         targetAmount: newProject.target_amount,
         mode: newProject.mode,
         month: newProject.month,
+        includeInBudget: Boolean(newProject.include_in_budget),
+        timeframeType: newProject.timeframe_type || 'indefinite',
+        startDate: newProject.start_date || undefined,
+        deadline: newProject.deadline ?? null,
       }),
     });
   } catch (e) {}
 }
 
-// Release Remaining Sinking Fund to Budget
-function releaseFundRemainingToBudget(fundId) {
+function getActiveDetailProject() {
+  if (!state.activeProjectId) return null;
+  return (state.projects || []).find(
+    (p) => String(p.id) === String(state.activeProjectId),
+  );
+}
+
+async function syncProjectChangeToCloud(fund, extraFields = {}) {
+  if (!fund) return;
+  const cleanEntries = normalizeProjectEntries(fund.entries).map((e) => ({
+    id: e.id,
+    title: e.title || '',
+    category: e.category || 'Other Expense',
+    account_name: e.account_name || 'Cash',
+    amount: Number((parseFloat(e.amount) || 0).toFixed(2)),
+    date: e.date || getLocalDateString(),
+    image_url: e.image_url ?? null,
+    image_size_kb: Number(e.image_size_kb) || 0,
+    created_at: e.created_at || new Date().toISOString(),
+  }));
+  const nextStatus = extraFields.status || fund.status || 'active';
+
+  if (supabaseClient && state.user?.id) {
+    try {
+      await supabaseClient.from('projects').upsert({
+        id: fund.id,
+        user_id: state.user.id,
+        title: fund.title,
+        icon: 'target',
+        target_amount: Number((parseFloat(fund.target_amount) || 0).toFixed(2)),
+        spent_amount: getProjectSpentAmount(fund),
+        mode: fund.mode || (fund.include_in_budget ? 'budget_deduct' : 'extra'),
+        month: fund.month || getCurrentMonthKey(),
+        status: nextStatus,
+        include_in_budget: Boolean(fund.include_in_budget),
+        timeframe_type: fund.timeframe_type || 'indefinite',
+        start_date: fund.start_date || null,
+        deadline: fund.deadline || null,
+        entries: cleanEntries,
+        updated_at: new Date().toISOString(),
+        ...extraFields,
+      });
+    } catch (e) {}
+  }
+
+  try {
+    await fetch(`/api/projects/${fund.id}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        title: fund.title,
+        targetAmount: Number((parseFloat(fund.target_amount) || 0).toFixed(2)),
+        spentAmount: getProjectSpentAmount(fund),
+        status: nextStatus,
+        includeInBudget: Boolean(fund.include_in_budget),
+        timeframeType: fund.timeframe_type || 'indefinite',
+        startDate: fund.start_date || undefined,
+        deadline: fund.deadline ?? null,
+        entries: cleanEntries,
+      }),
+    });
+  } catch (e) {}
+}
+
+function openProjectDetailModal(fundId) {
+  const fund = (state.projects || []).find(
+    (p) => String(p.id) === String(fundId),
+  );
+  if (!fund || !elements.projectDetailModal) return;
+
   triggerHaptic(10);
-  const fund = (state.projects || []).find((p) => p.id === fundId);
+  state.activeProjectId = String(fund.id);
+  state.editingProjectEntryId = null;
+
+  elements.projectMetaEditPanel?.classList.add('hidden');
+  resetProjectEntryForm();
+  renderProjectDetailModal();
+
+  elements.projectDetailModal.classList.remove('hidden');
+  pushModalHistoryState();
+}
+
+function closeProjectDetailModal(fromPopState = false) {
+  triggerHaptic(8);
+  elements.projectDetailModal?.classList.add('hidden');
+  elements.projectMetaEditPanel?.classList.add('hidden');
+  state.activeProjectId = null;
+  state.editingProjectEntryId = null;
+  resetProjectEntryForm();
+  popModalHistoryIfCleared(fromPopState === true);
+}
+
+function clearPendingProjectReceipt() {
+  state.pendingProjectReceiptDataUrl = null;
+  state.pendingProjectReceiptSizeKb = 0;
+  if (elements.projectReceiptFileInput) {
+    elements.projectReceiptFileInput.value = '';
+  }
+  if (elements.projectReceiptPreviewImg) {
+    elements.projectReceiptPreviewImg.src = '';
+  }
+  elements.projectReceiptPreviewDrawer?.classList.add('hidden');
+  elements.triggerProjectReceiptBtn?.classList.remove('active');
+}
+
+async function handleProjectReceiptFileSelected(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    showToast(
+      state.lang === 'zh' ? '请选择有效的图片' : 'Please select a valid image',
+      true,
+    );
+    return;
+  }
+  try {
+    const { dataUrl, sizeKb, width, height } = await compressReceiptImage(file);
+    state.pendingProjectReceiptDataUrl = dataUrl;
+    state.pendingProjectReceiptSizeKb = sizeKb;
+    if (elements.projectReceiptPreviewImg) {
+      elements.projectReceiptPreviewImg.src = dataUrl;
+    }
+    if (elements.projectReceiptPreviewMeta) {
+      const formatLabel = dataUrl.startsWith('data:image/webp')
+        ? 'WebP'
+        : 'JPEG';
+      elements.projectReceiptPreviewMeta.textContent = `${formatLabel} · ${width}×${height} · ~${sizeKb} KB`;
+    }
+    elements.projectReceiptPreviewDrawer?.classList.remove('hidden');
+    elements.triggerProjectReceiptBtn?.classList.add('active');
+    triggerHaptic(10);
+  } catch (err) {
+    showToast(err.message || 'Image compression failed', true);
+  }
+}
+
+function openProjectEntryReceiptLightbox(entryId) {
+  const fund = getActiveDetailProject();
+  if (!fund) return;
+  const entries = normalizeProjectEntries(fund.entries);
+  const entry = entries.find((item) => String(item.id) === String(entryId));
+  if (!entry || !entry.image_url || typeof openReceiptLightbox !== 'function') {
+    return;
+  }
+  const catLabel = getCategoryDisplayLabel(entry.category || 'Other Expense');
+  const titleText = entry.title ? `${entry.title} (${catLabel})` : catLabel;
+  const subText = `${entry.date || ''} · ${state.currency || 'RM'} ${formatNumber(entry.amount)}`;
+  openReceiptLightbox(entry.image_url, titleText, subText);
+}
+window.openProjectEntryReceiptLightbox = openProjectEntryReceiptLightbox;
+
+function resetProjectEntryForm() {
+  state.editingProjectEntryId = null;
+  state.selectedProjectEntryCategory =
+    (CATEGORIES.expense && CATEGORIES.expense[0]) || 'Food & Dining';
+  state.selectedProjectEntryAccount =
+    (DEFAULT_ACCOUNTS[0] && DEFAULT_ACCOUNTS[0].name) || 'Cash';
+  if (elements.projectEntryTitleInput) {
+    elements.projectEntryTitleInput.value = '';
+  }
+  if (elements.projectEntryAmountInput) {
+    elements.projectEntryAmountInput.value = '';
+  }
+  if (elements.projectEntryDateInput) {
+    elements.projectEntryDateInput.value = getLocalDateString();
+  }
+  if (elements.saveProjectEntryBtn) {
+    elements.saveProjectEntryBtn.textContent = t('btn_add_project_entry');
+  }
+  elements.cancelProjectEntryEditBtn?.classList.add('hidden');
+  clearPendingProjectReceipt();
+  renderProjectEntryCategoryGrid();
+  renderProjectEntryAccountPicker();
+}
+
+function renderProjectEntryCategoryGrid() {
+  const container = elements.projectEntryCategoryGrid;
+  if (!container) return;
+
+  const list = CATEGORIES.expense || [];
+  const selectedCat = list.includes(state.selectedProjectEntryCategory)
+    ? state.selectedProjectEntryCategory
+    : list[0] || 'Food & Dining';
+  state.selectedProjectEntryCategory = selectedCat;
+
+  container.innerHTML = list
+    .map((cat) => {
+      const isSelected = cat === selectedCat;
+      const icon = getCategoryIcon(cat);
+      const label = getCategoryDisplayLabel(cat);
+      return `
+        <button type="button" class="cat-grid-btn ${isSelected ? 'active' : ''}" data-project-cat="${escapeHtml(cat)}">
+          <span class="cat-grid-icon">${icon}</span>
+          <span class="cat-grid-label">${escapeHtml(label)}</span>
+        </button>
+      `;
+    })
+    .join('');
+
+  container.querySelectorAll('.cat-grid-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const chosen = btn.getAttribute('data-project-cat');
+      if (chosen) state.selectedProjectEntryCategory = chosen;
+      container
+        .querySelectorAll('.cat-grid-btn')
+        .forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+}
+
+function renderProjectEntryAccountPicker() {
+  const container = elements.projectEntryAccountGrid;
+  if (!container) return;
+
+  const currentAcc = state.selectedProjectEntryAccount || 'Cash';
+  container.innerHTML = DEFAULT_ACCOUNTS.map((acc) => {
+    const isSelected = acc.name === currentAcc;
+    const label = getAccountDisplayLabel(acc.name);
+    return `
+      <button type="button" class="account-chip-btn ${isSelected ? 'active' : ''}" data-project-acc="${escapeHtml(acc.name)}">
+        <span class="account-chip-icon">${acc.icon}</span>
+        <span class="account-chip-name">${escapeHtml(label)}</span>
+      </button>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.account-chip-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const chosen = btn.getAttribute('data-project-acc');
+      if (chosen) state.selectedProjectEntryAccount = chosen;
+      container
+        .querySelectorAll('.account-chip-btn')
+        .forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+}
+
+function renderProjectDetailModal() {
+  const fund = getActiveDetailProject();
   if (!fund) return;
 
-  const target = parseFloat(fund.target_amount) || 0;
-  const spent = parseFloat(fund.spent_amount) || 0;
-  const remaining = Math.max(0, target - spent);
+  const sym = state.currency || 'RM';
   const isZh = state.lang === 'zh';
+  const target = parseFloat(fund.target_amount) || 0;
+  const entries = normalizeProjectEntries(fund.entries);
+  const spent = getProjectSpentAmount(fund);
+  const isSettled = fund.status === 'settled';
+  const outcome = formatProjectOutcomeSummary(target, spent, isSettled);
+  const pctBar =
+    target > 0 ? Math.min(100, Math.round((spent / target) * 100)) : 0;
+
+  if (elements.projectDetailTitle) {
+    elements.projectDetailTitle.textContent = fund.title;
+  }
+
+  if (elements.projectDetailStatusBadge) {
+    elements.projectDetailStatusBadge.textContent = isSettled
+      ? t('fund_settled')
+      : t('fund_status_active');
+    elements.projectDetailStatusBadge.classList.toggle(
+      'status-completed',
+      isSettled,
+    );
+    elements.projectDetailStatusBadge.classList.toggle(
+      'status-active',
+      !isSettled,
+    );
+  }
+
+  if (elements.toggleEditProjectMetaBtn) {
+    elements.toggleEditProjectMetaBtn.classList.toggle('hidden', isSettled);
+  }
+  if (isSettled) {
+    elements.projectMetaEditPanel?.classList.add('hidden');
+  }
+
+  if (elements.projectDetailTargetVal) {
+    elements.projectDetailTargetVal.textContent = `${sym} ${formatNumber(target)}`;
+  }
+  if (elements.projectDetailSpentVal) {
+    elements.projectDetailSpentVal.textContent = `${sym} ${formatNumber(spent)}`;
+  }
+  if (elements.projectDetailOutcomeLabel) {
+    elements.projectDetailOutcomeLabel.textContent = outcome.label;
+  }
+  if (elements.projectDetailOutcomeVal) {
+    elements.projectDetailOutcomeVal.textContent = `${sym} ${outcome.absAmount}`;
+    elements.projectDetailOutcomeVal.classList.toggle(
+      'is-over-budget',
+      outcome.isOverBudget,
+    );
+    elements.projectDetailOutcomeVal.classList.toggle(
+      'is-remaining',
+      !outcome.isOverBudget,
+    );
+  }
+  if (elements.projectDetailProgressFill) {
+    elements.projectDetailProgressFill.style.width = `${pctBar}%`;
+    elements.projectDetailProgressFill.classList.toggle(
+      'is-over-budget',
+      outcome.isOverBudget,
+    );
+  }
+
+  // Toggle Active Add/Edit Form vs Completed Read-Only Banner & Footer Buttons
+  elements.projectEntryForm?.classList.toggle('hidden', isSettled);
+  elements.projectSettledNotice?.classList.toggle('hidden', !isSettled);
+  elements.detailCompleteProjectBtn?.classList.toggle('hidden', isSettled);
+  elements.detailResumeProjectBtn?.classList.toggle('hidden', !isSettled);
+  if (!isSettled) {
+    renderProjectEntryCategoryGrid();
+    renderProjectEntryAccountPicker();
+  }
+
+  if (elements.projectEntriesCountLabel) {
+    elements.projectEntriesCountLabel.textContent = isZh
+      ? `${entries.length} ${t('project_entry_count_suffix')}`
+      : `${entries.length} ${entries.length === 1 ? 'entry' : t('project_entry_count_suffix')}`;
+  }
+
+  if (!elements.projectEntriesList) return;
+  if (entries.length === 0) {
+    elements.projectEntriesList.innerHTML = `<div class="project-entries-empty">${t('project_entries_empty')}</div>`;
+    return;
+  }
+
+  elements.projectEntriesList.innerHTML = entries
+    .map((entry) => {
+      const isEditing =
+        state.editingProjectEntryId &&
+        String(state.editingProjectEntryId) === String(entry.id);
+      const catKey = entry.category || 'Other Expense';
+      const catLabel = getCategoryDisplayLabel(catKey);
+      const catIcon = getCategoryIcon(catKey);
+      const catColor =
+        (CATEGORY_META[catKey] && CATEGORY_META[catKey].color) || '';
+      const accLabel = getAccountDisplayLabel(entry.account_name || 'Cash');
+      const displayTitle = entry.title ? entry.title : catLabel;
+      const metaParts = [catLabel, accLabel, entry.date].filter(Boolean);
+      const actionsHtml = !isSettled
+        ? `
+          <div class="project-entry-actions">
+            <button
+              type="button"
+              class="btn-project-entry-icon"
+              onclick="editProjectEntry('${entry.id}')"
+              title="${isZh ? '编辑' : 'Edit'}"
+              aria-label="${isZh ? '编辑' : 'Edit'}"
+            >✎</button>
+            <button
+              type="button"
+              class="btn-project-entry-icon is-delete"
+              onclick="deleteProjectEntry('${entry.id}')"
+              title="${isZh ? '删除' : 'Delete'}"
+              aria-label="${isZh ? '删除' : 'Delete'}"
+            >✕</button>
+          </div>
+        `
+        : '';
+
+      const receiptBadgeHtml = entry.image_url
+        ? `<span class="badge-receipt-photo" onclick="event.stopPropagation(); openProjectEntryReceiptLightbox('${entry.id}')" title="${escapeHtml(t('view_receipt'))}">${SVG_ICONS.receipt}</span>`
+        : '';
+
+      return `
+        <div class="project-entry-item ${isEditing ? 'is-editing' : ''}">
+          <div class="project-entry-left">
+            <span class="project-entry-cat-icon" ${catColor ? `style="color: ${catColor}; background: ${catColor}1f;"` : ''}>
+              ${catIcon}
+            </span>
+            <div class="project-entry-info">
+              <span class="project-entry-name">${escapeHtml(displayTitle)}${receiptBadgeHtml}</span>
+              <span class="project-entry-meta">${escapeHtml(metaParts.join(' · '))}</span>
+            </div>
+          </div>
+          <div class="project-entry-right">
+            <span class="project-entry-amount mono-amount">-${sym} ${formatNumber(entry.amount)}</span>
+            ${actionsHtml}
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+}
+
+function toggleEditProjectMeta() {
+  const fund = getActiveDetailProject();
+  if (!fund || fund.status === 'settled' || !elements.projectMetaEditPanel)
+    return;
+
+  const willShow = elements.projectMetaEditPanel.classList.contains('hidden');
+  if (willShow) {
+    if (elements.projectDetailEditTitle) {
+      elements.projectDetailEditTitle.value = fund.title || '';
+    }
+    if (elements.projectDetailEditTarget) {
+      elements.projectDetailEditTarget.value = String(fund.target_amount || '');
+    }
+    if (elements.editProjectIncludeBudgetCheck) {
+      elements.editProjectIncludeBudgetCheck.checked = Boolean(
+        fund.include_in_budget,
+      );
+    }
+    applyProjectTimeframeUI(
+      'edit',
+      fund.timeframe_type || 'indefinite',
+      fund.start_date || getLocalDateString(),
+      fund.deadline || null,
+    );
+    elements.projectMetaEditPanel.classList.remove('hidden');
+    elements.projectDetailEditTitle?.focus();
+  } else {
+    elements.projectMetaEditPanel.classList.add('hidden');
+  }
+}
+
+async function saveProjectMeta() {
+  const fund = getActiveDetailProject();
+  if (!fund || fund.status === 'settled') return;
+
+  const isZh = state.lang === 'zh';
+  const nextTitle = (elements.projectDetailEditTitle?.value || '').trim();
+  const nextTarget = parseFloat(elements.projectDetailEditTarget?.value) || 0;
+  const includeInBudget = Boolean(
+    elements.editProjectIncludeBudgetCheck?.checked,
+  );
+  const timeframeType = state.editProjectTimeframe || 'indefinite';
+  const startStr =
+    elements.editProjectStartInput?.value ||
+    fund.start_date ||
+    getLocalDateString();
+  const rawDeadlineStr = elements.editProjectDeadlineInput?.value || null;
+  const computedDates = computeTimeframeDates(
+    timeframeType,
+    startStr,
+    rawDeadlineStr,
+  );
+
+  if (!nextTitle) {
+    return showToast(
+      isZh ? '专款名称不能为空' : 'Project name is required',
+      true,
+    );
+  }
+  if (nextTarget <= 0) {
+    return showToast(
+      isZh ? '请输入有效的预算金额' : 'Please enter a valid budget amount',
+      true,
+    );
+  }
+  if (
+    timeframeType !== 'indefinite' &&
+    computedDates.deadline &&
+    computedDates.deadline < computedDates.start_date
+  ) {
+    return showToast(
+      isZh
+        ? '截止日期不能早于开始日期'
+        : 'Deadline cannot be earlier than start date',
+      true,
+    );
+  }
+
+  fund.title = nextTitle;
+  fund.target_amount = Number(nextTarget.toFixed(2));
+  fund.include_in_budget = includeInBudget;
+  fund.mode = includeInBudget ? 'budget_deduct' : 'extra';
+  fund.timeframe_type = timeframeType;
+  fund.start_date = computedDates.start_date;
+  fund.deadline = computedDates.deadline;
+  elements.projectMetaEditPanel?.classList.add('hidden');
+
+  saveProjects(state.projects);
+  renderSinkingFunds();
+  renderBudgetTracker();
+  renderProjectDetailModal();
+  triggerHaptic(12);
+  showToast(isZh ? '已更新专款设置' : 'Project updated');
+  await syncProjectChangeToCloud(fund);
+}
+
+async function saveProjectEntry(e) {
+  if (e) e.preventDefault();
+  const fund = getActiveDetailProject();
+  if (!fund || fund.status === 'settled') return;
+
+  const isZh = state.lang === 'zh';
+  const title = (elements.projectEntryTitleInput?.value || '').trim();
+  const amount = parseFloat(elements.projectEntryAmountInput?.value) || 0;
+  const date = elements.projectEntryDateInput?.value || getLocalDateString();
+  const category = state.selectedProjectEntryCategory || 'Other Expense';
+  const accountName = state.selectedProjectEntryAccount || 'Cash';
+
+  if (amount <= 0) {
+    return showToast(
+      isZh ? '请输入有效支出金额' : 'Please enter a valid amount',
+      true,
+    );
+  }
+
+  let entries = normalizeProjectEntries(fund.entries);
+
+  // Preserve pre-existing aggregate spent_amount if converting a legacy card on first item
+  if (entries.length === 0 && (parseFloat(fund.spent_amount) || 0) > 0) {
+    entries.push({
+      id: 'pentry_legacy_' + Date.now(),
+      title: isZh ? '历史已用金额' : 'Previous Spent Balance',
+      category: 'Other Expense',
+      account_name: 'Cash',
+      amount: Number((parseFloat(fund.spent_amount) || 0).toFixed(2)),
+      date: getLocalDateString(),
+      created_at: fund.created_at || new Date().toISOString(),
+    });
+  }
+
+  let nextImageUrl = state.pendingProjectReceiptDataUrl || null;
+  const nextImageSizeKb = state.pendingProjectReceiptSizeKb || 0;
+  if (
+    nextImageUrl &&
+    String(nextImageUrl).startsWith('data:image/') &&
+    typeof uploadReceiptToCloud === 'function'
+  ) {
+    nextImageUrl = await uploadReceiptToCloud(nextImageUrl);
+  }
+
+  if (state.editingProjectEntryId) {
+    const idx = entries.findIndex(
+      (item) => String(item.id) === String(state.editingProjectEntryId),
+    );
+    if (idx !== -1) {
+      const previousImageUrl = entries[idx].image_url || null;
+      if (
+        previousImageUrl &&
+        previousImageUrl !== nextImageUrl &&
+        typeof deleteReceiptFromCloud === 'function'
+      ) {
+        deleteReceiptFromCloud(previousImageUrl);
+      }
+      entries[idx] = {
+        ...entries[idx],
+        title,
+        category,
+        account_name: accountName,
+        amount: Number(amount.toFixed(2)),
+        date,
+        image_url: nextImageUrl,
+        image_size_kb: nextImageSizeKb,
+      };
+    }
+  } else {
+    entries.unshift({
+      id: 'pentry_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      title,
+      category,
+      account_name: accountName,
+      amount: Number(amount.toFixed(2)),
+      date,
+      image_url: nextImageUrl,
+      image_size_kb: nextImageSizeKb,
+      created_at: new Date().toISOString(),
+    });
+  }
+
+  fund.entries = entries;
+  fund.spent_amount = getProjectSpentAmount(fund);
+
+  const wasEditing = Boolean(state.editingProjectEntryId);
+  resetProjectEntryForm();
+
+  saveProjects(state.projects);
+  renderSinkingFunds();
+  renderBudgetTracker();
+  renderProjectDetailModal();
+
+  triggerHaptic(12);
+  showToast(
+    wasEditing
+      ? isZh
+        ? '明细已更新'
+        : 'Entry updated'
+      : isZh
+        ? '已记入专款'
+        : 'Entry added to project',
+  );
+  await syncProjectChangeToCloud(fund);
+}
+
+function editProjectEntry(entryId) {
+  const fund = getActiveDetailProject();
+  if (!fund || fund.status === 'settled') return;
+
+  const entries = normalizeProjectEntries(fund.entries);
+  const targetEntry = entries.find(
+    (item) => String(item.id) === String(entryId),
+  );
+  if (!targetEntry) return;
+
+  triggerHaptic(8);
+  state.editingProjectEntryId = String(targetEntry.id);
+  state.selectedProjectEntryCategory = targetEntry.category || 'Other Expense';
+  state.selectedProjectEntryAccount = targetEntry.account_name || 'Cash';
+
+  if (elements.projectEntryTitleInput) {
+    elements.projectEntryTitleInput.value = targetEntry.title || '';
+  }
+  if (elements.projectEntryAmountInput) {
+    elements.projectEntryAmountInput.value = String(targetEntry.amount || '');
+  }
+  if (elements.projectEntryDateInput) {
+    elements.projectEntryDateInput.value =
+      targetEntry.date || getLocalDateString();
+  }
+  clearPendingProjectReceipt();
+  if (targetEntry.image_url) {
+    state.pendingProjectReceiptDataUrl = targetEntry.image_url;
+    state.pendingProjectReceiptSizeKb = targetEntry.image_size_kb || 0;
+    if (elements.projectReceiptPreviewImg) {
+      elements.projectReceiptPreviewImg.src = targetEntry.image_url;
+    }
+    if (elements.projectReceiptPreviewMeta) {
+      elements.projectReceiptPreviewMeta.textContent = targetEntry.image_size_kb
+        ? `${targetEntry.image_size_kb} KB · WebP`
+        : t('receipt_attached');
+    }
+    elements.projectReceiptPreviewDrawer?.classList.remove('hidden');
+    elements.triggerProjectReceiptBtn?.classList.add('active');
+  }
+  if (elements.saveProjectEntryBtn) {
+    elements.saveProjectEntryBtn.textContent = t('btn_save_project_entry');
+  }
+  elements.cancelProjectEntryEditBtn?.classList.remove('hidden');
+  renderProjectDetailModal();
+  elements.projectEntryAmountInput?.focus();
+}
+
+function cancelProjectEntryEdit() {
+  triggerHaptic(8);
+  resetProjectEntryForm();
+  renderProjectDetailModal();
+}
+
+async function deleteProjectEntry(entryId) {
+  const fund = getActiveDetailProject();
+  if (!fund || fund.status === 'settled') return;
+
+  const isZh = state.lang === 'zh';
+  const currentEntries = normalizeProjectEntries(fund.entries);
+  const removedEntry = currentEntries.find(
+    (item) => String(item.id) === String(entryId),
+  );
+  if (removedEntry?.image_url && typeof deleteReceiptFromCloud === 'function') {
+    deleteReceiptFromCloud(removedEntry.image_url);
+  }
+  const entries = currentEntries.filter(
+    (item) => String(item.id) !== String(entryId),
+  );
+  fund.entries = entries;
+  fund.spent_amount = entries.reduce((sum, item) => sum + item.amount, 0);
+
+  if (
+    state.editingProjectEntryId &&
+    String(state.editingProjectEntryId) === String(entryId)
+  ) {
+    resetProjectEntryForm();
+  }
+
+  saveProjects(state.projects);
+  renderSinkingFunds();
+  renderBudgetTracker();
+  renderProjectDetailModal();
+
+  triggerHaptic(12);
+  showToast(isZh ? '已删除该笔专款明细' : 'Project entry removed');
+  await syncProjectChangeToCloud(fund);
+}
+
+function completeProject(fundId) {
+  const targetId = fundId || state.activeProjectId;
+  const fund = (state.projects || []).find(
+    (p) => String(p.id) === String(targetId),
+  );
+  if (!fund) return;
+
+  triggerHaptic(10);
+  const isZh = state.lang === 'zh';
+  const target = parseFloat(fund.target_amount) || 0;
+  const spent = getProjectSpentAmount(fund);
+  const outcome = formatProjectOutcomeSummary(target, spent, true);
 
   showConfirmModal({
-    title: isZh ? '确认提前释放结余？' : 'Release Remaining Balance?',
-    subtitle: fund.title,
-    desc: isZh
-      ? `当前专款预留 ${state.currency} ${formatNumber(target)}，实际已用 ${state.currency} ${formatNumber(spent)}。提前释放后，剩余未用的 ${state.currency} ${formatNumber(remaining)} 将立即归还回日常月度预算，专款将标为已结清。`
-      : `Reserved ${state.currency} ${formatNumber(target)}, spent ${state.currency} ${formatNumber(spent)}. The remaining ${state.currency} ${formatNumber(remaining)} will be returned to your monthly daily budget and the fund marked as settled.`,
-    confirmText: isZh ? '确认释放并结清' : 'Release & Settle',
+    title: isZh ? '确认完成该专款？' : 'Complete Project Card?',
+    subtitle: `${fund.title} · ${outcome.fullText}`,
+    desc: t('confirm_complete_project'),
+    confirmText: isZh ? '确认完成' : 'Complete',
     danger: false,
     onConfirm: async () => {
-      fund.target_amount = spent;
       fund.status = 'settled';
+      resetProjectEntryForm();
+      elements.projectMetaEditPanel?.classList.add('hidden');
+
       saveProjects(state.projects);
       renderSinkingFunds();
       renderBudgetTracker();
-      updateProjectDropdownOptions();
-
-      if (supabaseClient && state.user?.id) {
-        try {
-          await supabaseClient
-            .from('projects')
-            .update({
-              target_amount: spent,
-              status: 'settled',
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', fundId)
-            .eq('user_id', state.user.id);
-        } catch (e) {}
+      if (
+        state.activeProjectId &&
+        String(state.activeProjectId) === String(fund.id)
+      ) {
+        renderProjectDetailModal();
       }
 
+      triggerHaptic(15);
+      showToast(
+        isZh
+          ? `专款【${fund.title}】已完成 (${outcome.fullText})`
+          : `"${fund.title}" completed (${outcome.fullText})`,
+      );
+
+      await syncProjectChangeToCloud(fund, { status: 'settled' });
       try {
-        await fetch('/api/projects/' + fundId + '/release', {
+        await fetch('/api/projects/' + fund.id + '/settle', {
           method: 'PATCH',
           headers: getAuthHeaders(),
         });
       } catch (e) {}
-      showToast(
-        isZh
-          ? `结余 ${state.currency} ${formatNumber(remaining)} 已释放回日常预算`
-          : `Released ${state.currency} ${formatNumber(remaining)} back to daily budget`,
-      );
     },
   });
 }
 
-function settleFund(fundId) {
-  triggerHaptic(10);
-  const fund = (state.projects || []).find((p) => p.id === fundId);
+function resumeProject(fundId) {
+  const targetId = fundId || state.activeProjectId;
+  const fund = (state.projects || []).find(
+    (p) => String(p.id) === String(targetId),
+  );
   if (!fund) return;
+
+  triggerHaptic(10);
   const isZh = state.lang === 'zh';
 
   showConfirmModal({
-    title: isZh ? '确认结案平账？' : 'Settle Sinking Fund?',
+    title: isZh ? '确认恢复该专款？' : 'Resume Project Card?',
     subtitle: fund.title,
-    desc: isZh
-      ? `确定要将专款【${fund.title}】结案平账吗？平账后此项目将正式归档。`
-      : `Are you sure you want to settle and archive "${fund.title}"?`,
-    confirmText: isZh ? '确认结案' : 'Settle Fund',
+    desc: t('confirm_resume_project'),
+    confirmText: isZh ? '确认恢复' : 'Resume',
     danger: false,
     onConfirm: async () => {
-      fund.status = 'settled';
+      fund.status = 'active';
+      resetProjectEntryForm();
+
       saveProjects(state.projects);
       renderSinkingFunds();
       renderBudgetTracker();
-      updateProjectDropdownOptions();
-
-      if (supabaseClient && state.user?.id) {
-        try {
-          await supabaseClient
-            .from('projects')
-            .update({
-              status: 'settled',
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', fundId)
-            .eq('user_id', state.user.id);
-        } catch (e) {}
+      if (
+        state.activeProjectId &&
+        String(state.activeProjectId) === String(fund.id)
+      ) {
+        renderProjectDetailModal();
       }
 
+      triggerHaptic(12);
+      showToast(
+        isZh
+          ? `专款【${fund.title}】已恢复为进行中`
+          : `"${fund.title}" resumed`,
+      );
+
+      await syncProjectChangeToCloud(fund, { status: 'active' });
       try {
-        await fetch('/api/projects/' + fundId + '/settle', {
+        await fetch('/api/projects/' + fund.id + '/resume', {
           method: 'PATCH',
           headers: getAuthHeaders(),
         });
       } catch (e) {}
-      triggerHaptic(15);
-      showToast(
-        isZh
-          ? `专款【${fund.title}】已结案平账`
-          : `Fund "${fund.title}" settled`,
-      );
     },
   });
 }
 
 function deleteProject(fundId) {
   triggerHaptic(10);
-  const fund = (state.projects || []).find((p) => p.id === fundId);
+  const targetId = fundId || state.activeProjectId;
+  const fund = (state.projects || []).find(
+    (p) => String(p.id) === String(targetId),
+  );
   if (!fund) return;
 
-  const remaining = Math.max(0, fund.target_amount - fund.spent_amount);
   const isZh = state.lang === 'zh';
 
   showConfirmModal({
-    title: isZh ? '确认撤销该专款？' : 'Delete Sinking Fund?',
+    title: isZh ? '确认删除该专款？' : 'Delete Project Card?',
     subtitle: fund.title,
-    desc: isZh
-      ? `确定要撤销【${fund.title}】专款吗？撤销后，剩余未用的 ${state.currency} ${formatNumber(remaining)} 将原路释放回日常预算，已产生的流水不受影响。`
-      : `Delete "${fund.title}"? Any unused ${state.currency} ${formatNumber(remaining)} will be returned to your daily budget. Existing transactions remain intact.`,
-    confirmText: isZh ? '确认撤销' : 'Delete Fund',
+    desc: t('confirm_cancel_project'),
+    confirmText: isZh ? '确认删除' : 'Delete',
     danger: true,
     onConfirm: async () => {
-      addDeletedId(getDeletedProjectsStorageKey(), fundId);
-      state.projects = (state.projects || []).filter((p) => p.id !== fundId);
+      addDeletedId(getDeletedProjectsStorageKey(), fund.id);
+      state.projects = (state.projects || []).filter(
+        (p) => String(p.id) !== String(fund.id),
+      );
+      if (
+        state.activeProjectId &&
+        String(state.activeProjectId) === String(fund.id)
+      ) {
+        closeProjectDetailModal(false);
+      }
       saveProjects(state.projects);
       renderSinkingFunds();
       renderBudgetTracker();
-      updateProjectDropdownOptions();
 
       if (supabaseClient && state.user?.id) {
         try {
           await supabaseClient
             .from('projects')
             .delete()
-            .eq('id', fundId)
+            .eq('id', fund.id)
             .eq('user_id', state.user.id);
         } catch (e) {}
       }
 
       try {
-        await fetch('/api/projects/' + fundId, {
+        await fetch('/api/projects/' + fund.id, {
           method: 'DELETE',
           headers: getAuthHeaders(),
         });
       } catch (e) {}
       triggerHaptic(15);
-      showToast(isZh ? '专款已撤销' : 'Sinking fund deleted');
+      showToast(isZh ? '专款卡片已删除' : 'Project card deleted');
     },
   });
 }
 
 // Claims Actions
+function renderClaimReceiveMethodGrid(selectedMethod) {
+  const grid = elements.claimReceiveMethodGrid;
+  if (!grid) return;
+
+  grid.innerHTML = DEFAULT_ACCOUNTS.map((acc) => {
+    const label = getAccountDisplayLabel(acc.name);
+    const isActive = acc.name === selectedMethod;
+    return `
+      <button
+        type="button"
+        class="claim-receive-method-chip ${isActive ? 'active' : ''}"
+        data-receive-method="${escapeHtml(acc.name)}"
+      >
+        ${acc.icon}
+        <span>${escapeHtml(label)}</span>
+      </button>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('.claim-receive-method-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      triggerHaptic(8);
+      const chosen = btn.dataset.receiveMethod || 'eWallet';
+      state.lastClaimReceiveMethod = chosen;
+      grid.querySelectorAll('.claim-receive-method-chip').forEach((b) => {
+        b.classList.toggle('active', b === btn);
+      });
+    });
+  });
+}
+
+function openClaimReceiveModal(actionMeta) {
+  if (!elements.claimReceiveModal) return;
+  const sym = state.currency || 'RM';
+  const isZh = state.lang === 'zh';
+  state.pendingClaimReceiveAction = actionMeta;
+
+  if (elements.claimReceiveModalSub) {
+    elements.claimReceiveModalSub.textContent = actionMeta.subtitle || '';
+  }
+
+  const defaultMethod = state.lastClaimReceiveMethod || 'eWallet';
+  renderClaimReceiveMethodGrid(defaultMethod);
+
+  elements.claimReceiveModal.classList.remove('hidden');
+  pushModalHistoryState();
+}
+
+function closeClaimReceiveModal(fromPopState = false) {
+  triggerHaptic(8);
+  elements.claimReceiveModal?.classList.add('hidden');
+  state.pendingClaimReceiveAction = null;
+  popModalHistoryIfCleared(fromPopState === true);
+}
+
+async function confirmClaimReceivePayment() {
+  const action = state.pendingClaimReceiveAction;
+  if (!action) {
+    closeClaimReceiveModal(false);
+    return;
+  }
+  const claim = (state.claims || []).find((c) => c.id === action.claimId);
+  const method = state.lastClaimReceiveMethod || 'eWallet';
+  closeClaimReceiveModal(false);
+  if (!claim) return;
+
+  const isZh = state.lang === 'zh';
+  const methodLabel = getAccountDisplayLabel(method);
+
+  if (action.mode === 'single') {
+    const friend = claim.friends?.[action.friendIdx];
+    if (!friend) return;
+    friend.paid = true;
+    friend.paid_via = method;
+    claim.status = claim.friends.every((f) => f.paid) ? 'settled' : 'active';
+    saveClaims(state.claims);
+    renderClaims();
+
+    if (supabaseClient && state.user?.id) {
+      try {
+        await supabaseClient
+          .from('claims')
+          .update({
+            friends: claim.friends,
+            status: claim.status,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', claim.id)
+          .eq('user_id', state.user.id);
+      } catch (e) {}
+    }
+
+    try {
+      await fetch(`/api/claims/${claim.id}/friend/${action.friendIdx}`, {
+        method: 'PATCH',
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ paid_via: method }),
+      });
+    } catch (e) {}
+
+    triggerHaptic(12);
+    showToast(
+      isZh
+        ? `已收到 ${friend.name} 的 ${state.currency} ${formatNumber(friend.amount)}（${methodLabel}）`
+        : `Received ${state.currency} ${formatNumber(friend.amount)} from ${friend.name} (${methodLabel})`,
+    );
+    return;
+  }
+
+  if (action.mode === 'all') {
+    (claim.friends || []).forEach((f) => {
+      if (!f.paid) {
+        f.paid = true;
+        f.paid_via = method;
+      } else if (!f.paid_via) {
+        f.paid_via = method;
+      }
+    });
+    claim.status = 'settled';
+    saveClaims(state.claims);
+    renderClaims();
+
+    if (supabaseClient && state.user?.id) {
+      try {
+        await supabaseClient
+          .from('claims')
+          .update({
+            friends: claim.friends,
+            status: 'settled',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', claim.id)
+          .eq('user_id', state.user.id);
+      } catch (e) {}
+    }
+
+    try {
+      await fetch(`/api/claims/${claim.id}/settle-all`, {
+        method: 'PATCH',
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ paid_via: method }),
+      });
+    } catch (e) {}
+
+    triggerHaptic(15);
+    showToast(
+      isZh
+        ? `该笔代垫款项已全额结清（${methodLabel}）`
+        : `All shares settled (${methodLabel})`,
+    );
+  }
+}
+
 async function toggleClaimFriendPaid(claimId, friendIdx) {
   triggerHaptic(12);
   const claim = (state.claims || []).find((c) => c.id === claimId);
   if (!claim || !claim.friends?.[friendIdx]) return;
 
   const friend = claim.friends[friendIdx];
-  friend.paid = !friend.paid;
+  const isZh = state.lang === 'zh';
+  const sym = state.currency || 'RM';
+
+  if (!friend.paid) {
+    openClaimReceiveModal({
+      mode: 'single',
+      claimId,
+      friendIdx,
+      subtitle: `${friend.name} · ${sym} ${formatNumber(friend.amount)}`,
+    });
+    return;
+  }
+
+  friend.paid = false;
+  delete friend.paid_via;
+  claim.status = 'active';
   saveClaims(state.claims);
   renderClaims();
 
@@ -7256,6 +9095,7 @@ async function toggleClaimFriendPaid(claimId, friendIdx) {
         .from('claims')
         .update({
           friends: claim.friends,
+          status: claim.status,
           updated_at: new Date().toISOString(),
         })
         .eq('id', claimId)
@@ -7270,63 +9110,29 @@ async function toggleClaimFriendPaid(claimId, friendIdx) {
     });
   } catch (e) {}
 
-  const isZh = state.lang === 'zh';
-  const statusMsg = friend.paid
-    ? isZh
-      ? `已收到 ${friend.name} 的 ${state.currency} ${formatNumber(friend.amount)}`
-      : `Received ${state.currency} ${formatNumber(friend.amount)} from ${friend.name}`
-    : isZh
-      ? `已标记为待收`
-      : `Marked as pending`;
-  showToast(statusMsg);
+  showToast(isZh ? '已标记为待收' : 'Marked as pending');
 }
 
 function settleAllClaim(claimId) {
-  triggerHaptic(15);
+  triggerHaptic(12);
   const claim = (state.claims || []).find((c) => c.id === claimId);
   if (!claim) return;
+
+  const sym = state.currency || 'RM';
   const isZh = state.lang === 'zh';
+  const unpaidFriends = (claim.friends || []).filter((f) => !f.paid);
+  const pendingAmt = unpaidFriends.reduce(
+    (sum, f) => sum + (parseFloat(f.amount) || 0),
+    0,
+  );
+  const subtitle = isZh
+    ? `${claim.title} · 待收 ${unpaidFriends.length} 人 (${sym} ${formatNumber(pendingAmt)})`
+    : `${claim.title} · ${unpaidFriends.length} pending (${sym} ${formatNumber(pendingAmt)})`;
 
-  showConfirmModal({
-    title: isZh ? '确认全额结清？' : 'Mark All as Settled?',
-    subtitle: claim.title,
-    desc: isZh
-      ? '确定要将此笔账单的所有分摊款项标记为全额结清吗？'
-      : 'Mark all friend shares on this split bill as paid and settled?',
-    confirmText: isZh ? '确认结清' : 'Settle All',
-    danger: false,
-    onConfirm: async () => {
-      (claim.friends || []).forEach((f) => {
-        f.paid = true;
-      });
-      claim.status = 'settled';
-      saveClaims(state.claims);
-      renderClaims();
-
-      if (supabaseClient && state.user?.id) {
-        try {
-          await supabaseClient
-            .from('claims')
-            .update({
-              friends: claim.friends,
-              status: 'settled',
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', claimId)
-            .eq('user_id', state.user.id);
-        } catch (e) {}
-      }
-
-      try {
-        await fetch(`/api/claims/${claimId}/settle-all`, {
-          method: 'PATCH',
-          headers: getAuthHeaders(),
-        });
-      } catch (e) {}
-      showToast(
-        isZh ? '该笔代垫款项已全额结清' : 'All shares marked as settled',
-      );
-    },
+  openClaimReceiveModal({
+    mode: 'all',
+    claimId,
+    subtitle,
   });
 }
 
@@ -7347,6 +9153,12 @@ function deleteClaim(claimId) {
     onConfirm: async () => {
       addDeletedId(getDeletedClaimsStorageKey(), claimId);
       state.claims = (state.claims || []).filter((c) => c.id !== claimId);
+      if (
+        state.editingClaimId &&
+        String(state.editingClaimId) === String(claimId)
+      ) {
+        closeEditClaimModal(false);
+      }
       saveClaims(state.claims);
       renderClaims();
 
@@ -7369,6 +9181,273 @@ function deleteClaim(claimId) {
       showToast(isZh ? '已删除待收账单' : 'Claim deleted');
     },
   });
+}
+
+function openProjectSettingsEdit(fundId) {
+  openProjectDetailModal(fundId);
+  if (elements.projectMetaEditPanel?.classList.contains('hidden')) {
+    toggleEditProjectMeta();
+  }
+}
+
+function addEditClaimFriendRow(
+  defaultName = '',
+  defaultAmount = '',
+  defaultPaid = false,
+  defaultPaidVia = '',
+) {
+  const list = elements.editClaimFriendsList;
+  if (!list) return;
+
+  const isZh = state.lang === 'zh';
+  const methodOptionsHtml = [
+    `<option value="">${escapeHtml(t('claim_via_unrecorded'))}</option>`,
+    ...DEFAULT_ACCOUNTS.map((acc) => {
+      const selected = defaultPaidVia === acc.name ? 'selected' : '';
+      return `<option value="${escapeHtml(acc.name)}" ${selected}>${escapeHtml(getAccountDisplayLabel(acc.name))}</option>`;
+    }),
+  ].join('');
+
+  const row = document.createElement('div');
+  row.className = 'edit-claim-friend-row';
+  row.innerHTML = `
+    <input
+      type="text"
+      class="clean-form-input edit-claim-friend-name"
+      placeholder="${t('friend_name_placeholder')}"
+      value="${escapeHtml(defaultName)}"
+      maxlength="40"
+      required
+    />
+    <input
+      type="number"
+      class="clean-form-input mono-amount edit-claim-friend-amount"
+      placeholder="0.00"
+      step="0.01"
+      min="0"
+      inputmode="decimal"
+      value="${defaultAmount}"
+      required
+    />
+    <label class="edit-claim-paid-toggle">
+      <input type="checkbox" class="edit-claim-friend-paid" ${defaultPaid ? 'checked' : ''} />
+      <span>${isZh ? '已还' : 'Paid'}</span>
+    </label>
+    <button type="button" class="btn-friend-delete" title="Remove">&times;</button>
+    <div class="edit-claim-friend-via-row ${defaultPaid ? '' : 'hidden'}">
+      <span class="edit-claim-friend-via-label">${isZh ? '收款方式' : 'Paid via'}</span>
+      <select class="edit-claim-friend-via">
+        ${methodOptionsHtml}
+      </select>
+    </div>
+  `;
+
+  const paidCheck = row.querySelector('.edit-claim-friend-paid');
+  const viaRow = row.querySelector('.edit-claim-friend-via-row');
+  const viaSelect = row.querySelector('.edit-claim-friend-via');
+  paidCheck?.addEventListener('change', () => {
+    const isChecked = Boolean(paidCheck.checked);
+    viaRow?.classList.toggle('hidden', !isChecked);
+    if (!isChecked && viaSelect) {
+      viaSelect.value = '';
+    }
+  });
+
+  row
+    .querySelector('.edit-claim-friend-amount')
+    ?.addEventListener('input', recalcEditClaimMyShare);
+  row.querySelector('.btn-friend-delete')?.addEventListener('click', () => {
+    row.remove();
+    recalcEditClaimMyShare();
+  });
+
+  list.appendChild(row);
+}
+
+function recalcEditClaimMyShare() {
+  const total = parseFloat(elements.editClaimTotalInput?.value) || 0;
+  let friendsSum = 0;
+  elements.editClaimFriendsList
+    ?.querySelectorAll('.edit-claim-friend-amount')
+    .forEach((inp) => {
+      friendsSum += parseFloat(inp.value) || 0;
+    });
+
+  const isOver = friendsSum > total + 0.001;
+  elements.editClaimOverSumWarn?.classList.toggle('hidden', !isOver);
+  if (elements.editClaimMyShareInput) {
+    const computed = Math.max(0, Number((total - friendsSum).toFixed(2)));
+    elements.editClaimMyShareInput.value = String(computed);
+  }
+}
+
+function openEditClaimModal(claimId) {
+  const claim = (state.claims || []).find(
+    (c) => String(c.id) === String(claimId),
+  );
+  if (!claim || !elements.editClaimModal) return;
+
+  triggerHaptic(10);
+  state.editingClaimId = String(claim.id);
+
+  if (elements.editClaimTitleInput) {
+    elements.editClaimTitleInput.value = claim.title || '';
+  }
+  if (elements.editClaimTotalInput) {
+    elements.editClaimTotalInput.value = String(claim.total_amount ?? '');
+  }
+  if (elements.editClaimDateInput) {
+    elements.editClaimDateInput.value = claim.date || getLocalDateString();
+  }
+  if (elements.editClaimFriendsList) {
+    elements.editClaimFriendsList.innerHTML = '';
+    const friends = Array.isArray(claim.friends) ? claim.friends : [];
+    if (friends.length === 0) {
+      addEditClaimFriendRow('', '', false);
+    } else {
+      friends.forEach((f) => {
+        addEditClaimFriendRow(
+          f.name || '',
+          f.amount ?? '',
+          Boolean(f.paid),
+          f.paid_via || '',
+        );
+      });
+    }
+  }
+  if (elements.editClaimMyShareInput) {
+    elements.editClaimMyShareInput.value = String(claim.my_share ?? 0);
+  }
+  elements.editClaimOverSumWarn?.classList.add('hidden');
+  recalcEditClaimMyShare();
+
+  elements.editClaimModal.classList.remove('hidden');
+  pushModalHistoryState();
+}
+
+function closeEditClaimModal(fromPopState = false) {
+  triggerHaptic(8);
+  elements.editClaimModal?.classList.add('hidden');
+  state.editingClaimId = null;
+  popModalHistoryIfCleared(fromPopState === true);
+}
+
+async function saveEditClaim() {
+  if (!state.editingClaimId) return;
+  const claim = (state.claims || []).find(
+    (c) => String(c.id) === String(state.editingClaimId),
+  );
+  if (!claim) return;
+
+  const isZh = state.lang === 'zh';
+  const title = (elements.editClaimTitleInput?.value || '').trim();
+  const totalAmount = parseFloat(elements.editClaimTotalInput?.value) || 0;
+  const date = elements.editClaimDateInput?.value || getLocalDateString();
+
+  if (!title) {
+    return showToast(
+      isZh ? '请输入代垫项目名称' : 'Claim title is required',
+      true,
+    );
+  }
+  if (totalAmount <= 0) {
+    return showToast(
+      isZh ? '请输入有效的总付金额' : 'Please enter a valid total amount',
+      true,
+    );
+  }
+
+  const friends = [];
+  elements.editClaimFriendsList
+    ?.querySelectorAll('.edit-claim-friend-row')
+    .forEach((row) => {
+      const name = (
+        row.querySelector('.edit-claim-friend-name')?.value || ''
+      ).trim();
+      const amount =
+        parseFloat(row.querySelector('.edit-claim-friend-amount')?.value) || 0;
+      const paid = Boolean(
+        row.querySelector('.edit-claim-friend-paid')?.checked,
+      );
+      const paidVia = paid
+        ? (row.querySelector('.edit-claim-friend-via')?.value || '').trim()
+        : '';
+      if (name && amount > 0) {
+        const item = { name, amount: Number(amount.toFixed(2)), paid };
+        if (paidVia) item.paid_via = paidVia;
+        friends.push(item);
+      }
+    });
+
+  if (friends.length === 0) {
+    return showToast(
+      isZh
+        ? '请至少保留一位有效分摊对象及金额'
+        : 'Please add at least one valid split party',
+      true,
+    );
+  }
+
+  const friendsSum = friends.reduce((sum, f) => sum + f.amount, 0);
+  if (friendsSum > totalAmount + 0.001) {
+    return showToast(
+      isZh
+        ? '分摊总额不能超过总付金额'
+        : 'Split sum cannot exceed total amount',
+      true,
+    );
+  }
+
+  const myShareRaw = parseFloat(elements.editClaimMyShareInput?.value);
+  const myShare = Number.isNaN(myShareRaw)
+    ? Math.max(0, Number((totalAmount - friendsSum).toFixed(2)))
+    : Math.max(0, Number(myShareRaw.toFixed(2)));
+
+  claim.title = title;
+  claim.total_amount = Number(totalAmount.toFixed(2));
+  claim.my_share = myShare;
+  claim.friends = friends;
+  claim.date = date;
+  claim.status = friends.every((f) => f.paid) ? 'settled' : 'active';
+
+  saveClaims(state.claims);
+  renderClaims();
+  closeEditClaimModal(false);
+  triggerHaptic(12);
+  showToast(isZh ? '已更新代垫账单' : 'Claim updated');
+
+  if (supabaseClient && state.user?.id) {
+    try {
+      await supabaseClient
+        .from('claims')
+        .update({
+          title: claim.title,
+          total_amount: claim.total_amount,
+          my_share: claim.my_share,
+          friends: claim.friends,
+          status: claim.status,
+          date: claim.date,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', claim.id)
+        .eq('user_id', state.user.id);
+    } catch (e) {}
+  }
+
+  try {
+    await fetch(`/api/claims/${claim.id}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        title: claim.title,
+        totalAmount: claim.total_amount,
+        myShare: claim.my_share,
+        friends: claim.friends,
+        status: claim.status,
+        date: claim.date,
+      }),
+    });
+  } catch (e) {}
 }
 
 // Budget Top-Up Management (History, Add, Delete)
@@ -7537,31 +9616,64 @@ function closeConfirmModal() {
   popModalHistoryIfCleared();
 }
 
-// Populate Project Select in Transaction Creation Modal
-function updateProjectDropdownOptions() {
-  const select = elements.entryProjectSelect;
-  if (!select) return;
-
+function distributeSplitEvenly(
+  totalAmount,
+  friendAmountInputs,
+  onAfterDistribute,
+) {
   const isZh = state.lang === 'zh';
-  const activeFunds = (state.projects || []).filter(
-    (p) => p.status === 'active',
-  );
-  select.innerHTML =
-    `<option value="">${isZh ? '-- 无关联 (日常生活预算) --' : '-- None (Daily Budget) --'}</option>` +
-    activeFunds
-      .map(
-        (f) =>
-          `<option value="${f.id}">${escapeHtml(f.title)} (${
-            f.mode === 'budget_deduct'
-              ? isZh
-                ? '从本月预算扣除'
-                : 'From Monthly Budget'
-              : isZh
-                ? '额外专项'
-                : 'Extra Fund'
-          })</option>`,
-      )
-      .join('');
+  const total = parseFloat(totalAmount) || 0;
+  if (total <= 0) {
+    showToast(
+      isZh ? '请先输入有效总付金额' : 'Please enter total paid amount first',
+      true,
+    );
+    return;
+  }
+  const inputs = Array.from(friendAmountInputs || []);
+  if (inputs.length === 0) return;
+
+  const participantCount = 1 + inputs.length;
+  const perFriend = Number((total / participantCount).toFixed(2));
+  inputs.forEach((inp) => {
+    inp.value = String(perFriend);
+  });
+  if (typeof onAfterDistribute === 'function') {
+    onAfterDistribute();
+  }
+  triggerHaptic(10);
+}
+
+function recalcSplitBillMyShare() {
+  const total = parseFloat(elements.inputAmount?.value) || 0;
+  let friendsSum = 0;
+  elements.splitFriendsList
+    ?.querySelectorAll('.friend-amount-input')
+    .forEach((inp) => {
+      friendsSum += parseFloat(inp.value) || 0;
+    });
+
+  const isOver = total > 0 ? friendsSum > total + 0.001 : friendsSum > 0.001;
+  elements.splitOverSumWarn?.classList.toggle('hidden', !isOver);
+
+  const computed = Math.max(0, Number((total - friendsSum).toFixed(2)));
+  if (elements.splitMyShareInput) {
+    elements.splitMyShareInput.value =
+      total > 0 || friendsSum > 0 ? String(computed) : '';
+  }
+
+  if (elements.splitCalcFormula) {
+    if (total > 0) {
+      const sym = state.currency || 'RM';
+      const isZh = state.lang === 'zh';
+      elements.splitCalcFormula.textContent = isZh
+        ? `总付 ${sym} ${formatNumber(total)} − 代垫 ${sym} ${formatNumber(friendsSum)} = 自付 ${sym} ${formatNumber(computed)}`
+        : `Total ${sym} ${formatNumber(total)} − Split ${sym} ${formatNumber(friendsSum)} = Mine ${sym} ${formatNumber(computed)}`;
+      elements.splitCalcFormula.classList.remove('hidden');
+    } else {
+      elements.splitCalcFormula.classList.add('hidden');
+    }
+  }
 }
 
 // Add a Dynamic Friend Row in Split Bill Drawer
@@ -7580,11 +9692,16 @@ function addSplitFriendRow(defaultName = '', defaultAmount = '') {
     <button type="button" class="btn-friend-delete" title="Remove">&times;</button>
   `;
 
-  row.querySelector('.btn-friend-delete').addEventListener('click', () => {
+  row
+    .querySelector('.friend-amount-input')
+    ?.addEventListener('input', recalcSplitBillMyShare);
+  row.querySelector('.btn-friend-delete')?.addEventListener('click', () => {
     row.remove();
+    recalcSplitBillMyShare();
   });
 
   list.appendChild(row);
+  recalcSplitBillMyShare();
 }
 
 // Setup Event Listeners for the Projects & Claims Module
@@ -7608,7 +9725,7 @@ function setupProjectsModuleEventListeners() {
     renderClaims();
   });
 
-  // 2. New Project Modal Triggers
+  // 2. New Project & Project Detail Modal Triggers
   elements.openNewProjectBtn?.addEventListener('click', openNewProjectModal);
   elements.closeNewProjectModalBtn?.addEventListener(
     'click',
@@ -7620,31 +9737,116 @@ function setupProjectsModuleEventListeners() {
   });
   elements.saveNewProjectBtn?.addEventListener('click', saveNewProject);
 
-  const updateProjectModeTip = (mode) => {
-    if (!elements.projectModeTip) return;
-    const isZh = state.lang === 'zh';
-    elements.projectModeTip.textContent =
-      mode === 'budget_deduct'
-        ? isZh
-          ? '将从本月总预算中锁定预留这部分额度，防止日常消费超支。'
-          : 'Locks this amount from your monthly budget to prevent overspending.'
-        : isZh
-          ? '作为独立额外资金池追踪，不占用本月日常预算。'
-          : 'Tracked separately without reducing your monthly daily budget.';
-  };
-  updateProjectModeTip('budget_deduct');
-  elements.btnModeBudgetDeduct?.addEventListener('click', () => {
+  // Create Entry Modal Destination Switch (Daily Expense vs Dedicated Project Fund)
+  elements.btnDestDaily?.addEventListener('click', () => {
     triggerHaptic(8);
-    elements.btnModeBudgetDeduct.classList.add('active');
-    elements.btnModeExtraFund?.classList.remove('active');
-    updateProjectModeTip('budget_deduct');
+    setEntryDestination('daily');
+  });
+  elements.btnDestFund?.addEventListener('click', () => {
+    triggerHaptic(8);
+    setEntryDestination('fund');
   });
 
-  elements.btnModeExtraFund?.addEventListener('click', () => {
+  // New Project & Edit Project Timeframe Preset Pills & Start Date Recalculation
+  elements.newProjectTimeframePills
+    ?.querySelectorAll('.timeframe-pill-btn')
+    .forEach((btn) => {
+      btn.addEventListener('click', () => {
+        triggerHaptic(8);
+        const tf = btn.getAttribute('data-timeframe') || 'indefinite';
+        applyProjectTimeframeUI(
+          'new',
+          tf,
+          elements.newProjectStartInput?.value || getLocalDateString(),
+          elements.newProjectDeadlineInput?.value || null,
+        );
+      });
+    });
+  elements.newProjectStartInput?.addEventListener('change', () => {
+    applyProjectTimeframeUI(
+      'new',
+      state.newProjectTimeframe || 'indefinite',
+      elements.newProjectStartInput.value,
+      elements.newProjectDeadlineInput?.value || null,
+    );
+  });
+
+  elements.editProjectTimeframePills
+    ?.querySelectorAll('.timeframe-pill-btn')
+    .forEach((btn) => {
+      btn.addEventListener('click', () => {
+        triggerHaptic(8);
+        const tf = btn.getAttribute('data-timeframe') || 'indefinite';
+        applyProjectTimeframeUI(
+          'edit',
+          tf,
+          elements.editProjectStartInput?.value || getLocalDateString(),
+          elements.editProjectDeadlineInput?.value || null,
+        );
+      });
+    });
+  elements.editProjectStartInput?.addEventListener('change', () => {
+    applyProjectTimeframeUI(
+      'edit',
+      state.editProjectTimeframe || 'indefinite',
+      elements.editProjectStartInput.value,
+      elements.editProjectDeadlineInput?.value || null,
+    );
+  });
+
+  elements.closeProjectDetailModalBtn?.addEventListener('click', () =>
+    closeProjectDetailModal(false),
+  );
+  elements.projectDetailModal?.addEventListener('click', (e) => {
+    if (e.target === elements.projectDetailModal) {
+      closeProjectDetailModal(false);
+    }
+  });
+  elements.toggleEditProjectMetaBtn?.addEventListener(
+    'click',
+    toggleEditProjectMeta,
+  );
+  elements.cancelProjectMetaBtn?.addEventListener('click', () => {
+    elements.projectMetaEditPanel?.classList.add('hidden');
+  });
+  elements.saveProjectMetaBtn?.addEventListener('click', saveProjectMeta);
+  elements.projectEntryForm?.addEventListener('submit', saveProjectEntry);
+  elements.cancelProjectEntryEditBtn?.addEventListener(
+    'click',
+    cancelProjectEntryEdit,
+  );
+  elements.detailDeleteProjectBtn?.addEventListener('click', () =>
+    deleteProject(),
+  );
+  elements.detailCompleteProjectBtn?.addEventListener('click', () =>
+    completeProject(),
+  );
+  elements.detailResumeProjectBtn?.addEventListener('click', () =>
+    resumeProject(),
+  );
+
+  // Project Entry Receipt Photo Upload & Preview
+  elements.triggerProjectReceiptBtn?.addEventListener('click', () => {
     triggerHaptic(8);
-    elements.btnModeExtraFund.classList.add('active');
-    elements.btnModeBudgetDeduct?.classList.remove('active');
-    updateProjectModeTip('extra');
+    elements.projectReceiptFileInput?.click();
+  });
+  elements.projectReceiptFileInput?.addEventListener('change', (e) => {
+    handleProjectReceiptFileSelected(e);
+  });
+  elements.removeProjectReceiptBtn?.addEventListener('click', () => {
+    clearPendingProjectReceipt();
+  });
+  elements.previewProjectReceiptThumbWrap?.addEventListener('click', () => {
+    if (
+      state.pendingProjectReceiptDataUrl &&
+      typeof openReceiptLightbox === 'function'
+    ) {
+      openReceiptLightbox(
+        state.pendingProjectReceiptDataUrl,
+        t('receipt_attached'),
+        elements.projectReceiptPreviewMeta?.textContent || '',
+      );
+    }
   });
 
   // 3. Budget Top-up Triggers
@@ -7678,26 +9880,42 @@ function setupProjectsModuleEventListeners() {
   });
 
   // 5. Create Transaction Advanced Toggles
-  elements.toggleFundLinkBtn?.addEventListener('click', () => {
-    triggerHaptic(10);
-    const isOpen = !elements.sinkingFundDrawer?.classList.contains('hidden');
-    elements.sinkingFundDrawer?.classList.toggle('hidden', isOpen);
-    elements.toggleFundLinkBtn?.classList.toggle('active', !isOpen);
-  });
-
   elements.toggleSplitBillBtn?.addEventListener('click', () => {
     triggerHaptic(10);
     const isOpen = !elements.splitBillDrawer?.classList.contains('hidden');
     elements.splitBillDrawer?.classList.toggle('hidden', isOpen);
     elements.toggleSplitBillBtn?.classList.toggle('active', !isOpen);
 
+    if (!isOpen) {
+      if (
+        elements.splitFriendsList &&
+        elements.splitFriendsList.children.length === 0
+      ) {
+        addSplitFriendRow();
+      } else {
+        recalcSplitBillMyShare();
+      }
+    }
+  });
+
+  elements.inputAmount?.addEventListener('input', () => {
+    if (elements.toggleSplitBillBtn?.classList.contains('active')) {
+      recalcSplitBillMyShare();
+    }
+  });
+
+  elements.splitEvenlyBtn?.addEventListener('click', () => {
     if (
-      !isOpen &&
       elements.splitFriendsList &&
       elements.splitFriendsList.children.length === 0
     ) {
       addSplitFriendRow();
     }
+    distributeSplitEvenly(
+      elements.inputAmount?.value,
+      elements.splitFriendsList?.querySelectorAll('.friend-amount-input'),
+      recalcSplitBillMyShare,
+    );
   });
 
   elements.addFriendRowBtn?.addEventListener('click', () => {
@@ -7706,6 +9924,58 @@ function setupProjectsModuleEventListeners() {
   });
 
   elements.openNewClaimBtn?.addEventListener('click', openCreateModalWithSplit);
+
+  // Edit Claim Modal Listeners
+  elements.closeEditClaimModalBtn?.addEventListener('click', () =>
+    closeEditClaimModal(false),
+  );
+  elements.cancelEditClaimBtn?.addEventListener('click', () =>
+    closeEditClaimModal(false),
+  );
+  elements.editClaimModal?.addEventListener('click', (e) => {
+    if (e.target === elements.editClaimModal) closeEditClaimModal(false);
+  });
+  elements.editClaimSplitEvenlyBtn?.addEventListener('click', () => {
+    if (
+      elements.editClaimFriendsList &&
+      elements.editClaimFriendsList.children.length === 0
+    ) {
+      addEditClaimFriendRow('', '', false);
+    }
+    distributeSplitEvenly(
+      elements.editClaimTotalInput?.value,
+      elements.editClaimFriendsList?.querySelectorAll(
+        '.edit-claim-friend-amount',
+      ),
+      recalcEditClaimMyShare,
+    );
+  });
+  elements.addEditClaimFriendBtn?.addEventListener('click', () => {
+    triggerHaptic(8);
+    addEditClaimFriendRow('', '', false);
+  });
+  elements.editClaimTotalInput?.addEventListener(
+    'input',
+    recalcEditClaimMyShare,
+  );
+  elements.saveEditClaimBtn?.addEventListener('click', saveEditClaim);
+  elements.deleteClaimInModalBtn?.addEventListener('click', () => {
+    if (state.editingClaimId) {
+      deleteClaim(state.editingClaimId);
+    }
+  });
+
+  // Claim Receive Method Modal Listeners
+  elements.closeClaimReceiveModalBtn?.addEventListener('click', () =>
+    closeClaimReceiveModal(false),
+  );
+  elements.claimReceiveModal?.addEventListener('click', (e) => {
+    if (e.target === elements.claimReceiveModal) closeClaimReceiveModal(false);
+  });
+  elements.confirmClaimReceiveBtn?.addEventListener(
+    'click',
+    confirmClaimReceivePayment,
+  );
 
   // Refresh current local date, relative day tags, month rollover, and streak when returning from background
   const handleAppWakeupRollover = () => {
@@ -7732,9 +10002,16 @@ function setupProjectsModuleEventListeners() {
       elements.inputDate.value = getLocalDateString();
     }
     renderTable();
+    renderClaims();
     renderStreakAndBadges();
     updateAccountModalData();
     renderAccountsCenter();
+    if (
+      navigator.onLine &&
+      Date.now() - lastAutoUpdateCheckAt >= AUTO_UPDATE_CHECK_COOLDOWN_MS
+    ) {
+      checkForAppUpdates(false);
+    }
   };
 
   document.addEventListener('visibilitychange', () => {

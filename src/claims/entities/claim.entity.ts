@@ -10,6 +10,7 @@ export interface ClaimFriendItem {
   name: string;
   amount: number;
   paid: boolean;
+  paid_via?: string;
 }
 
 /**
@@ -33,7 +34,12 @@ export class Claim {
   @Column({ type: 'decimal', precision: 10, scale: 2, name: 'my_share' })
   myShare: number;
 
-  @Column({ type: 'simple-json' })
+  /**
+   * Split party breakdown (JSONB on Postgres, JSON text on SQLite)
+   */
+  @Column({
+    type: process.env.DATABASE_URL ? 'jsonb' : 'simple-json',
+  })
   friends: ClaimFriendItem[];
 
   @Column({ type: 'varchar', length: 20, default: 'active' })

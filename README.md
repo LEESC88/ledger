@@ -34,13 +34,12 @@ Install and run **MonetaX** directly on your Android phone without needing to ho
 
 ---
 
-## 🆕 What's New in v1.5.7 (Mobile Ergonomics, Dark-Mode Contrast & Safe Sync Polish)
+## 🆕 What's New in v1.5.8 (Dedicated Project Budget Cards, Smart Split Claims & Dual-Mode Auto-Update)
 
-* 🎨 **High-Contrast Dark Mode & Complete Theme Tokens**: Added `--on-accent` (`#0f172a` in dark mode / `#ffffff` in light mode) across all solid brand/semantic buttons and mapped legacy CSS token aliases (`--bg-card`, `--border-subtle`, `--color-primary/success/danger`, `--accent-emerald/rose`) cleanly in `:root`.
-* 👁️ **Privacy Mode Receipt Shielding**: Aligned receipt preview & lightbox blur selectors with `body.privacy-active` (plus press/hover-to-peek) so receipt photos stay masked alongside financial amounts.
-* 📱 **Mobile Safe-Area, Touch Targets & Gesture Polish**: Scoped desktop modal overrides behind `@media (min-width: 641px)` to restore full-width mobile bottom sheets with `env(safe-area-inset-bottom)`, expanded `.btn-icon-header` hit targets to `44px` vertically without crowding the header, prevented accidental swipe-close while scrolling long forms, and gated `navigator.vibrate` behind `userActivation`.
-* 🛡️ **Safe ZIP Cleanup, Real Async Refresh & Search UX**: Only purges cloud receipts that were successfully packed into the `.zip` archive, awaits all 5 sync requests in `#refreshBtn`, adds `150ms` search debouncing + filtered empty states, restores `#projectModeTip` funding-mode descriptions, and syncs `APP_VERSION` badges immediately at boot.
-* 📜 **v1.5.6 – v1.5.4 Foundation**: Bundled offline `JSZip` precache, dynamic JPEG/WebP MIME upload/archive sync, Android native `FileProvider` `.zip` & photo sharing, 0ms cold-start hydration, 400% zoomable lightbox, and multi-tenant isolation test suite.
+* 🎯 **Dedicated Project Budget Cards (`projects`)**: Upgraded Sinking Funds into self-contained project budget cards with standalone line-item `entries`, custom timeframes (`indefinite`, `2w`, `this_month`, `1m`, `3m`, `custom`), `include_in_budget` toggle with combined monthly pool overview, double-confirm Settle/Resume actions, and full SQLite / Supabase PostgreSQL sync (`PATCH /api/projects/:id` & `:id/resume`).
+* 🤝 **Smart Split Bills & Claims (`claims`)**: Added real-time `myShare` auto-calculation (`Total - Friends`) with formula display, evenly split helper, over-sum validation, pure-advance (`myShare = 0`) handling, full claim editing (`#editClaimModal` + `PATCH /api/claims/:id`), concise plain-text statement copy, month-synced settled history folding, and non-intrusive `paid_via` repayment channel tracking across localStorage, Supabase RLS, and NestJS APIs.
+* 🔄 **Dual-Mode Auto-Update Checker**: Upgraded `checkForAppUpdates()` with `compareSemver()`, foreground resume polling (15-minute cooldown), release notes passthrough, optional top-banner notifications for standard releases, and lockable force-update modals (`forceUpdate` / `minSupportedVersion` / `[FORCE]`).
+* 📜 **v1.5.7 – v1.5.4 Foundation**: High-contrast `--on-accent` theme tokens, privacy-mode receipt blur, offline `JSZip` precache, Android native `FileProvider` `.zip` sharing, 0ms cold-start hydration, and multi-tenant isolation test suite.
 
 ---
 

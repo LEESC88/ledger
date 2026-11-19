@@ -95,7 +95,9 @@ WITH CHECK ((select auth.uid())::text = user_id);
 
 
 -- ============================================================================
--- Projects & Sinking Funds Table
+-- Projects & Dedicated Budget Cards Table
+-- Supports monthly budget toggle (`include_in_budget`), custom timeframe,
+-- and standalone item entries stored in `entries` JSONB.
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS projects (
   id VARCHAR(50) PRIMARY KEY,
@@ -104,13 +106,29 @@ CREATE TABLE IF NOT EXISTS projects (
   icon VARCHAR(20) DEFAULT '🎯',
   target_amount DECIMAL(10, 2) NOT NULL,
   spent_amount DECIMAL(10, 2) DEFAULT 0.00,
-  mode VARCHAR(30) DEFAULT 'budget_deduct', -- 'budget_deduct' | 'extra'
+  mode VARCHAR(30) DEFAULT 'extra', -- 'budget_deduct' | 'extra'
   month VARCHAR(10) NOT NULL,
   status VARCHAR(20) DEFAULT 'active',      -- 'active' | 'settled'
+  include_in_budget BOOLEAN NOT NULL DEFAULT false,
+  timeframe_type VARCHAR(30) NOT NULL DEFAULT 'indefinite',
+  start_date VARCHAR(10),
+  deadline VARCHAR(10),
+  entries JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE public.projects
+  ADD COLUMN IF NOT EXISTS include_in_budget BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS timeframe_type VARCHAR(30) NOT NULL DEFAULT 'indefinite',
+  ADD COLUMN IF NOT EXISTS start_date VARCHAR(10),
+  ADD COLUMN IF NOT EXISTS deadline VARCHAR(10),
+  ADD COLUMN IF NOT EXISTS entries JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+ALTER TABLE public.projects
+  ALTER COLUMN mode SET DEFAULT 'extra';
+
+CREATE INDEX IF NOT EXISTS idx_projects_include_budget ON projects(user_id, include_in_budget, status);
 CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id);
 CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
 

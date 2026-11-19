@@ -379,7 +379,7 @@
             class="btn-update-dismiss"
             aria-label="Dismiss"
           >
-            ✕
+            &times;
           </button>
         </div>
       </div>
@@ -768,6 +768,28 @@
         <section id="pageAnalytics" class="app-page" data-page="analytics">
           <!-- Monthly Budget Tracker Card -->
           <div id="budgetTrackerBanner" class="budget-tracker-banner">
+            <!-- Combined Monthly Pool Overview (Overall Daily + Included Dedicated Funds) -->
+            <div
+              id="budgetCombinedOverview"
+              class="budget-combined-overview hidden"
+            >
+              <div class="budget-combined-left">
+                <span
+                  class="budget-combined-label"
+                  data-i18n="budget_combined_pool_label"
+                  >本月总盘子 (日常 + 专款)</span
+                >
+                <span
+                  id="budgetCombinedFormula"
+                  class="budget-combined-formula mono-amount"
+                ></span>
+              </div>
+              <span
+                id="budgetCombinedUsage"
+                class="budget-combined-usage mono-amount"
+              ></span>
+            </div>
+
             <div class="budget-tracker-inner">
               <div class="budget-meta-left">
                 <div class="budget-icon-capsule">
@@ -788,6 +810,11 @@
                   <div class="budget-title-line">
                     <span class="budget-label" data-i18n="monthly_budget"
                       >Monthly Budget</span
+                    >
+                    <span
+                      class="budget-overall-badge"
+                      data-i18n="budget_overall_badge"
+                      >整体预算</span
                     >
                     <span id="budgetPeriodLabel" class="budget-period-badge"
                       >All Records</span
@@ -880,6 +907,27 @@
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- Separate Dedicated Funds Budget Section (Distinct Color, Never Added to Overall Daily Limit) -->
+            <div id="budgetFundsSection" class="budget-funds-section hidden">
+              <div class="budget-funds-header">
+                <div class="budget-funds-title-wrap">
+                  <span class="budget-funds-dot" aria-hidden="true"></span>
+                  <span
+                    class="budget-funds-title"
+                    data-i18n="budget_funds_section_title"
+                    >专款预算</span
+                  >
+                  <span id="budgetFundsCountBadge" class="budget-funds-count-pill"
+                    >0 项</span
+                  >
+                </div>
+                <span id="budgetFundsSummaryText" class="budget-funds-summary-text mono-amount"
+                  >RM 0.00 / RM 0.00</span
+                >
+              </div>
+              <div id="budgetFundsList" class="budget-funds-list"></div>
             </div>
           </div>
 
@@ -1566,6 +1614,41 @@
               </button>
             </div>
 
+            <!-- Daily vs Project Fund Destination Switch (Expense Mode Only) -->
+            <div id="entryDestinationWrap" class="entry-destination-wrap">
+              <div class="segmented-control entry-dest-switch">
+                <button
+                  type="button"
+                  class="segment-btn active"
+                  id="btnDestDaily"
+                  data-dest="daily"
+                >
+                  <span data-i18n="dest_daily_expense">日常消费</span>
+                </button>
+                <button
+                  type="button"
+                  class="segment-btn"
+                  id="btnDestFund"
+                  data-dest="fund"
+                >
+                  <span data-i18n="dest_project_fund">专款支出</span>
+                </button>
+              </div>
+
+              <div
+                id="entryFundTargetPicker"
+                class="entry-fund-target-picker hidden"
+              >
+                <label class="field-label" data-i18n="select_project_target"
+                  >选择专款对象</label
+                >
+                <div
+                  id="entryFundCardsGrid"
+                  class="entry-fund-cards-grid"
+                ></div>
+              </div>
+            </div>
+
             <!-- Clean Amount Input Field -->
             <div class="create-field-group">
               <label
@@ -1748,13 +1831,6 @@
             <div class="entry-advanced-toggles">
               <button
                 type="button"
-                id="toggleFundLinkBtn"
-                class="pill-toggle-btn"
-              >
-                <span data-i18n="associate_sinking_fund">关联专款储备</span>
-              </button>
-              <button
-                type="button"
                 id="toggleSplitBillBtn"
                 class="pill-toggle-btn"
               >
@@ -1857,28 +1933,23 @@
               </button>
             </div>
 
-            <!-- Sinking Fund Association Drawer -->
-            <div id="sinkingFundDrawer" class="entry-sub-drawer hidden">
-              <label
-                for="entryProjectSelect"
-                class="field-label"
-                data-i18n="associate_sinking_fund"
-                >关联专款预留池</label
-              >
-              <select id="entryProjectSelect" class="clean-form-select">
-                <option value="">-- 无关联 (日常预算) --</option>
-              </select>
-            </div>
-
             <!-- Split Bill Drawer -->
             <div id="splitBillDrawer" class="entry-sub-drawer hidden">
               <div class="split-drawer-header">
-                <label
-                  for="splitMyShareInput"
-                  class="field-label"
-                  data-i18n="my_share_label"
-                  >我自己消费的部分</label
-                >
+                <div class="split-my-share-label-wrap">
+                  <label
+                    for="splitMyShareInput"
+                    class="field-label"
+                    data-i18n="my_share_label"
+                    >我自己消费的部分</label
+                  >
+                  <span
+                    id="splitAutoCalcBadge"
+                    class="edit-claim-autocalc-tag"
+                    data-i18n="claim_autocalc_badge"
+                    >自动重算</span
+                  >
+                </div>
                 <div class="split-my-share-box">
                   <span class="currency-sym">RM</span>
                   <input
@@ -1887,22 +1958,35 @@
                     step="0.01"
                     min="0"
                     placeholder="0.00"
-                    class="clean-form-input"
+                    class="clean-form-input mono-amount"
                   />
                 </div>
               </div>
+              <p id="splitCalcFormula" class="split-calc-formula hidden"></p>
+              <p id="splitOverSumWarn" class="edit-claim-warn hidden" data-i18n="split_over_sum_warn">
+                代垫分摊金额之和已超出总付金额，请核对。
+              </p>
               <div class="split-friends-section">
                 <div class="split-friends-header">
                   <label class="field-label" data-i18n="friends_share_label"
                     >代付朋友名单</label
                   >
-                  <button
-                    type="button"
-                    id="addFriendRowBtn"
-                    class="btn-xs-action"
-                  >
-                    <span data-i18n="add_friend_share_btn">+ 添加朋友</span>
-                  </button>
+                  <div class="split-friends-actions">
+                    <button
+                      type="button"
+                      id="splitEvenlyBtn"
+                      class="btn-xs-action is-secondary"
+                    >
+                      <span data-i18n="split_evenly_btn">按人数均分</span>
+                    </button>
+                    <button
+                      type="button"
+                      id="addFriendRowBtn"
+                      class="btn-xs-action"
+                    >
+                      <span data-i18n="add_friend_share_btn">+ 添加朋友</span>
+                    </button>
+                  </div>
                 </div>
                 <div id="splitFriendsList" class="split-friends-list">
                   <!-- Dynamic friend rows added by app.js -->
@@ -1978,6 +2062,13 @@
           </div>
 
           <div class="modal-body">
+            <p
+              id="inAppUpdateForceNotice"
+              class="update-force-notice hidden"
+              data-i18n="inapp_force_update_notice"
+            >
+              此版本包含重要更新，请先完成升级后继续使用。
+            </p>
             <p id="inAppUpdateNotes" class="update-notes-body">
               New version is ready with improvements.
             </p>
@@ -2196,7 +2287,7 @@
                 class="header-select select-fullwidth"
               >
                 <option value="current_year" selected>
-                  📅 本年度账单 (今年至今)
+                  本年度账单 (今年至今)
                 </option>
                 <option value="1">&gt; 1 Year (365 Days)</option>
                 <option value="2">&gt; 2 Years (730 Days)</option>
@@ -2310,34 +2401,126 @@
                 />
               </div>
             </div>
+
+            <!-- Include in Monthly Budget Toggle -->
+            <label
+              for="newProjectIncludeBudgetCheck"
+              class="project-budget-toggle-card"
+            >
+              <div class="project-budget-toggle-text">
+                <span
+                  class="project-budget-toggle-title"
+                  data-i18n="include_in_monthly_budget_label"
+                  >纳入每月预算</span
+                >
+                <span
+                  class="project-budget-toggle-desc"
+                  data-i18n="include_in_monthly_budget_desc"
+                  >开启后会在每月预算页单独显示，不占用日常额度。</span
+                >
+              </div>
+              <input
+                type="checkbox"
+                id="newProjectIncludeBudgetCheck"
+                class="project-toggle-checkbox"
+              />
+            </label>
+
+            <!-- Custom Timeframe / Deadline Picker -->
             <div class="create-field-group">
-              <label class="field-label" data-i18n="funding_mode_label"
-                >Funding Mode</label
+              <label class="field-label" data-i18n="project_timeframe_label"
+                >专款时限</label
               >
-              <div class="segmented-control project-mode-switch">
+              <div
+                id="newProjectTimeframePills"
+                class="timeframe-preset-pills"
+              >
                 <button
                   type="button"
-                  class="segment-btn active"
-                  id="btnModeBudgetDeduct"
-                  data-mode="budget_deduct"
+                  class="timeframe-pill-btn active"
+                  data-timeframe="indefinite"
+                  data-i18n="timeframe_indefinite"
                 >
-                  <span data-i18n="mode_budget_deduct">从本月预算扣除</span>
+                  未确定 / 长期
                 </button>
                 <button
                   type="button"
-                  class="segment-btn"
-                  id="btnModeExtraFund"
-                  data-mode="extra"
+                  class="timeframe-pill-btn"
+                  data-timeframe="2w"
+                  data-i18n="timeframe_2w"
                 >
-                  <span data-i18n="mode_extra_fund">作为额外专项</span>
+                  两周内
+                </button>
+                <button
+                  type="button"
+                  class="timeframe-pill-btn"
+                  data-timeframe="this_month"
+                  data-i18n="timeframe_this_month"
+                >
+                  本月内
+                </button>
+                <button
+                  type="button"
+                  class="timeframe-pill-btn"
+                  data-timeframe="1m"
+                  data-i18n="timeframe_1m"
+                >
+                  1 个月内
+                </button>
+                <button
+                  type="button"
+                  class="timeframe-pill-btn"
+                  data-timeframe="3m"
+                  data-i18n="timeframe_3m"
+                >
+                  3 个月内
+                </button>
+                <button
+                  type="button"
+                  class="timeframe-pill-btn"
+                  data-timeframe="custom"
+                  data-i18n="timeframe_custom"
+                >
+                  自定义
                 </button>
               </div>
-              <p
-                id="projectModeTip"
-                class="text-muted"
-                style="font-size: 0.78rem; margin-top: 6px; line-height: 1.4"
+              <div
+                id="newProjectDatesRow"
+                class="project-timeframe-dates-row hidden"
               >
-                将从本月预算中锁定预留这部分额度，防止日常消费超支。
+                <div class="create-field-group">
+                  <label
+                    for="newProjectStartInput"
+                    class="field-label"
+                    data-i18n="project_start_date_label"
+                    >开始日期</label
+                  >
+                  <input
+                    type="date"
+                    id="newProjectStartInput"
+                    class="clean-form-input"
+                  />
+                </div>
+                <div class="create-field-group">
+                  <label
+                    for="newProjectDeadlineInput"
+                    class="field-label"
+                    data-i18n="project_deadline_label"
+                    >截止日期</label
+                  >
+                  <input
+                    type="date"
+                    id="newProjectDeadlineInput"
+                    class="clean-form-input"
+                  />
+                </div>
+              </div>
+              <p
+                id="newProjectTimeframeHint"
+                class="text-muted project-create-hint"
+                data-i18n="project_timeframe_indefinite_hint"
+              >
+                未设截止日，点击「完成」前将一直保留。
               </p>
             </div>
           </div>
@@ -2355,6 +2538,813 @@
               data-i18n="save"
             >
               Save
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================
+         1B. PROJECT / SINKING FUND DETAIL MODAL (Standalone Mini-Ledger)
+         =================================================================== -->
+      <div
+        id="projectDetailModal"
+        class="modal-overlay hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="projectDetailTitle"
+      >
+        <div class="modal-dialog modal-dialog-md project-detail-dialog">
+          <div class="modal-header project-detail-header">
+            <div class="modal-title-row">
+              <div class="modal-icon project-detail-icon" aria-hidden="true">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="12" r="6"></circle>
+                  <circle cx="12" cy="12" r="2"></circle>
+                </svg>
+              </div>
+              <div class="project-detail-title-wrap">
+                <div class="project-detail-heading-row">
+                  <h3 id="projectDetailTitle" class="modal-title">专款详情</h3>
+                  <span
+                    id="projectDetailStatusBadge"
+                    class="project-status-badge status-active"
+                    data-i18n="fund_status_active"
+                    >进行中</span
+                  >
+                </div>
+                <button
+                  type="button"
+                  id="toggleEditProjectMetaBtn"
+                  class="btn-edit-project-settings"
+                  data-i18n="project_edit_meta"
+                >
+                  ✎ 编辑专款设置
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              id="closeProjectDetailModalBtn"
+              class="btn-close-modal"
+              aria-label="Close modal"
+            >
+              &times;
+            </button>
+          </div>
+
+          <div class="modal-body project-detail-body">
+            <!-- Inline Edit Project Title / Target Budget -->
+            <div
+              id="projectMetaEditPanel"
+              class="project-meta-edit-panel hidden"
+            >
+              <div class="project-meta-edit-grid">
+                <div class="create-field-group">
+                  <label
+                    for="projectDetailEditTitle"
+                    class="field-label"
+                    data-i18n="project_name_label"
+                    >专款名称</label
+                  >
+                  <div class="clean-text-box">
+                    <input
+                      type="text"
+                      id="projectDetailEditTitle"
+                      class="clean-form-input"
+                      maxlength="40"
+                    />
+                  </div>
+                </div>
+                <div class="create-field-group">
+                  <label
+                    for="projectDetailEditTarget"
+                    class="field-label"
+                    data-i18n="reserved_amount_label"
+                    >预算金额</label
+                  >
+                  <div class="clean-amount-box">
+                    <span class="amount-currency-label currency-sym">RM</span>
+                    <input
+                      type="number"
+                      id="projectDetailEditTarget"
+                      class="amount-input project-meta-amount-input"
+                      step="0.01"
+                      min="0.01"
+                      inputmode="decimal"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <label
+                for="editProjectIncludeBudgetCheck"
+                class="project-budget-toggle-card is-compact"
+              >
+                <div class="project-budget-toggle-text">
+                  <span
+                    class="project-budget-toggle-title"
+                    data-i18n="include_in_monthly_budget_label"
+                    >纳入每月预算</span
+                  >
+                </div>
+                <input
+                  type="checkbox"
+                  id="editProjectIncludeBudgetCheck"
+                  class="project-toggle-checkbox"
+                />
+              </label>
+
+              <div class="create-field-group">
+                <label class="field-label" data-i18n="project_timeframe_label"
+                  >专款时限</label
+                >
+                <div
+                  id="editProjectTimeframePills"
+                  class="timeframe-preset-pills"
+                >
+                  <button
+                    type="button"
+                    class="timeframe-pill-btn active"
+                    data-timeframe="indefinite"
+                    data-i18n="timeframe_indefinite"
+                  >
+                    未确定 / 长期
+                  </button>
+                  <button
+                    type="button"
+                    class="timeframe-pill-btn"
+                    data-timeframe="2w"
+                    data-i18n="timeframe_2w"
+                  >
+                    两周内
+                  </button>
+                  <button
+                    type="button"
+                    class="timeframe-pill-btn"
+                    data-timeframe="this_month"
+                    data-i18n="timeframe_this_month"
+                  >
+                    本月内
+                  </button>
+                  <button
+                    type="button"
+                    class="timeframe-pill-btn"
+                    data-timeframe="1m"
+                    data-i18n="timeframe_1m"
+                  >
+                    1 个月内
+                  </button>
+                  <button
+                    type="button"
+                    class="timeframe-pill-btn"
+                    data-timeframe="3m"
+                    data-i18n="timeframe_3m"
+                  >
+                    3 个月内
+                  </button>
+                  <button
+                    type="button"
+                    class="timeframe-pill-btn"
+                    data-timeframe="custom"
+                    data-i18n="timeframe_custom"
+                  >
+                    自定义
+                  </button>
+                </div>
+                <div
+                  id="editProjectDatesRow"
+                  class="project-timeframe-dates-row hidden"
+                >
+                  <div class="create-field-group">
+                    <label
+                      for="editProjectStartInput"
+                      class="field-label"
+                      data-i18n="project_start_date_label"
+                      >开始日期</label
+                    >
+                    <input
+                      type="date"
+                      id="editProjectStartInput"
+                      class="clean-form-input"
+                    />
+                  </div>
+                  <div class="create-field-group">
+                    <label
+                      for="editProjectDeadlineInput"
+                      class="field-label"
+                      data-i18n="project_deadline_label"
+                      >截止日期</label
+                    >
+                    <input
+                      type="date"
+                      id="editProjectDeadlineInput"
+                      class="clean-form-input"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="project-meta-edit-actions">
+                <button
+                  type="button"
+                  id="cancelProjectMetaBtn"
+                  class="btn-modal-secondary"
+                  data-i18n="cancel"
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  id="saveProjectMetaBtn"
+                  class="btn-modal-primary"
+                  data-i18n="save"
+                >
+                  保存
+                </button>
+              </div>
+            </div>
+
+            <!-- Summary Metrics & Progress Bar -->
+            <div class="project-detail-summary">
+              <div class="project-detail-metrics">
+                <div class="project-metric-cell">
+                  <span class="project-metric-label" data-i18n="fund_target"
+                    >预算</span
+                  >
+                  <span
+                    id="projectDetailTargetVal"
+                    class="project-metric-value mono-amount"
+                    >RM 0.00</span
+                  >
+                </div>
+                <div class="project-metric-cell">
+                  <span class="project-metric-label" data-i18n="fund_spent"
+                    >已支出</span
+                  >
+                  <span
+                    id="projectDetailSpentVal"
+                    class="project-metric-value mono-amount"
+                    >RM 0.00</span
+                  >
+                </div>
+                <div class="project-metric-cell project-metric-outcome">
+                  <span
+                    id="projectDetailOutcomeLabel"
+                    class="project-metric-label"
+                    data-i18n="fund_remaining"
+                    >有剩</span
+                  >
+                  <span
+                    id="projectDetailOutcomeVal"
+                    class="project-metric-value mono-amount is-remaining"
+                    >RM 0.00</span
+                  >
+                </div>
+              </div>
+              <div class="project-progress-track">
+                <div
+                  id="projectDetailProgressFill"
+                  class="project-progress-spent"
+                  style="width: 0%"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Add / Edit Expense Form (hidden when settled) -->
+            <form
+              id="projectEntryForm"
+              class="project-entry-form"
+              autocomplete="off"
+            >
+              <!-- Amount -->
+              <div class="create-field-group">
+                <label
+                  for="projectEntryAmountInput"
+                  class="field-label"
+                  data-i18n="col_amount"
+                  >金额</label
+                >
+                <div class="clean-amount-box project-entry-amount-box">
+                  <span class="amount-currency-label currency-sym">RM</span>
+                  <input
+                    type="number"
+                    id="projectEntryAmountInput"
+                    class="amount-input project-entry-amount-input"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0.01"
+                    inputmode="decimal"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Expense Categories Grid (same as main ledger) -->
+              <div class="category-picker-section">
+                <label class="field-label" data-i18n="col_category"
+                  >分类</label
+                >
+                <div
+                  id="projectEntryCategoryGrid"
+                  class="category-chip-grid project-entry-cat-grid"
+                ></div>
+              </div>
+
+              <!-- Payment Method Selector (same as main ledger) -->
+              <div class="account-picker-section">
+                <label class="field-label" data-i18n="account_label"
+                  >支付账户</label
+                >
+                <div
+                  id="projectEntryAccountGrid"
+                  class="account-chip-grid project-entry-acc-grid"
+                ></div>
+              </div>
+
+              <!-- Date & Note -->
+              <div class="create-meta-grid">
+                <div class="create-field-group">
+                  <label
+                    for="projectEntryDateInput"
+                    class="field-label"
+                    data-i18n="col_date"
+                    >日期</label
+                  >
+                  <input
+                    type="date"
+                    id="projectEntryDateInput"
+                    class="clean-form-input"
+                    required
+                  />
+                </div>
+                <div class="create-field-group">
+                  <label
+                    for="projectEntryTitleInput"
+                    class="field-label"
+                    data-i18n="col_note"
+                    >备注</label
+                  >
+                  <input
+                    type="text"
+                    id="projectEntryTitleInput"
+                    class="clean-form-input"
+                    data-i18n-placeholder="project_entry_title_placeholder"
+                    placeholder="添加备注说明（选填）..."
+                    maxlength="50"
+                  />
+                </div>
+              </div>
+
+              <!-- Receipt / Photo Attachment -->
+              <div class="project-entry-attachment-row">
+                <button
+                  type="button"
+                  id="triggerProjectReceiptBtn"
+                  class="pill-toggle-btn receipt-upload-trigger"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                    ></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                  </svg>
+                  <span data-i18n="add_receipt_photo">添加凭证 / 实物图片</span>
+                </button>
+                <input
+                  type="file"
+                  id="projectReceiptFileInput"
+                  accept="image/*"
+                  class="visually-hidden"
+                />
+              </div>
+
+              <div
+                id="projectReceiptPreviewDrawer"
+                class="receipt-preview-drawer hidden"
+              >
+                <div
+                  id="previewProjectReceiptThumbWrap"
+                  class="receipt-preview-thumb-wrap"
+                  title="查看凭证大图"
+                >
+                  <img
+                    id="projectReceiptPreviewImg"
+                    src=""
+                    alt="Receipt Preview"
+                    class="receipt-preview-img"
+                  />
+                  <span class="receipt-zoom-badge">
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      <line x1="11" y1="8" x2="11" y2="14"></line>
+                      <line x1="8" y1="11" x2="14" y2="11"></line>
+                    </svg>
+                  </span>
+                </div>
+                <div class="receipt-preview-info">
+                  <span class="receipt-preview-title" data-i18n="receipt_attached"
+                    >已附凭证图片</span
+                  >
+                  <span
+                    id="projectReceiptPreviewMeta"
+                    class="receipt-preview-meta"
+                    >WebP · 0 KB</span
+                  >
+                </div>
+                <button
+                  type="button"
+                  id="removeProjectReceiptBtn"
+                  class="btn-receipt-remove"
+                  aria-label="Remove receipt photo"
+                >
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path
+                      d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="project-entry-form-actions">
+                <div class="project-entry-btn-group">
+                  <button
+                    type="button"
+                    id="cancelProjectEntryEditBtn"
+                    class="btn-modal-secondary hidden"
+                    data-i18n="cancel"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="submit"
+                    id="saveProjectEntryBtn"
+                    class="btn-modal-primary project-entry-submit-btn"
+                    data-i18n="btn_add_project_entry"
+                  >
+                    + 记入专款
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <!-- Read-only notice when completed -->
+            <div
+              id="projectSettledNotice"
+              class="project-settled-notice hidden"
+              data-i18n="project_settled_readonly_hint"
+            >
+              该专款已完成，当前仅展示历史明细。如需补充或修改记录，请先点击右下角「恢复」。
+            </div>
+
+            <!-- Scrollable Entries List -->
+            <div class="project-entries-section">
+              <div class="project-entries-header">
+                <span
+                  class="project-entries-title"
+                  data-i18n="project_entries_heading"
+                  >专款明细</span
+                >
+                <span
+                  id="projectEntriesCountLabel"
+                  class="project-entries-count"
+                  >0 笔</span
+                >
+              </div>
+              <div id="projectEntriesList" class="project-entries-list"></div>
+            </div>
+          </div>
+
+          <div class="modal-footer project-detail-footer">
+            <button
+              type="button"
+              id="detailDeleteProjectBtn"
+              class="btn-card-action btn-action-delete"
+              data-i18n="btn_delete_project"
+            >
+              删除专款
+            </button>
+            <div class="project-detail-footer-right">
+              <button
+                type="button"
+                id="detailCompleteProjectBtn"
+                class="btn-modal-primary"
+                data-i18n="btn_complete_fund"
+              >
+                完成
+              </button>
+              <button
+                type="button"
+                id="detailResumeProjectBtn"
+                class="btn-modal-secondary hidden"
+                data-i18n="btn_resume_fund"
+              >
+                恢复
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================
+         1C. EDIT CLAIM / SPLIT BILL MODAL
+         =================================================================== -->
+      <div
+        id="editClaimModal"
+        class="modal-overlay hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="editClaimModalTitle"
+      >
+        <div class="modal-dialog modal-dialog-md project-detail-dialog">
+          <div class="modal-header">
+            <div class="modal-title-row">
+              <div class="modal-icon" aria-hidden="true">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                  <path d="M9 14l2 2 4-4"></path>
+                </svg>
+              </div>
+              <div>
+                <h3
+                  id="editClaimModalTitle"
+                  class="modal-title"
+                  data-i18n="edit_claim_modal_title"
+                >
+                  编辑代垫账单
+                </h3>
+                <p class="modal-subtitle" data-i18n="edit_claim_modal_sub">
+                  修改分摊对象、金额、日期与收款状态
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              id="closeEditClaimModalBtn"
+              class="btn-close-modal"
+              aria-label="Close modal"
+            >
+              &times;
+            </button>
+          </div>
+
+          <div class="modal-body project-detail-body">
+            <div class="create-field-group">
+              <label
+                for="editClaimTitleInput"
+                class="field-label"
+                data-i18n="claim_title_label"
+                >代垫项目名称</label
+              >
+              <div class="clean-text-box">
+                <input
+                  type="text"
+                  id="editClaimTitleInput"
+                  class="clean-form-input"
+                  maxlength="60"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="project-meta-edit-grid">
+              <div class="create-field-group">
+                <label
+                  for="editClaimTotalInput"
+                  class="field-label"
+                  data-i18n="claim_total_paid_label"
+                  >总付金额</label
+                >
+                <div class="clean-amount-box">
+                  <span class="amount-currency-label currency-sym">RM</span>
+                  <input
+                    type="number"
+                    id="editClaimTotalInput"
+                    class="amount-input project-meta-amount-input"
+                    step="0.01"
+                    min="0.01"
+                    inputmode="decimal"
+                  />
+                </div>
+              </div>
+              <div class="create-field-group">
+                <label
+                  for="editClaimDateInput"
+                  class="field-label"
+                  data-i18n="col_date"
+                  >日期</label
+                >
+                <input
+                  type="date"
+                  id="editClaimDateInput"
+                  class="clean-form-input"
+                />
+              </div>
+            </div>
+
+            <div class="create-field-group">
+              <div class="edit-claim-friends-header">
+                <label class="field-label" data-i18n="friends_share_label"
+                  >分摊结算对象</label
+                >
+                <div class="split-friends-actions">
+                  <button
+                    type="button"
+                    id="editClaimSplitEvenlyBtn"
+                    class="btn-xs-action is-secondary"
+                    data-i18n="split_evenly_btn"
+                  >
+                    按人数均分
+                  </button>
+                  <button
+                    type="button"
+                    id="addEditClaimFriendBtn"
+                    class="btn-inline-link"
+                    data-i18n="add_friend_share_btn"
+                  >
+                    + 添加分摊对象
+                  </button>
+                </div>
+              </div>
+              <div
+                id="editClaimFriendsList"
+                class="edit-claim-friends-list"
+              ></div>
+            </div>
+
+            <div class="edit-claim-myshare-box">
+              <div class="edit-claim-myshare-row">
+                <label
+                  for="editClaimMyShareInput"
+                  class="field-label"
+                  data-i18n="my_share_label"
+                  >个人实付开销</label
+                >
+                <span
+                  id="editClaimMyShareHint"
+                  class="edit-claim-autocalc-tag"
+                  data-i18n="claim_autocalc_badge"
+                  >自动重算</span
+                >
+              </div>
+              <div class="clean-amount-box">
+                <span class="amount-currency-label currency-sym">RM</span>
+                <input
+                  type="number"
+                  id="editClaimMyShareInput"
+                  class="amount-input project-meta-amount-input"
+                  step="0.01"
+                  min="0"
+                  inputmode="decimal"
+                />
+              </div>
+              <p id="editClaimOverSumWarn" class="edit-claim-warn hidden" data-i18n="split_over_sum_warn">
+                代垫分摊金额之和已超出总付金额，请核对。
+              </p>
+            </div>
+          </div>
+
+          <div class="modal-footer project-detail-footer">
+            <button
+              type="button"
+              id="deleteClaimInModalBtn"
+              class="btn-card-action btn-action-delete"
+              data-i18n="btn_delete"
+            >
+              删除
+            </button>
+            <div class="project-detail-footer-right">
+              <button
+                type="button"
+                id="cancelEditClaimBtn"
+                class="btn-modal-secondary"
+                data-i18n="cancel"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                id="saveEditClaimBtn"
+                class="btn-modal-primary"
+                data-i18n="save"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================
+         1F. CLAIM RECEIVE METHOD MODAL (Record Repayment Channel Only)
+         =================================================================== -->
+      <div id="claimReceiveModal" class="modal-overlay hidden">
+        <div class="modal-dialog modal-dialog-sm">
+          <div class="modal-header">
+            <div class="modal-title-row">
+              <div class="modal-icon-box" style="color: var(--income-green)">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <div>
+                <h3
+                  class="modal-title"
+                  data-i18n="claim_receive_modal_title"
+                >
+                  记录收款方式
+                </h3>
+                <p id="claimReceiveModalSub" class="modal-sub"></p>
+              </div>
+            </div>
+            <button
+              type="button"
+              id="closeClaimReceiveModalBtn"
+              class="btn-close-modal"
+              aria-label="Close modal"
+            >
+              &times;
+            </button>
+          </div>
+          <div class="modal-body" style="padding-top: 8px">
+            <label
+              class="field-label"
+              data-i18n="claim_receive_method_label"
+              style="display: block; margin-bottom: 10px"
+              >对方通过什么方式归还？</label
+            >
+            <div
+              id="claimReceiveMethodGrid"
+              class="claim-receive-method-grid"
+            ></div>
+          </div>
+          <div class="modal-footer" style="justify-content: stretch">
+            <button
+              type="button"
+              id="confirmClaimReceiveBtn"
+              class="btn-modal-primary"
+              style="width: 100%"
+              data-i18n="confirm_claim_receive_btn"
+            >
+              确认已收
             </button>
           </div>
         </div>

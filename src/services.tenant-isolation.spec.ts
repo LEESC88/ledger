@@ -81,6 +81,59 @@ describe('Multi-Tenant Isolation & Core Service Logic', () => {
     await expect(service.updateSpentAmount('proj_1', 200)).rejects.toThrow(
       UnauthorizedException,
     );
+    await expect(
+      service.update('proj_1', { title: 'Updated' }),
+    ).rejects.toThrow(UnauthorizedException);
+    await expect(service.resume('proj_1')).rejects.toThrow(
+      UnauthorizedException,
+    );
+
+    repo.findOne.mockResolvedValueOnce({
+      id: 'proj_1',
+      userId: 'user-1',
+      title: 'Car Repair',
+      targetAmount: 500,
+      spentAmount: 0,
+      status: 'active',
+      entries: [],
+    });
+    const updatedProj = await service.update(
+      'proj_1',
+      {
+        includeInBudget: true,
+        timeframeType: '2w',
+        entries: [
+          {
+            id: 'e1',
+            title: 'Parts',
+            category: 'Transportation',
+            account_name: 'Cash',
+            amount: 120,
+            date: '2026-11-18',
+          },
+          {
+            id: 'e2',
+            title: 'Oil',
+            category: 'Transportation',
+            account_name: 'eWallet',
+            amount: 150,
+            date: '2026-11-18',
+          },
+        ],
+      },
+      'user-1',
+    );
+    expect(updatedProj.spentAmount).toBe(270);
+    expect(updatedProj.includeInBudget).toBe(true);
+    expect(updatedProj.entries).toHaveLength(2);
+
+    repo.findOne.mockResolvedValueOnce({
+      id: 'proj_1',
+      userId: 'user-1',
+      status: 'settled',
+    });
+    const resumedProj = await service.resume('proj_1', 'user-1');
+    expect(resumedProj.status).toBe('active');
   });
 
   it('ClaimsService: enforces userId and auto-settles when all friends pay', async () => {
@@ -106,6 +159,9 @@ describe('Multi-Tenant Isolation & Core Service Logic', () => {
     await expect(service.remove('claim_1')).rejects.toThrow(
       UnauthorizedException,
     );
+    await expect(
+      service.update('claim_1', { title: 'Updated' }),
+    ).rejects.toThrow(UnauthorizedException);
 
     repo.findOne.mockResolvedValueOnce({
       id: 'claim_1',
@@ -113,9 +169,54 @@ describe('Multi-Tenant Isolation & Core Service Logic', () => {
       status: 'active',
       friends: [{ name: 'Alice', amount: 30, paid: false }],
     });
-    const updated = await service.toggleFriendPaid('claim_1', 0, 'user-1');
+    const updated = await service.toggleFriendPaid(
+      'claim_1',
+      0,
+      'user-1',
+      'eWallet',
+    );
     expect(updated.friends[0].paid).toBe(true);
+    expect(updated.friends[0].paid_via).toBe('eWallet');
     expect(updated.status).toBe('settled');
+
+    repo.findOne.mockResolvedValueOnce({
+      id: 'claim_1',
+      userId: 'user-1',
+      title: 'Dinner',
+      totalAmount: 90,
+      myShare: 30,
+      status: 'settled',
+      date: '2026-11-16',
+      friends: [{ name: 'Alice', amount: 60, paid: true, paid_via: 'Cash' }],
+    });
+    const edited = await service.update(
+      'claim_1',
+      {
+        title: 'Hotpot Dinner',
+        totalAmount: 120,
+        friends: [
+          { name: 'Alice', amount: 40, paid: true, paid_via: 'Cash' },
+          { name: 'Bob', amount: 40, paid: false, paid_via: 'eWallet' },
+        ],
+      },
+      'user-1',
+    );
+    expect(edited.title).toBe('Hotpot Dinner');
+    expect(edited.myShare).toBe(40);
+    expect(edited.status).toBe('active');
+    expect(edited.friends).toHaveLength(2);
+    expect(edited.friends[0].paid_via).toBe('Cash');
+    expect(edited.friends[1].paid_via).toBeUndefined();
+
+    repo.findOne.mockResolvedValueOnce(edited);
+    const allSettled = await service.settleAll(
+      'claim_1',
+      'user-1',
+      'Bank Card',
+    );
+    expect(allSettled.status).toBe('settled');
+    expect(allSettled.friends[0].paid_via).toBe('Cash');
+    expect(allSettled.friends[1].paid_via).toBe('Bank Card');
   });
 
   it('BudgetsService: enforces userId and falls back to default budget', async () => {
@@ -130,13 +231,11 @@ describe('Multi-Tenant Isolation & Core Service Logic', () => {
       }),
     ).rejects.toThrow(UnauthorizedException);
 
-    repo.findOne
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        month: 'default',
-        userId: 'user-1',
-        amount: 2500,
-      });
+    repo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      month: 'default',
+      userId: 'user-1',
+      amount: 2500,
+    });
     const budget = await service.getBudget('2026-11', 'user-1');
     expect(budget?.amount).toBe(2500);
     expect(repo.findOne).toHaveBeenNthCalledWith(2, {

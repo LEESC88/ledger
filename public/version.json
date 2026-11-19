@@ -1,6 +1,8 @@
 {
-  "version": "1.5.7",
-  "releaseDate": "2026-11-17",
+  "version": "1.5.8",
+  "minSupportedVersion": "1.5.7",
+  "forceUpdate": false,
+  "releaseDate": "2026-11-19",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/MonetaX.apk",
-  "notes": "MonetaX v1.5.7 Release: 🎨 High-Contrast Dark Mode Buttons (--on-accent) & Theme Token Parity; 👁️ Privacy Mode Receipt Blur Fix; 📱 Mobile Bottom-Sheet Safe Area, 44px Header Touch Targets & Scroll-Safe Swipe Guard; 🛡️ Safe ZIP Receipt Purge, Real Async Refresh, 150ms Search Debounce & Sinking-Fund Mode Hints."
+  "notes": "MonetaX v1.5.8: Dedicated project budget cards with custom timeframes & item entries, Split Bill auto-calc & editing, settled history folding with month sync, repayment method tracking (paid_via), and smart dual-mode auto-update checker."
 }
