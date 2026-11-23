@@ -1,0 +1,2042 @@
+/* MonetaX UI - Dedicated Funds, Split Claims & Global Contrast Overrides */
+
+/* ==========================================================================
+   11. PROJECTS & CLAIMS MODULE (Sinking Funds & Split Bills)
+   ========================================================================== */
+
+.projects-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 24px;
+}
+
+.projects-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.projects-main-heading {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.projects-sub-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 2px 0 0 0;
+}
+
+.btn-primary-capsule {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--brand-cyan);
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+  transition: all 0.15s ease;
+}
+
+.btn-primary-capsule:hover {
+  background: var(--brand-cyan-hover, #0f766e);
+  transform: translateY(-1px);
+}
+
+.projects-tab-switch {
+  margin-top: 4px;
+}
+
+.projects-card-grid,
+.claims-card-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Sinking Fund Card */
+.project-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.project-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.project-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.project-icon-badge {
+  font-size: 1.4rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(13, 148, 136, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-name-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.project-mode-pill {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+.project-mode-pill.mode-budget {
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--brand-cyan);
+}
+
+.project-mode-pill.mode-extra {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.project-math-equation {
+  font-size: 0.85rem;
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+/* Sinking Fund Dual Progress Bar */
+.project-progress-track {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-hover);
+  border-radius: 9999px;
+  position: relative;
+  overflow: hidden;
+}
+
+.project-progress-spent {
+  height: 100%;
+  background: var(--brand-cyan);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.project-card-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.project-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-card-action {
+  flex: 1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-card);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.btn-card-action:hover {
+  background: var(--bg-hover);
+}
+
+.btn-card-action.btn-action-settle {
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--brand-cyan);
+  border-color: rgba(13, 148, 136, 0.2);
+}
+
+.btn-card-action.btn-action-delete {
+  color: var(--expense-rose);
+  border-color: var(--expense-subtle);
+}
+
+/* Independent Project Card Enhancements & Detail Modal */
+.project-card.is-clickable {
+  cursor: pointer;
+  transition:
+    transform var(--transition-quick),
+    box-shadow var(--transition-quick),
+    border-color var(--transition-quick);
+}
+
+.project-card.is-clickable:hover {
+  transform: translateY(-2px);
+  border-color: var(--brand-cyan);
+  box-shadow: var(--shadow-float);
+}
+
+.project-card.is-clickable:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.project-card.is-completed {
+  background: var(--bg-input);
+  border-color: var(--border-card);
+}
+
+.project-card-top-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.project-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.project-status-badge.status-active {
+  background: var(--brand-cyan-subtle);
+  color: var(--brand-cyan);
+}
+
+.project-status-badge.status-completed {
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+}
+
+.project-outcome-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.project-outcome-pill.is-remaining {
+  background: var(--income-subtle);
+  color: var(--income-green);
+}
+
+.project-outcome-pill.is-over-budget {
+  background: var(--expense-subtle);
+  color: var(--expense-rose);
+}
+
+.project-progress-spent.is-over-budget {
+  background: var(--expense-rose);
+}
+
+.project-card-footer-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.project-card-hint {
+  opacity: 0.85;
+}
+
+.project-create-hint {
+  font-size: 0.78rem;
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+/* Detail Modal */
+.project-detail-dialog {
+  max-width: 520px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+.project-detail-header {
+  flex-shrink: 0;
+}
+
+.project-detail-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.project-detail-heading-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-inline-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--brand-cyan);
+  cursor: pointer;
+  text-align: left;
+  width: fit-content;
+}
+
+.btn-inline-link:hover {
+  text-decoration: underline;
+}
+
+.project-detail-body {
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.project-meta-edit-panel {
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.project-meta-edit-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 10px;
+}
+
+.project-meta-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.project-detail-summary {
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.project-detail-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.project-metric-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.project-metric-outcome {
+  text-align: right;
+}
+
+.project-metric-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.project-metric-value {
+  font-size: 0.94rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.project-metric-value.is-remaining {
+  color: var(--income-green);
+}
+
+.project-metric-value.is-over-budget {
+  color: var(--expense-rose);
+}
+
+.project-entry-form {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.project-entry-amount-box {
+  padding: 6px 12px;
+}
+
+.project-meta-amount-input,
+.project-entry-amount-input {
+  font-size: 1.15rem;
+}
+
+.project-entry-cat-grid .cat-grid-btn,
+.project-entry-acc-grid .account-chip-btn {
+  min-height: 48px;
+  padding: 7px 4px;
+}
+
+.project-entry-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.project-entry-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.project-entry-submit-btn {
+  flex: 1;
+  min-height: 38px;
+}
+
+.project-detail-dialog .btn-modal-primary {
+  color: var(--on-accent);
+}
+
+.project-settled-notice {
+  background: var(--bg-input);
+  border: 1px dashed var(--border-input);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.project-entries-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-entries-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.project-entries-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.project-entries-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.project-entries-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.project-entries-empty {
+  padding: 18px 12px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--bg-input);
+  border: 1px dashed var(--border-card);
+  border-radius: var(--radius-md);
+}
+
+.project-entry-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-quick);
+}
+
+.project-entry-item.is-editing {
+  border-color: var(--brand-cyan);
+  background: var(--brand-cyan-subtle);
+}
+
+.project-entry-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.project-entry-cat-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--brand-cyan-subtle);
+  color: var(--brand-cyan);
+}
+
+.project-entry-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.project-entry-name {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-entry-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-entry-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.project-entry-amount {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--expense-rose);
+  font-variant-numeric: tabular-nums;
+}
+
+.project-entry-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-project-entry-icon {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xs);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  transition:
+    color var(--transition-quick),
+    border-color var(--transition-quick);
+}
+
+.btn-project-entry-icon:hover {
+  color: var(--text-primary);
+  border-color: var(--border-input);
+}
+
+.btn-project-entry-icon.is-delete:hover {
+  color: var(--expense-rose);
+  border-color: var(--expense-subtle);
+}
+
+.project-detail-footer {
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+#confirmActionModal {
+  z-index: 240;
+}
+
+.project-entry-attachment-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-detail-footer .btn-card-action {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 7px 14px;
+}
+
+.project-detail-footer-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Monthly Budget Combined Overview Row (Daily + Dedicated Funds) */
+.budget-combined-overview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.budget-combined-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.budget-combined-label {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.budget-combined-formula {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.budget-combined-usage {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--brand-cyan);
+}
+
+.btn-edit-project-settings {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  background: var(--brand-cyan-subtle);
+  border: 1px solid transparent;
+  color: var(--brand-cyan);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: fit-content;
+  transition: border-color var(--transition-quick);
+}
+
+.btn-edit-project-settings:hover {
+  border-color: var(--brand-cyan);
+}
+
+.project-card-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-card-edit-icon {
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xs);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  transition: all var(--transition-quick);
+}
+
+.btn-card-edit-icon:hover {
+  color: var(--brand-cyan);
+  border-color: var(--brand-cyan);
+}
+
+/* Editable Claim Cards & Edit Claim Modal */
+.claim-card.is-clickable {
+  cursor: pointer;
+  transition:
+    transform var(--transition-quick),
+    border-color var(--transition-quick),
+    box-shadow var(--transition-quick);
+}
+
+.claim-card.is-clickable:hover {
+  transform: translateY(-2px);
+  border-color: var(--brand-cyan);
+  box-shadow: var(--shadow-float);
+}
+
+.edit-claim-friends-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.edit-claim-friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-claim-friend-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr auto auto;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+}
+
+.edit-claim-friend-via-row {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  margin-top: 2px;
+  border-top: 1px dashed var(--border-card);
+}
+
+.edit-claim-friend-via-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.edit-claim-friend-via {
+  flex: 1;
+  max-width: 190px;
+  height: 30px;
+  padding: 0 8px;
+  font-size: 0.74rem;
+  border-radius: 7px;
+  border: 1px solid var(--border-card);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.claims-active-empty-banner {
+  text-align: center;
+  padding: 20px 16px;
+  border-radius: 14px;
+  border: 1px dashed var(--border-card);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.claims-settled-group {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.claims-settled-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-card);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.claims-settled-toggle:hover {
+  background: var(--bg-hover);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.claims-settled-toggle-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.claims-settled-chevron {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-muted);
+  transition: transform 0.18s ease;
+}
+
+.claims-settled-toggle.is-expanded .claims-settled-chevron {
+  transform: rotate(90deg);
+}
+
+.claims-settled-toggle-hint {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.claims-settled-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.claim-receive-method-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.claim-receive-method-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 12px;
+  border-radius: 11px;
+  border: 1px solid var(--border-card);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.claim-receive-method-chip svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.claim-receive-method-chip.active {
+  background: rgba(13, 148, 136, 0.12);
+  border-color: var(--brand-cyan);
+  color: var(--brand-cyan);
+}
+
+.edit-claim-paid-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.edit-claim-paid-toggle input {
+  accent-color: var(--income-green);
+  cursor: pointer;
+}
+
+.edit-claim-myshare-box {
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-claim-myshare-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.edit-claim-autocalc-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: var(--brand-cyan-subtle);
+  color: var(--brand-cyan);
+}
+
+.edit-claim-warn {
+  margin: 2px 0 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--expense-rose);
+}
+
+/* Monthly Budget Overall vs Dedicated Funds Split Section */
+.budget-overall-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: var(--brand-cyan-subtle);
+  color: var(--brand-cyan);
+}
+
+.budget-funds-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border-card);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.budget-funds-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.budget-funds-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.budget-funds-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+.budget-funds-title {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.budget-funds-count-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(139, 92, 246, 0.14);
+  color: #a78bfa;
+}
+
+[data-theme='light'] .budget-funds-count-pill {
+  color: #6d28d9;
+}
+
+.budget-funds-summary-text {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.budget-funds-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.budget-fund-row {
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-quick),
+    transform var(--transition-quick);
+}
+
+.budget-fund-row:hover {
+  border-color: #8b5cf6;
+  transform: translateY(-1px);
+}
+
+.budget-fund-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.budget-fund-row-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.budget-fund-row-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.inline-svg-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--brand-cyan);
+}
+
+.inline-svg-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.budget-fund-row-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.budget-fund-numbers {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.budget-fund-outcome {
+  font-weight: 700;
+}
+
+.budget-fund-outcome.is-remaining {
+  color: var(--income-green);
+}
+
+.budget-fund-outcome.is-over-budget {
+  color: var(--expense-rose);
+}
+
+.budget-fund-bar-track {
+  width: 100%;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  overflow: hidden;
+}
+
+.budget-fund-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, #7c3aed, #a78bfa);
+  transition: width 260ms ease;
+}
+
+.budget-fund-bar-fill.is-over-budget {
+  background: var(--expense-rose);
+}
+
+/* Homepage Create Modal: Daily vs Dedicated Fund Destination Switch */
+.entry-destination-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.entry-dest-switch .segment-btn.active[data-dest='daily'] {
+  background: var(--brand-cyan);
+  color: var(--on-accent);
+  box-shadow: 0 2px 8px var(--brand-cyan-glow);
+}
+
+.entry-dest-switch .segment-btn.active[data-dest='fund'] {
+  background: #7c3aed;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.28);
+}
+
+.entry-fund-target-picker {
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.entry-fund-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.entry-fund-card-btn {
+  text-align: left;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: all var(--transition-quick);
+}
+
+.entry-fund-card-btn:hover {
+  border-color: #8b5cf6;
+}
+
+.entry-fund-card-btn.active {
+  background: rgba(139, 92, 246, 0.14);
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 1px #8b5cf6;
+}
+
+.entry-fund-card-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entry-fund-card-meta {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-fund-card-meta.is-over-budget {
+  color: var(--expense-rose);
+}
+
+.entry-fund-empty-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Project Include-in-Budget Toggle & Timeframe Controls */
+.project-budget-toggle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color var(--transition-quick);
+}
+
+.project-budget-toggle-card:hover {
+  border-color: #8b5cf6;
+}
+
+.project-budget-toggle-card.is-compact {
+  padding: 8px 10px;
+}
+
+.project-budget-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.project-budget-toggle-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.project-budget-toggle-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.project-toggle-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #8b5cf6;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.timeframe-preset-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.timeframe-pill-btn {
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-full);
+  padding: 5px 10px;
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-quick);
+}
+
+.timeframe-pill-btn:hover {
+  border-color: var(--border-input);
+}
+
+.timeframe-pill-btn.active {
+  background: var(--brand-cyan-subtle);
+  border-color: var(--brand-cyan);
+  color: var(--brand-cyan);
+  font-weight: 700;
+}
+
+.project-timeframe-dates-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.project-badge-included {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(139, 92, 246, 0.14);
+  color: #a78bfa;
+}
+
+[data-theme='light'] .project-badge-included {
+  color: #6d28d9;
+}
+
+.project-badge-timeframe {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  color: var(--text-muted);
+}
+
+.project-badge-timeframe.is-overdue {
+  background: var(--expense-subtle);
+  border-color: transparent;
+  color: var(--expense-rose);
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .project-meta-edit-grid,
+  .project-timeframe-dates-row,
+  .entry-fund-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .project-entry-cat-grid,
+  .project-entry-acc-grid {
+    gap: 6px;
+  }
+
+  .project-detail-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Claims & Split Bills */
+.claims-summary-card {
+  background: linear-gradient(
+    135deg,
+    rgba(13, 148, 136, 0.12),
+    rgba(20, 184, 166, 0.05)
+  );
+  border: 1px solid rgba(13, 148, 136, 0.2);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.claims-summary-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.claims-summary-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--brand-cyan);
+}
+
+.claims-summary-amount {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-mono, monospace);
+}
+
+.btn-claim-action {
+  background: var(--brand-cyan);
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.claim-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.claim-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.claim-title-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.claim-total-badge {
+  font-size: 0.85rem;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  color: var(--brand-cyan);
+}
+
+.claim-friend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.claim-friend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--bg-hover);
+  font-size: 0.85rem;
+}
+
+.claim-friend-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-mark-paid {
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid var(--brand-cyan);
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--brand-cyan);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-mark-paid.paid {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+/* Striped Locked Bar in Monthly Budget */
+.btn-budget-topup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--brand-cyan);
+  border: 1px solid rgba(13, 148, 136, 0.2);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+.budget-bar-locked {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  max-width: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(245, 158, 11, 0.25),
+    rgba(245, 158, 11, 0.25) 6px,
+    rgba(245, 158, 11, 0.45) 6px,
+    rgba(245, 158, 11, 0.45) 12px
+  );
+  border-left: 2px dashed #f59e0b;
+  border-radius: 0 var(--radius-full) var(--radius-full) 0;
+  transition: width 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.budget-formula-row {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono, monospace);
+  font-weight: 500;
+}
+
+/* Timeline Source Badges */
+.badge-source-fund {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--brand-cyan);
+}
+
+.badge-source-claim {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+/* Create Entry Advanced Toggles & Drawers */
+.entry-advanced-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 10px 0;
+}
+
+.pill-toggle-btn {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px dashed var(--border-card);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pill-toggle-btn.active {
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--brand-cyan);
+  border: 1px solid var(--brand-cyan);
+}
+
+.entry-sub-drawer {
+  background: var(--bg-hover);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.split-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.split-my-share-label-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.split-calc-formula {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.split-my-share-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 140px;
+}
+
+.split-friends-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.split-friends-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-xs-action {
+  background: transparent;
+  border: 1px solid var(--brand-cyan);
+  color: var(--brand-cyan);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-quick);
+}
+
+.btn-xs-action.is-secondary {
+  border-color: var(--border-input);
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+}
+
+.btn-xs-action.is-secondary:hover {
+  border-color: var(--brand-cyan);
+  color: var(--brand-cyan);
+}
+
+.split-friend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.btn-friend-delete {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+/* Web & Desktop Modal Dialog Scroll Adaptation */
+.modal-overlay {
+  overflow-y: auto;
+}
+
+.modal-overlay:not(.create-sheet-overlay) {
+  padding: 16px;
+}
+
+.create-sheet-dialog {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: calc(100dvh - 24px);
+}
+
+.create-sheet-form {
+  overflow-y: auto;
+  max-height: calc(88dvh - 120px);
+  padding-right: 6px;
+  padding-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overscroll-behavior: contain;
+}
+
+@media (min-width: 641px) {
+  .create-sheet-dialog {
+    max-width: 480px;
+    max-height: calc(100dvh - 40px);
+    padding: 20px 20px 16px 20px;
+  }
+}
+
+.create-sheet-form::-webkit-scrollbar {
+  width: 5px;
+}
+.create-sheet-form::-webkit-scrollbar-thumb {
+  background: var(--border-card);
+  border-radius: 9999px;
+}
+
+/* Zero-flash session state */
+html.has-auth-session #loginLandingView {
+  display: none !important;
+}
+html.has-auth-session #appLayout {
+  display: flex !important;
+}
+
+/* Projects Tab Segmented Control & Buttons */
+.projects-tab-switch {
+  display: flex !important;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-input) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 4px !important;
+  gap: 6px !important;
+  margin-bottom: 16px !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.projects-tab-switch .segment-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.projects-tab-switch .segment-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.projects-tab-switch .segment-btn.active {
+  background: var(--bg-surface) !important;
+  color: var(--brand-cyan) !important;
+  font-weight: 700 !important;
+  border: 1px solid var(--border-card) !important;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Funding Mode Toggle in Modal */
+.project-mode-switch {
+  display: flex !important;
+  background: var(--bg-input) !important;
+  border: 1.5px solid var(--border-input) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 4px !important;
+  gap: 6px !important;
+}
+
+.project-mode-switch .segment-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.project-mode-switch .segment-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.project-mode-switch .segment-btn.active[data-mode='budget_deduct'] {
+  background: var(--bg-surface) !important;
+  color: var(--brand-cyan) !important;
+  font-weight: 700 !important;
+  border-color: var(--brand-cyan) !important;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.15) !important;
+}
+
+.project-mode-switch .segment-btn.active[data-mode='extra'] {
+  background: var(--bg-surface) !important;
+  color: #7c3aed !important;
+  font-weight: 700 !important;
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.15) !important;
+}
+
+/* Desktop Self-Contained Ledger Scroll Container */
+@media (min-width: 641px) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .app-layout {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    padding-bottom: 84px;
+  }
+
+  .pages-viewport {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-page#pageLedger {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .column-panel.column-ledger {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 12px;
+  }
+
+  .table-container {
+    flex: 1;
+    min-height: 0;
+    max-height: none !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Other pages can scroll smoothly */
+  .app-page:not(#pageLedger) {
+    overflow-y: auto;
+    max-height: 100%;
+    padding-right: 2px;
+  }
+}
+
+/* Sleek Scrollbar for Table Container */
+.table-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.table-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.table-container::-webkit-scrollbar-thumb {
+  background: var(--border-card);
+  border-radius: 9999px;
+}
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+.sinking-tab-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--border-card);
+}
+
+.sinking-tab-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* ==========================================================================
+   Icon & Top-Up List Enhancements (Line-Art Consistency)
+   ========================================================================== */
+.cat-grid-icon,
+.cat-chip-icon,
+.account-chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+.cat-grid-icon svg,
+.cat-chip-icon svg,
+.account-chip-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.cat-grid-btn.active .cat-grid-icon,
+.account-chip-btn.active .account-chip-icon {
+  color: var(--brand-cyan);
+}
+
+.empty-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--brand-cyan-subtle);
+  color: var(--brand-cyan);
+  margin-bottom: 12px;
+}
+.empty-icon-wrap svg {
+  width: 24px;
+  height: 24px;
+}
+
+.badge-source-fund,
+.badge-source-claim {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.badge-source-fund svg,
+.badge-source-claim svg {
+  width: 12px;
+  height: 12px;
+  vertical-align: middle;
+}
+
+.timeline-calendar-icon svg {
+  width: 13px;
+  height: 13px;
+  vertical-align: middle;
+}
+
+.streak-fire svg {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  color: #f97316;
+}
+
+.btn-del-topup {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.btn-del-topup:hover {
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.topup-history-section {
+  margin-top: 12px;
+}
+
+.topup-history-item {
+  transition: background-color 0.15s ease;
+}
+
+.topup-history-item:hover {
+  background: var(--bg-hover) !important;
+}
+
+.claim-receive-icon {
+  color: var(--income-green);
+}
+
+.claim-receive-body {
+  padding-top: 8px;
+}
+
+.claim-receive-label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.claim-receive-footer {
+  justify-content: stretch;
+}
+
+.claim-receive-submit-btn {
+  width: 100%;
+}
+
+.btn-create-inline,
+.btn-empty-create,
+.fab-circle,
+.btn-submit,
+.avatar-edit-badge,
+.btn-save-username,
+.btn-check-update,
+.btn-modal-primary,
+.btn-modal-danger,
+.btn-update-now,
+.btn-primary-capsule,
+.btn-claim-action,
+.segment-btn.active[data-type='expense'],
+.segment-btn.active[data-type='income'] {
+  color: var(--on-accent);
+}

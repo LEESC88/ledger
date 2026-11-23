@@ -18,7 +18,10 @@
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/ledger.css" />
+    <link rel="stylesheet" href="css/analytics-settings.css" />
+    <link rel="stylesheet" href="css/projects-claims.css" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#0F766E" />
@@ -1342,7 +1345,7 @@
                     >Data Backup &amp; Cleanup</span
                   >
                   <span class="row-sub" data-i18n="data_management_desc"
-                    >Export CSV or prune old records</span
+                    >Export Excel / CSV or prune old records</span
                   >
                 </div>
                 <div class="settings-inline-btns">
@@ -1350,9 +1353,9 @@
                     type="button"
                     id="exportCsvBtn"
                     class="btn-settings-outline"
-                    data-i18n="export_csv"
+                    data-i18n="export_data"
                   >
-                    Export CSV
+                    Export Data
                   </button>
                   <button
                     type="button"
@@ -2324,6 +2327,144 @@
       </div>
 
       <!-- ===================================================================
+         EXPORT FORMAT SELECTION MODAL (Excel / CSV)
+         =================================================================== -->
+      <div id="exportFormatModal" class="modal-overlay hidden">
+        <div class="modal-dialog modal-dialog-sm">
+          <div class="modal-header">
+            <div class="modal-title-row">
+              <div class="modal-icon">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </div>
+              <div>
+                <h3 class="modal-title" data-i18n="export_modal_title">
+                  Export Data
+                </h3>
+              </div>
+            </div>
+            <button
+              type="button"
+              id="closeExportFormatModalBtn"
+              class="btn-modal-close"
+              aria-label="Close"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div id="exportScopeSummary" class="export-scope-banner"></div>
+            <div class="export-format-grid">
+              <button
+                type="button"
+                id="exportAsExcelBtn"
+                class="export-format-card export-format-card-primary"
+              >
+                <div class="export-format-icon export-format-icon-excel">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                    ></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="8" y1="13" x2="16" y2="13"></line>
+                    <line x1="8" y1="17" x2="16" y2="17"></line>
+                    <line x1="10" y1="9" x2="10" y2="21"></line>
+                  </svg>
+                </div>
+                <div class="export-format-info">
+                  <div class="export-format-title-row">
+                    <span
+                      class="export-format-title"
+                      data-i18n="export_excel_title"
+                      >Excel Workbook (.xlsx)</span
+                    >
+                    <span
+                      class="export-format-badge"
+                      data-i18n="export_excel_badge"
+                      >Recommended</span
+                    >
+                  </div>
+                  <p class="export-format-desc" data-i18n="export_excel_desc">
+                    4 styled sheets: Summary, Ledger, Projects &amp; Claims
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                id="exportAsCsvBtn"
+                class="export-format-card"
+              >
+                <div class="export-format-icon export-format-icon-csv">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                    ></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="8" y1="13" x2="16" y2="13"></line>
+                    <line x1="8" y1="17" x2="12" y2="17"></line>
+                  </svg>
+                </div>
+                <div class="export-format-info">
+                  <div class="export-format-title-row">
+                    <span
+                      class="export-format-title"
+                      data-i18n="export_csv_title"
+                      >CSV Spreadsheet (.csv)</span
+                    >
+                  </div>
+                  <p class="export-format-desc" data-i18n="export_csv_desc">
+                    Lightweight RFC 4180 ledger table for universal import
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================
          1. NEW SINKING FUND / PROJECT MODAL
          =================================================================== -->
       <div id="newProjectModal" class="modal-overlay hidden">
@@ -3290,7 +3431,7 @@
         <div class="modal-dialog modal-dialog-sm">
           <div class="modal-header">
             <div class="modal-title-row">
-              <div class="modal-icon-box" style="color: var(--income-green)">
+              <div class="modal-icon-box claim-receive-icon">
                 <svg
                   width="20"
                   height="20"
@@ -3324,11 +3465,10 @@
               &times;
             </button>
           </div>
-          <div class="modal-body" style="padding-top: 8px">
+          <div class="modal-body claim-receive-body">
             <label
-              class="field-label"
+              class="field-label claim-receive-label"
               data-i18n="claim_receive_method_label"
-              style="display: block; margin-bottom: 10px"
               >对方通过什么方式归还？</label
             >
             <div
@@ -3336,12 +3476,11 @@
               class="claim-receive-method-grid"
             ></div>
           </div>
-          <div class="modal-footer" style="justify-content: stretch">
+          <div class="modal-footer claim-receive-footer">
             <button
               type="button"
               id="confirmClaimReceiveBtn"
-              class="btn-modal-primary"
-              style="width: 100%"
+              class="btn-modal-primary claim-receive-submit-btn"
               data-i18n="confirm_claim_receive_btn"
             >
               确认已收
@@ -3667,6 +3806,14 @@
 
     <script src="/vendor/jszip.min.js"></script>
     <script src="i18n.js"></script>
-    <script src="app.js"></script>
+    <script src="js/core.js"></script>
+    <script src="js/updater.js"></script>
+    <script src="js/sync.js"></script>
+    <script src="js/records.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/projects.js"></script>
+    <script src="js/claims.js"></script>
+    <script src="js/main.js"></script>
   </body>
 </html>

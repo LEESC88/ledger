@@ -1,8 +1,8 @@
 {
-  "version": "1.5.8",
-  "minSupportedVersion": "1.5.7",
+  "version": "1.6.0",
+  "minSupportedVersion": "1.5.8",
   "forceUpdate": false,
-  "releaseDate": "2026-11-19",
+  "releaseDate": "2026-11-23",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/MonetaX.apk",
-  "notes": "MonetaX v1.5.8: Dedicated project budget cards with custom timeframes & item entries, Split Bill auto-calc & editing, settled history folding with month sync, repayment method tracking (paid_via), and smart dual-mode auto-update checker."
+  "notes": "MonetaX v1.6.0: Modular CSS/JS architecture, unified GitHub Release & version.json update checks, offline auto-sync queue for Projects & Split Claims (including receipt uploads), and unified Excel (.xlsx 4-sheet styled workbook) / CSV report export."
 }

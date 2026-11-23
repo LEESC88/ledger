@@ -32,10 +32,17 @@ jobs:
       - name: Read Version from public/version.json
         id: version
         run: |
-          VERSION=$(node -e "const fs = require('fs'); console.log(JSON.parse(fs.readFileSync('./public/version.json', 'utf8')).version);")
-          NOTES=$(node -e "const fs = require('fs'); console.log(JSON.parse(fs.readFileSync('./public/version.json', 'utf8')).notes);")
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "NOTES=$NOTES" >> $GITHUB_OUTPUT
+          node -e '
+            const fs = require("fs");
+            const v = JSON.parse(fs.readFileSync("./public/version.json", "utf8"));
+            const out = process.env.GITHUB_OUTPUT;
+            const flags = [];
+            if (v.forceUpdate) flags.push("[FORCE]");
+            if (v.minSupportedVersion) flags.push(`[MIN:${v.minSupportedVersion}]`);
+            fs.appendFileSync(out, `VERSION=${v.version || ""}\n`);
+            fs.appendFileSync(out, `NOTES=${String(v.notes || "").replace(/[\r\n]+/g, " ")}\n`);
+            fs.appendFileSync(out, `POLICY_TAGS=${flags.join(" ")}\n`);
+          '
 
       - name: Install Capacitor & Sync Android Web Assets
         run: |
@@ -71,6 +78,7 @@ jobs:
             ## 📱 MonetaX v${{ steps.version.outputs.VERSION }} — Official Signed Android APK Release
 
             ${{ steps.version.outputs.NOTES }}
+            ${{ steps.version.outputs.POLICY_TAGS }}
 
             ### 📥 Direct Download
             Download **`MonetaX.apk`** below and install it directly on your Android device (V1/V2 Production Keystore Signed).
