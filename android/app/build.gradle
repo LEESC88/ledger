@@ -18,25 +18,20 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file('ledger.keystore')
-            storePassword 'ledger123'
-            keyAlias 'ledger'
-            keyPassword 'ledger123'
-            v1SigningEnabled true
-            v2SigningEnabled true
-        }
-        debug {
-            storeFile file('ledger.keystore')
-            storePassword 'ledger123'
-            keyAlias 'ledger'
-            keyPassword 'ledger123'
-            v1SigningEnabled true
-            v2SigningEnabled true
+            def ksFile = System.getenv("KEYSTORE_FILE")
+            if (ksFile) {
+                storeFile file(ksFile)
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+                v1SigningEnabled true
+                v2SigningEnabled true
+            }
         }
     }
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            signingConfig System.getenv("KEYSTORE_FILE") ? signingConfigs.release : signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
