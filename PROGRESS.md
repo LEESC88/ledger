@@ -283,6 +283,11 @@
 
 ---
 
-## 🎯 Next Immediate Steps (下一步操作)
-1. **[Live Auth Test]**: Run `npm run start:dev`, open `http://localhost:3000`, click **Sign in with Google**, and verify real-time avatar/name display in the navigation bar.
-2. **[Multi-User Mobile App Packaging]**: Package the application via Capacitor for testing across independent devices.
+---
+
+### v1.6.0 Release Milestone (2026-11-23 — Completed)
+* [✔] **Modular Frontend Split**: Replaced legacy `public/style.css` & `public/app.js` with 4 CSS modules (`public/css/*.css`) and 9 Vanilla JS modules (`public/js/*.js`), precached by `public/sw.js` (`monetax-cache-v1.6.0`).
+* [✔] **Dual-Source OTA Updater (`public/js/updater.js`)**: Unified GitHub Releases API + `public/version.json` policy merge (`forceUpdate`, `minSupportedVersion`, `[FORCE]`, `[MIN:x.x.x]`).
+* [✔] **Offline Auto-Sync Queue (`public/js/sync.js`)**: Added `metaQueue` for Projects & Split Claims (with offline `data:image/` receipt upload on reconnect).
+* [✔] **Unified Excel (`.xlsx`) & CSV Report Export (`public/js/analytics.js`)**: Added format selector modal and shared `buildExportReportData()` exporting identical 4-section reports (Summary, Ledger, Projects, Claims).
+* [✔] **Archify System Architecture (`docs/architecture.html`, `docs/architecture-{dark,light}.png`)**: Regenerated source-backed v1.6.0 interactive architecture diagram.

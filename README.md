@@ -34,12 +34,13 @@ Install and run **MonetaX** directly on your Android phone without needing to ho
 
 ---
 
-## 🆕 What's New in v1.5.8 (Dedicated Project Budget Cards, Smart Split Claims & Dual-Mode Auto-Update)
+## 🆕 What's New in v1.6.0 (Modular Architecture, Offline Auto-Sync & Unified Excel/CSV Export)
 
-* 🎯 **Dedicated Project Budget Cards (`projects`)**: Upgraded Sinking Funds into self-contained project budget cards with standalone line-item `entries`, custom timeframes (`indefinite`, `2w`, `this_month`, `1m`, `3m`, `custom`), `include_in_budget` toggle with combined monthly pool overview, double-confirm Settle/Resume actions, and full SQLite / Supabase PostgreSQL sync (`PATCH /api/projects/:id` & `:id/resume`).
-* 🤝 **Smart Split Bills & Claims (`claims`)**: Added real-time `myShare` auto-calculation (`Total - Friends`) with formula display, evenly split helper, over-sum validation, pure-advance (`myShare = 0`) handling, full claim editing (`#editClaimModal` + `PATCH /api/claims/:id`), concise plain-text statement copy, month-synced settled history folding, and non-intrusive `paid_via` repayment channel tracking across localStorage, Supabase RLS, and NestJS APIs.
-* 🔄 **Dual-Mode Auto-Update Checker**: Upgraded `checkForAppUpdates()` with `compareSemver()`, foreground resume polling (15-minute cooldown), release notes passthrough, optional top-banner notifications for standard releases, and lockable force-update modals (`forceUpdate` / `minSupportedVersion` / `[FORCE]`).
-* 📜 **v1.5.7 – v1.5.4 Foundation**: High-contrast `--on-accent` theme tokens, privacy-mode receipt blur, offline `JSZip` precache, Android native `FileProvider` `.zip` sharing, 0ms cold-start hydration, and multi-tenant isolation test suite.
+* 🧩 **Modular Frontend Architecture (`4 CSS + 9 JS`)**: Refactored legacy monolithic `app.js` / `style.css` into 4 domain stylesheets (`public/css/{base,ledger,analytics-settings,projects-claims}.css`) and 9 vanilla ES2022 modules (`public/js/{core,updater,sync,records,analytics,settings,projects,claims,main}.js`), all precached by Service Worker `v1.6.0`.
+* 📊 **Unified Excel (`.xlsx`) & CSV Report Export**: Added a format selector modal letting you choose **Excel (4 styled sheets: Summary, Ledger, Projects & Claims)** or **CSV** on each export. Both formats share one report builder (`buildExportReportData()`) with 100% identical content, one-click direct download on desktop, and native share sheet on Android.
+* 🔁 **Offline Auto-Sync Queue for Projects & Split Claims**: Extended `syncOfflineDrafts()` with a deduplicated `metaQueue` so offline creates, edits, deletions, and `data:image/` project receipts for Projects and Claims automatically replay to Supabase and local APIs upon reconnect.
+* 🔄 **Unified Dual-Source OTA Update Checker**: Merged GitHub Releases API and `public/version.json` in parallel (`Promise.allSettled`) with CI policy tags (`[FORCE]` / `[MIN:x.x.x]`) so optional banners and force-update gates stay 100% consistent.
+* 📜 **v1.5.8 – v1.5.4 Foundation**: Dedicated project budget cards with line-item entries & custom timeframes, Smart Split Claims auto-calc/edit/`paid_via` tracking, settled history folding, privacy-mode receipt blur, offline `JSZip` 2-year receipt archival, and multi-tenant isolation test suite.
 
 ---
 
@@ -76,16 +77,16 @@ Built on a **Local-First + Direct Supabase Cloud (PostgreSQL)** architecture, Mo
 MonetaX follows a clean **Three-Tier Local-First + Dual-Track Persistence** architecture, designed for maximum resilience, sub-millisecond tactile responsiveness, and complete multi-tenant cloud isolation:
 
 1. **Client Runtime & Local-First Engine Layer (终端与 Local-First 引擎层)**
-   * **Android Native Shell (`Capacitor 6`)**: Native WebView wrapper with deep-link OAuth callback (`com.leesc88.ledger://oauth`), native `FileProvider` share intent (`CSV` / `ZIP` / Receipt Images), and `NativeUpdater` in-app APK installer.
-   * **In-App OTA Engine (`NativeUpdaterInterface`)**: Automated background version polling against `version.json`, real-time download percentage bridge, and package installer invocation.
-   * **Responsive SPA UI (`Vanilla ES2022`)**: Lightweight `<3.8MB` zero-virtual-DOM single-page architecture featuring fluid drag physics, 360° Anti-Peeking privacy mode, Chart.js 4 visual analytics, and modular i18n (`zh-CN`, `en`, `ms`).
-   * **Local-First Financial Engine**: Instant optimistic transaction CRUD, sub-`16ms` single-tap record deletion, and calendar month auto-rollover (`YYYY-MM`).
-   * **PWA Service Worker & LocalStorage Vault**: Network-first asset delivery (`public/sw.js`) and resilient local vault with offline draft retry/replay queue.
+   * **Android Native Shell (`Capacitor 6`)**: Native WebView wrapper with deep-link OAuth callback (`com.leesc88.ledger://oauth`), native `FileProvider` share intent (`XLSX` / `CSV` / `ZIP` / Receipt Images), and `NativeUpdater` in-app APK installer.
+   * **Dual-Source OTA Engine (`public/js/updater.js`)**: Parallel polling against GitHub Releases API and `version.json` with unified `forceUpdate` / `minSupportedVersion` policy evaluation, real-time download progress bridge, and package installer invocation.
+   * **Modular Responsive SPA (`4 CSS + 9 Vanilla ES2022 JS`)**: Zero-virtual-DOM modular architecture featuring fluid drag physics, 360° Anti-Peeking privacy mode, Chart.js 4 visual analytics, unified 4-sheet Excel (`.xlsx`) & CSV report exporter, and bilingual i18n (`zh-CN`, `en`).
+   * **Local-First Sync Coordinator (`public/js/sync.js`)**: Instant optimistic CRUD with unified offline draft + `metaQueue` auto-replay for Records, Projects, Split Claims, and offline `data:image/` receipts.
+   * **PWA Service Worker & LocalStorage Vault**: Network-first asset delivery (`public/sw.js`, cache `v1.6.0`) and resilient local vault with offline replay queues.
 
 2. **Server Gateway & Cloud Sync Control Layer (服务网关与云同步控制层)**
-   * **Release Manifest & Signing**: `version.json` endpoint coupled with production V1/V2 keystore signatures.
-   * **NestJS 11 Modular Backend**: RESTful APIs for `Records`, `Budgets`, `Projects` (Sinking Funds), and `Claims` (Split Bills) with global `ValidationPipe` enforcement.
-   * **Supabase Auth & Cloud Sync Coordinator**: Google OAuth 2.0 PKCE authentication and bi-directional background sync coordinator.
+   * **Release Manifest & Signing**: `version.json` endpoint coupled with CI `[FORCE]` / `[MIN:...]` policy tags and production V1/V2 keystore signatures.
+   * **NestJS 12 Modular Backend (Optional Local Server)**: RESTful APIs for `Records`, `Budgets`, `Projects` (Sinking Funds), and `Claims` (Split Bills) with global `ValidationPipe` enforcement.
+   * **Supabase Auth & Cloud Sync**: Google OAuth 2.0 PKCE authentication and bi-directional background sync coordinator.
 
 3. **Storage & Cloud Distribution Tier (持久化与云端分发层)**
    * **GitHub Releases CDN**: Global fast CDN distribution for signed `MonetaX.apk` assets.
@@ -136,10 +137,10 @@ MonetaX follows a clean **Three-Tier Local-First + Dual-Track Persistence** arch
 * **Interactive HD Zoom Lightbox**: Supports `100%`–`400%` zoom buttons, pinch-to-zoom, mouse wheel zoom, click/tap `225%` toggle, drag-to-pan, and one-tap original WebP download.
 * **2-Year Rolling Retention & 7-Day Grace Period**: Receipt photos older than 2 years enter a 7-day countdown grace period with a 1-tap local `.zip` bundler (`JSZip` + `receipt_manifest.csv`). After backup or grace period expiry, only the cloud image binary is purged while 100% of transaction records and amounts remain permanently intact (`[Receipt Archived]` badge).
 
-#### 9. 🛡️ Enterprise Security, Data Retention & CSV Export
+#### 9. 🛡️ Enterprise Security, Data Retention & Unified Excel / CSV Export
 * **Native Google OAuth 2.0**: Zero-port deep-link scheme (`com.leesc88.ledger://oauth`) with isolated account data.
 * **Row-Level Security (RLS) & Strict Multi-Tenant Guards**: End-to-end data isolation enforced at both the PostgreSQL RLS layer, Supabase Storage folder policy (`{user_id}/{year}/{filename}.webp`), and NestJS service layer.
-* **Flexible CSV Export & Native Android Sheet**: Export transactions for the current year or historical thresholds (1, 2, 3, or 5 years) directly via the native Android Share/Save sheet into your phone's File Manager.
+* **Unified Excel (`.xlsx`) & CSV Report Export**: Choose **Excel** (4 styled sheets: Summary, Ledger, Projects & Claims) or **CSV** (identical 4-section data) on every export, with consistent one-click desktop download and native Android Share/Save sheet.
 * **Storage Protection**: Built-in 50,000 record capacity limit per user with visual warning badges to prevent cloud database exhaustion.
 
 ---
@@ -253,16 +254,16 @@ MonetaX 整体遵循 **“三层拓扑 · 本地优先 · 存储双轨 · 零延
 
 #### 架构三层核心划分：
 1. **终端与 Local-First 引擎层 (`Client Runtime`)**：
-   * **Android 原生容器 (`Capacitor 6`)**：托管原生 WebView，封装 `com.leesc88.ledger://oauth` 深度链接唤醒、原生 `FileProvider` 分享 Intent（支持 CSV / ZIP / 收据原图）及 `NativeUpdater` 原生安装器桥接。
-   * **端内 OTA 更新引擎 (`NativeUpdaterInterface`)**：轮询 `version.json`，实时计算并回传 APK 下载百分比，智能引导 Android 8.0+ 未知应用安装权限。
-   * **MonetaX 响应式视图 (`Vanilla ES2022`)**：轻量级 `<3.8MB` 单页应用，包含 `#pageLedger`、`#pageProjects`、`#pageAnalytics`、`#pageSettings` 四大视图、360° 防窥私密模式 (`👁️`)、Chart.js 4 图表与中/英/马三语字典。
-   * **Local-First 财务引擎**：实现账单 CRUD、`<16ms` 乐观 UI 单击秒删、自然月跨月自动切换与重置（`YYYY-MM`）及离线重放状态机。
-   * **PWA 离线缓存服务 & 本地金库**：`public/sw.js` 静态资源网络优先缓存，LocalStorage 按月隔离存储与离线草稿队列重放。
+   * **Android 原生容器 (`Capacitor 6`)**：托管原生 WebView，封装 `com.leesc88.ledger://oauth` 深度链接唤醒、原生 `FileProvider` 分享 Intent（支持 XLSX / CSV / ZIP / 收据原图）及 `NativeUpdater` 原生安装器桥接。
+   * **双源 OTA 更新引擎 (`public/js/updater.js`)**：并行融合 GitHub Releases API 与 `version.json` 策略字段（`forceUpdate` / `minSupportedVersion`），实时回传 APK 下载进度并调起原生安装。
+   * **模块化响应式 SPA (`4 CSS + 9 Vanilla ES2022 JS`)**：零虚拟 DOM 轻量模块化架构，包含四大视图、360° 防窥私密模式 (`👁️`)、Chart.js 4 图表、统一 4 工作表 Excel (`.xlsx`) & CSV 导出器与中英双语字典。
+   * **Local-First 同步协调器 (`public/js/sync.js`)**：乐观 UI 毫秒级响应，断网自动将日常流水、专款、代垫与离线凭证图纳入持久化重放队列（`offlineQueue` + `metaQueue`），联网后自动静默补传。
+   * **PWA 离线缓存服务 & 本地金库**：`public/sw.js`（缓存 `v1.6.0`）预缓存全部模块化前端资产，保障离线秒开。
 
 2. **服务网关与云同步控制层 (`Server & Sync Tier`)**：
-   * **版本清单与签名配置**：`version.json` 客户端元数据分发与 Gradle V1/V2 签名体系。
-   * **NestJS 11 模块化后端**：严格划分为 `Records`（账单）、`Budgets`（预算）、`Projects`（专款）、`Claims`（代垫分摊）四大模块，全局 `ValidationPipe` 强校验输入。
-   * **Supabase 认证与云同步**：Google OAuth 2.0 PKCE 认证会话恢复与专款/代垫双向云端同步器。
+   * **版本清单与签名配置**：`version.json` 客户端元数据、CI `[FORCE]` / `[MIN:...]` 策略标签与 Gradle V1/V2 签名体系。
+   * **NestJS 12 模块化后端（可选本地服务）**：严格划分为 `Records`（账单）、`Budgets`（预算）、`Projects`（专款）、`Claims`（代垫分摊）四大模块，全局 `ValidationPipe` 强校验输入。
+   * **Supabase 认证与云同步**：Google OAuth 2.0 PKCE 认证会话恢复与全量双向云端同步器。
 
 3. **持久化与云端分发层 (`Storage & Cloud Tier`)**：
    * **GitHub Releases 分发**：全球 CDN 高速下发最新签名的 `MonetaX.apk` 安装包。
@@ -339,9 +340,9 @@ MonetaX 整体遵循 **“三层拓扑 · 本地优先 · 存储双轨 · 零延
   * **Supabase Auth 元数据自动备份**（`user_metadata` 跨设备即时同步）；
   * **NestJS SQLite 本地/服务端双向同步**，搭载墓碑防误删合并（Tombstone-aware Merge）与缺失自动回填，刷新零丢失。
 
-#### 7. 历史归档、本年数据与 RFC 4180 CSV 导出
-* **全周期与本年度导出**：支持即时导出**「📅 本年度账单」**及 1年、2年、3年、5年前的历史账单；
-* **原生安卓文件管理器直存**：在手机端一键唤起系统分享与保存面板，可自由选择保存到本地任意目录；
+#### 7. 历史归档与统一 Excel（`.xlsx`）/ CSV 双格式导出
+* **每次导出自由二选一**：支持导出带表头配色、列宽与数值格式的 **4 工作表 Excel 报表（`.xlsx`）**，或轻量 **CSV 表格（`.csv`）**；两者共用数据源，均完整包含 **收支汇总 & 分类排行、日常流水、专款明细 & 子条目、代垫明细 & 分摊收款**；
+* **一致的下载体验**：桌面浏览器统一一键直接下载，Android 端统一唤起系统分享与转存面板；同时支持历史归档导出本年度及 1/2/3/5 年前数据；
 * **容量防爆保护**：内置单用户 50,000 条记录容量限额与预警防护，有效防止云端数据库过载。
 
 #### 8. 模块化多语言与外观主题
