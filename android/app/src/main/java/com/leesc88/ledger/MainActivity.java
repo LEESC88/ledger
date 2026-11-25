@@ -109,14 +109,17 @@ public class MainActivity extends BridgeActivity {
                     String currentUrl = apkUrl;
                     int redirects = 0;
 
-                    // Follow HTTP redirects (GitHub Releases redirect to AWS S3 CDN)
+                    // Follow HTTP redirects (GitHub Releases redirect to GitHub CDN)
                     while (redirects < 6) {
                         URL url = new URL(currentUrl);
+                        if (!isAllowedApkUrl(url, redirects == 0)) {
+                            throw new Exception("Blocked untrusted update URL: " + url.getHost());
+                        }
                         conn = (HttpURLConnection) url.openConnection();
                         conn.setConnectTimeout(15000);
                         conn.setReadTimeout(30000);
                         conn.setInstanceFollowRedirects(false);
-                        conn.setRequestProperty("User-Agent", "LEDGER-Android-Client/1.4.1");
+                        conn.setRequestProperty("User-Agent", "MonetaX-Android-Client/1.6.1");
 
                         int responseCode = conn.getResponseCode();
                         if (responseCode == HttpURLConnection.HTTP_MOVED_PERM
@@ -181,6 +184,25 @@ public class MainActivity extends BridgeActivity {
                     } catch (Exception ignored) {}
                 }
             });
+        }
+
+        private boolean isAllowedApkUrl(URL url, boolean isInitialRequest) {
+            if (url == null || !"https".equalsIgnoreCase(url.getProtocol())) {
+                return false;
+            }
+            String host = url.getHost();
+            if (host == null) return false;
+            String normalizedHost = host.toLowerCase();
+            if (isInitialRequest) {
+                String path = url.getPath();
+                return "github.com".equals(normalizedHost)
+                    && path != null
+                    && path.startsWith("/LEESC88/ledger/releases/");
+            }
+            return "github.com".equals(normalizedHost)
+                || "objects.githubusercontent.com".equals(normalizedHost)
+                || "release-assets.githubusercontent.com".equals(normalizedHost)
+                || "github-releases.githubusercontent.com".equals(normalizedHost);
         }
 
         private void launchShareSheet(File targetFile, String mimeType, String subject, String chooserTitle) {

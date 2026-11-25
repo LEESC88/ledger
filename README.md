@@ -34,13 +34,11 @@ Install and run **MonetaX** directly on your Android phone without needing to ho
 
 ---
 
-## 🆕 What's New in v1.6.0 (Modular Architecture, Offline Auto-Sync & Unified Excel/CSV Export)
+## 🆕 What's New in v1.6.1 (Security Hardening Release)
 
-* 🧩 **Modular Frontend Architecture (`4 CSS + 9 JS`)**: Refactored legacy monolithic `app.js` / `style.css` into 4 domain stylesheets (`public/css/{base,ledger,analytics-settings,projects-claims}.css`) and 9 vanilla ES2022 modules (`public/js/{core,updater,sync,records,analytics,settings,projects,claims,main}.js`), all precached by Service Worker `v1.6.0`.
-* 📊 **Unified Excel (`.xlsx`) & CSV Report Export**: Added a format selector modal letting you choose **Excel (4 styled sheets: Summary, Ledger, Projects & Claims)** or **CSV** on each export. Both formats share one report builder (`buildExportReportData()`) with 100% identical content, one-click direct download on desktop, and native share sheet on Android.
-* 🔁 **Offline Auto-Sync Queue for Projects & Split Claims**: Extended `syncOfflineDrafts()` with a deduplicated `metaQueue` so offline creates, edits, deletions, and `data:image/` project receipts for Projects and Claims automatically replay to Supabase and local APIs upon reconnect.
-* 🔄 **Unified Dual-Source OTA Update Checker**: Merged GitHub Releases API and `public/version.json` in parallel (`Promise.allSettled`) with CI policy tags (`[FORCE]` / `[MIN:x.x.x]`) so optional banners and force-update gates stay 100% consistent.
-* 📜 **v1.5.8 – v1.5.4 Foundation**: Dedicated project budget cards with line-item entries & custom timeframes, Smart Split Claims auto-calc/edit/`paid_via` tracking, settled history folding, privacy-mode receipt blur, offline `JSZip` 2-year receipt archival, and multi-tenant isolation test suite.
+* 🔐 **Android & OTA Security Hardening**: Migrated release APK signing to private GitHub Actions Secrets, disabled cleartext HTTP (`usesCleartextTraffic="false"`, `cleartext: false`) and USB ADB backup (`allowBackup="false"`), and locked in-app OTA APK downloads strictly to `https://` GitHub Releases & official GitHub CDN hosts.
+* 🛡️ **Local Server Loopback Isolation**: Defaulted local NestJS server binding in `src/main.ts` to `127.0.0.1` (`process.env.HOST ?? '127.0.0.1'`) so local SQLite & `/api-docs` are unreachable from public Wi-Fi / LAN peers.
+* 🧩 **v1.6.0 Foundation**: Modular frontend (`4 CSS + 9 JS` precached by SW `v1.6.1`), unified 4-section Excel (`.xlsx`) & CSV report export, offline `metaQueue` auto-sync for Projects & Split Claims (including `data:image/` receipts), and dual-source OTA update checker.
 
 ---
 
@@ -81,7 +79,7 @@ MonetaX follows a clean **Three-Tier Local-First + Dual-Track Persistence** arch
    * **Dual-Source OTA Engine (`public/js/updater.js`)**: Parallel polling against GitHub Releases API and `version.json` with unified `forceUpdate` / `minSupportedVersion` policy evaluation, real-time download progress bridge, and package installer invocation.
    * **Modular Responsive SPA (`4 CSS + 9 Vanilla ES2022 JS`)**: Zero-virtual-DOM modular architecture featuring fluid drag physics, 360° Anti-Peeking privacy mode, Chart.js 4 visual analytics, unified 4-sheet Excel (`.xlsx`) & CSV report exporter, and bilingual i18n (`zh-CN`, `en`).
    * **Local-First Sync Coordinator (`public/js/sync.js`)**: Instant optimistic CRUD with unified offline draft + `metaQueue` auto-replay for Records, Projects, Split Claims, and offline `data:image/` receipts.
-   * **PWA Service Worker & LocalStorage Vault**: Network-first asset delivery (`public/sw.js`, cache `v1.6.0`) and resilient local vault with offline replay queues.
+   * **PWA Service Worker & LocalStorage Vault**: Network-first asset delivery (`public/sw.js`, cache `v1.6.1`) and resilient local vault with offline replay queues.
 
 2. **Server Gateway & Cloud Sync Control Layer (服务网关与云同步控制层)**
    * **Release Manifest & Signing**: `version.json` endpoint coupled with CI `[FORCE]` / `[MIN:...]` policy tags and production V1/V2 keystore signatures.
@@ -258,7 +256,7 @@ MonetaX 整体遵循 **“三层拓扑 · 本地优先 · 存储双轨 · 零延
    * **双源 OTA 更新引擎 (`public/js/updater.js`)**：并行融合 GitHub Releases API 与 `version.json` 策略字段（`forceUpdate` / `minSupportedVersion`），实时回传 APK 下载进度并调起原生安装。
    * **模块化响应式 SPA (`4 CSS + 9 Vanilla ES2022 JS`)**：零虚拟 DOM 轻量模块化架构，包含四大视图、360° 防窥私密模式 (`👁️`)、Chart.js 4 图表、统一 4 工作表 Excel (`.xlsx`) & CSV 导出器与中英双语字典。
    * **Local-First 同步协调器 (`public/js/sync.js`)**：乐观 UI 毫秒级响应，断网自动将日常流水、专款、代垫与离线凭证图纳入持久化重放队列（`offlineQueue` + `metaQueue`），联网后自动静默补传。
-   * **PWA 离线缓存服务 & 本地金库**：`public/sw.js`（缓存 `v1.6.0`）预缓存全部模块化前端资产，保障离线秒开。
+   * **PWA 离线缓存服务 & 本地金库**：`public/sw.js`（缓存 `v1.6.1`）预缓存全部模块化前端资产，保障离线秒开。
 
 2. **服务网关与云同步控制层 (`Server & Sync Tier`)**：
    * **版本清单与签名配置**：`version.json` 客户端元数据、CI `[FORCE]` / `[MIN:...]` 策略标签与 Gradle V1/V2 签名体系。
