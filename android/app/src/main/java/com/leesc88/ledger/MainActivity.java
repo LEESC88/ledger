@@ -119,7 +119,7 @@ public class MainActivity extends BridgeActivity {
                         conn.setConnectTimeout(15000);
                         conn.setReadTimeout(30000);
                         conn.setInstanceFollowRedirects(false);
-                        conn.setRequestProperty("User-Agent", "MonetaX-Android-Client/1.6.1");
+                        conn.setRequestProperty("User-Agent", "MonetaX-Android-Client/1.6.2");
 
                         int responseCode = conn.getResponseCode();
                         if (responseCode == HttpURLConnection.HTTP_MOVED_PERM

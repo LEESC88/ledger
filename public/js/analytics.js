@@ -94,31 +94,7 @@ async function persistBudget(amount, month) {
   if (!userId) return;
 
   try {
-    if (supabaseClient) {
-      const rowsToUpsert = [
-        { user_id: userId, month: targetMonth, amount: state.monthlyBudget },
-      ];
-      if (targetMonth !== 'default') {
-        rowsToUpsert.push({
-          user_id: userId,
-          month: 'default',
-          amount: state.monthlyBudget,
-        });
-      }
-      const { error } = await supabaseClient
-        .from('budgets')
-        .upsert(rowsToUpsert, { onConflict: 'user_id,month' });
-      if (!error) return;
-    }
-
-    await fetch('/api/budgets', {
-      method: 'POST',
-      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({
-        month: targetMonth,
-        amount: state.monthlyBudget,
-      }),
-    });
+    await LedgerStore.budgets.set(targetMonth, state.monthlyBudget);
   } catch (err) {
     console.error('Failed to persist budget:', err);
   }

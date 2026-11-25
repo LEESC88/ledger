@@ -959,83 +959,18 @@ async function syncProjectChangeToCloud(fund, extraFields = {}, options = {}) {
     saveProjects(state.projects, false);
   }
 
-  const spentAmount = getProjectSpentAmount({ ...fund, entries: cleanEntries });
-  const targetAmount = Number((parseFloat(fund.target_amount) || 0).toFixed(2));
-  const mode = fund.mode || (fund.include_in_budget ? 'budget_deduct' : 'extra');
-  const month = fund.month || getCurrentMonthKey();
-
-  let cloudOk = false;
-  if (supabaseClient && state.user?.id) {
-    try {
-      const { error } = await supabaseClient.from('projects').upsert({
-        id: fund.id,
-        user_id: state.user.id,
-        title: fund.title,
-        icon: 'target',
-        target_amount: targetAmount,
-        spent_amount: spentAmount,
-        mode,
-        month,
-        status: nextStatus,
-        include_in_budget: Boolean(fund.include_in_budget),
-        timeframe_type: fund.timeframe_type || 'indefinite',
-        start_date: fund.start_date || null,
-        deadline: fund.deadline || null,
-        entries: cleanEntries,
-        updated_at: new Date().toISOString(),
-        ...extraFields,
-      });
-      if (!error) cloudOk = true;
-    } catch (e) {}
-  }
-
-  let apiOk = false;
-  try {
-    const isPost = apiMethod === 'POST';
-    const url = isPost ? '/api/projects' : `/api/projects/${fund.id}`;
-    const body = isPost
-      ? {
-          id: fund.id,
-          title: fund.title,
-          targetAmount,
-          spentAmount,
-          mode,
-          month,
-          status: nextStatus,
-          includeInBudget: Boolean(fund.include_in_budget),
-          timeframeType: fund.timeframe_type || 'indefinite',
-          startDate: fund.start_date || undefined,
-          deadline: fund.deadline ?? null,
-          entries: cleanEntries,
-        }
-      : {
-          title: fund.title,
-          targetAmount,
-          spentAmount,
-          status: nextStatus,
-          includeInBudget: Boolean(fund.include_in_budget),
-          timeframeType: fund.timeframe_type || 'indefinite',
-          startDate: fund.start_date || undefined,
-          deadline: fund.deadline ?? null,
-          entries: cleanEntries,
-        };
-    const res = await fetch(url, {
-      method: isPost ? 'POST' : 'PATCH',
-      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify(body),
-    });
-    if (res.ok) apiOk = true;
-  } catch (e) {}
-
-  const ok = supabaseClient && state.user?.id ? cloudOk : apiOk;
-  if (ok) {
-    removeMetaSync('project', fund.id);
-    return true;
-  }
-  if (!fromQueue) enqueueMetaSync('project', 'upsert', snapshot);
-  return false;
+  /**
+   * ============================================================================
+   * STEP-BY-STEP IMPLEMENTATION HINTS (projects.js Spot 1 - 委托给 LedgerStore.projects.upsert):
+   * 1. 删除下面从 `const spentAmount = ...` 一直到函数末尾 `return false;` 的全部代码
+   * 2. 保留函数结尾的 `}` 不动
+   * 3. 原地写成一行：
+   *      return LedgerStore.projects.upsert(snapshot, extraFields, options);
+   * ============================================================================
+   */
+  // ✍️ YOUR TURN: Delete the inline Supabase + fetch block below and delegate to LedgerStore:
+  return LedgerStore.projects.upsert(snapshot, extraFields, options);
 }
-
 function openProjectDetailModal(fundId) {
   const fund = (state.projects || []).find(
     (p) => String(p.id) === String(fundId),
@@ -1789,44 +1724,18 @@ function deleteProject(fundId) {
 }
 
 async function deleteProjectInCloud(fundId, options = {}) {
-  if (!fundId) return false;
-  const { fromQueue = false } = options;
-
-  if (!navigator.onLine) {
-    if (!fromQueue) enqueueMetaSync('project', 'delete', { id: fundId });
-    return false;
-  }
-
-  let cloudOk = false;
-  if (supabaseClient && state.user?.id) {
-    try {
-      const { error } = await supabaseClient
-        .from('projects')
-        .delete()
-        .eq('id', fundId)
-        .eq('user_id', state.user.id);
-      if (!error) cloudOk = true;
-    } catch (e) {}
-  }
-
-  let apiOk = false;
-  try {
-    const res = await fetch('/api/projects/' + fundId, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    });
-    if (res.ok || res.status === 404) apiOk = true;
-  } catch (e) {}
-
-  const ok = supabaseClient && state.user?.id ? cloudOk : apiOk;
-  if (ok) {
-    removeMetaSync('project', fundId);
-    return true;
-  }
-  if (!fromQueue) enqueueMetaSync('project', 'delete', { id: fundId });
-  return false;
+  /**
+   * ============================================================================
+   * STEP-BY-STEP IMPLEMENTATION HINTS (projects.js Spot 2 - 委托给 LedgerStore.projects.remove):
+   * 1. 删除下面从 `if (!fundId) return false;` 一直到 `return false;` 的全部代码
+   * 2. 保留函数结尾的 `}` 不动
+   * 3. 原地写成一行：
+   *      return LedgerStore.projects.remove(fundId, options);
+   * ============================================================================
+   */
+  // ✍️ YOUR TURN: Delete the inline delete block below and delegate to LedgerStore:
+  return LedgerStore.projects.remove(fundId, options);
 }
-
 function openProjectSettingsEdit(fundId) {
   openProjectDetailModal(fundId);
   if (elements.projectMetaEditPanel?.classList.contains('hidden')) {

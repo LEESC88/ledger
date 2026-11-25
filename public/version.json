@@ -1,8 +1,8 @@
 {
-  "version": "1.6.1",
+  "version": "1.6.2",
   "minSupportedVersion": "1.5.8",
   "forceUpdate": false,
   "releaseDate": "2026-11-25",
   "apkUrl": "https://github.com/LEESC88/ledger/releases/latest/download/MonetaX.apk",
-  "notes": "MonetaX v1.6.1: Security hardening release — GitHub Secrets-based APK signing, HTTPS-only Android traffic (cleartext & ADB backup disabled), strict GitHub CDN allowlist for in-app OTA downloads, and NestJS loopback-only (127.0.0.1) local server binding."
+  "notes": "MonetaX v1.6.2: Deep-module architecture upgrade — unified LedgerStore (Ports & Adapters), zero-DOM LedgerDomain & AppState native ES Modules, backend TenantRepository seam with in-memory SQLite integration tests, and 15/15 Vitest coverage."
 }

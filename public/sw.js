@@ -1,4 +1,4 @@
-const CACHE_NAME = 'monetax-cache-v1.6.1';
+const CACHE_NAME = 'monetax-cache-v1.6.2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -7,7 +7,10 @@ const STATIC_ASSETS = [
   '/css/analytics-settings.css',
   '/css/projects-claims.css',
   '/i18n.js',
+  '/js/app-state.mjs',
   '/js/core.js',
+  '/js/domain.mjs',
+  '/js/store.js',
   '/js/updater.js',
   '/js/sync.js',
   '/js/records.js',

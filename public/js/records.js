@@ -863,52 +863,11 @@ async function executeRecordUpdate(editingId, updatedPayload) {
     }
   }
 
-  if (
-    supabaseClient &&
-    state.user?.id &&
-    !String(editingId).startsWith('draft-')
-  ) {
-    const baseUpdate = {
-      type: updatedPayload.type,
-      amount: updatedPayload.amount,
-      category: updatedPayload.category,
-      account_name: updatedPayload.account_name,
-      date: updatedPayload.date,
-      note: updatedPayload.note || null,
-    };
-    let { error } = await supabaseClient
-      .from('records')
-      .update({
-        ...baseUpdate,
-        image_url: updatedPayload.image_url || null,
-        image_size_kb: updatedPayload.image_size_kb || 0,
-        image_archived: nextImageArchived,
-      })
-      .eq('id', editingId)
-      .eq('user_id', state.user.id);
-
-    // Graceful fallback if Supabase schema columns have not been migrated yet
-    if (error && error.message?.includes('image_')) {
-      const retry = await supabaseClient
-        .from('records')
-        .update(baseUpdate)
-        .eq('id', editingId)
-        .eq('user_id', state.user.id);
-      error = retry.error;
-    }
-    if (error) throw new Error(error.message);
-  } else if (!String(editingId).startsWith('draft-')) {
-    // Local / SQLite backend persistence fallback
-    const res = await fetch(`/api/records/${editingId}`, {
-      method: 'PATCH',
-      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify(updatedPayload),
-    });
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.message || 'Local record update failed');
-    }
-  }
+  await LedgerStore.records.update(
+    editingId,
+    updatedPayload,
+    nextImageArchived,
+  );
 
   renderTable();
   calculateLocalSummaryMetrics();
@@ -1077,8 +1036,6 @@ async function handleRecordSubmit(e) {
     elements.submitBtn.style.opacity = '0.7';
 
     const userId = state.user?.id;
-    let created = false;
-
     // Check Split Bill Association
     const isSplitActive =
       elements.toggleSplitBillBtn?.classList.contains('active');
@@ -1190,57 +1147,7 @@ async function handleRecordSubmit(e) {
       payload.image_url = await uploadReceiptToCloud(payload.image_url);
     }
 
-    if (supabaseClient && userId) {
-      const baseInsert = {
-        user_id: userId,
-        type: payload.type,
-        amount: payload.amount,
-        category: payload.category,
-        account_name: payload.account_name,
-        date: payload.date,
-        note: payload.note || null,
-      };
-      let { error } = await supabaseClient
-        .from('records')
-        .insert({
-          ...baseInsert,
-          image_url: payload.image_url || null,
-          image_size_kb: payload.image_size_kb || 0,
-        })
-        .select()
-        .single();
-
-      // Graceful fallback if Supabase schema columns have not been migrated yet
-      if (error && error.message?.includes('image_')) {
-        const retry = await supabaseClient
-          .from('records')
-          .insert(baseInsert)
-          .select()
-          .single();
-        error = retry.error;
-      }
-
-      if (error) {
-        throw new Error(error.message);
-      }
-      created = true;
-    }
-
-    if (!created) {
-      const res = await fetch('/api/records', {
-        method: 'POST',
-        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        const msg = Array.isArray(errorData.message)
-          ? errorData.message.join(', ')
-          : errorData.message || 'Transaction failed';
-        throw new Error(msg);
-      }
-    }
+    await LedgerStore.records.create(payload);
 
     showToast(
       state.lang === 'zh'
@@ -1389,28 +1296,7 @@ window.handleDelete = function (id) {
       showToast(state.lang === 'zh' ? '已删除账单' : 'Transaction deleted');
 
       try {
-        const userId = state.user?.id;
-        let deleted = false;
-
-        if (supabaseClient && userId) {
-          const { error } = await supabaseClient
-            .from('records')
-            .delete()
-            .eq('id', id)
-            .eq('user_id', userId);
-
-          if (error) throw new Error(error.message);
-          deleted = true;
-        }
-
-        if (!deleted) {
-          const res = await fetch(`/api/records/${id}`, {
-            method: 'DELETE',
-            headers: getAuthHeaders(),
-          });
-
-          if (!res.ok) throw new Error('Failed to delete transaction');
-        }
+        await LedgerStore.records.remove(id);
 
         await Promise.all([
           loadRecords(),

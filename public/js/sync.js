@@ -87,99 +87,32 @@ function getTotalPendingSyncCount() {
 }
 
 async function syncClaimToCloud(claim, options = {}) {
-  if (!claim || !claim.id) return false;
-  const {
-    fromQueue = false,
-    apiMethod = 'PATCH',
-    apiPath = null,
-    apiBody = null,
-  } = options;
-  if (!navigator.onLine) {
-    if (!fromQueue) enqueueMetaSync('claim', 'upsert', claim);
-    return false;
-  }
-  let cloudOk = false;
-  if (supabaseClient && state.user?.id) {
-    try {
-      const { error } = await supabaseClient.from('claims').upsert({
-        id: claim.id,
-        user_id: state.user.id,
-        title: claim.title,
-        total_amount: claim.total_amount,
-        my_share: claim.my_share,
-        friends: claim.friends || [],
-        status: claim.status || 'active',
-        date: claim.date || getLocalDateString(),
-        updated_at: new Date().toISOString(),
-      });
-      if (!error) cloudOk = true;
-    } catch (e) {}
-  }
-  let apiOk = false;
-  try {
-    const url =
-      apiPath ||
-      (apiMethod === 'POST' ? '/api/claims' : `/api/claims/${claim.id}`);
-    const bodyObj = apiBody || {
-      id: claim.id,
-      title: claim.title,
-      totalAmount: claim.total_amount,
-      myShare: claim.my_share,
-      friends: claim.friends || [],
-      status: claim.status || 'active',
-      date: claim.date || getLocalDateString(),
-    };
-    const res = await fetch(url, {
-      method: apiMethod,
-      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify(bodyObj),
-    });
-    if (res.ok) apiOk = true;
-  } catch (e) {}
-  const ok = supabaseClient && state.user?.id ? cloudOk : apiOk;
-  if (ok) {
-    removeMetaSync('claim', claim.id);
-    return true;
-  }
-  if (!fromQueue) enqueueMetaSync('claim', 'upsert', claim);
-  return false;
+  /**
+   * ============================================================================
+   * STEP-BY-STEP IMPLEMENTATION HINTS (sync.js Spot 1 - 委托给 LedgerStore.claims.upsert):
+   * 1. 删除下面从 `if (!claim || !claim.id) return false;` 一直到 `return false;` 的全部代码
+   * 2. 保留函数结尾的 `}` 不动
+   * 3. 原地写成一行：
+   *      return LedgerStore.claims.upsert(claim, options);
+   * ============================================================================
+   */
+  // ✍️ YOUR TURN: Delete the inline Supabase + fetch block below and delegate to LedgerStore:
+  return LedgerStore.claims.upsert(claim, options);
 }
-
 async function deleteClaimInCloud(claimId, options = {}) {
-  if (!claimId) return false;
-  const { fromQueue = false } = options;
-  if (!navigator.onLine) {
-    if (!fromQueue) enqueueMetaSync('claim', 'delete', { id: claimId });
-    return false;
-  }
-  let cloudOk = false;
-  if (supabaseClient && state.user?.id) {
-    try {
-      const { error } = await supabaseClient
-        .from('claims')
-        .delete()
-        .eq('id', claimId)
-        .eq('user_id', state.user.id);
-      if (!error) cloudOk = true;
-    } catch (e) {}
-  }
-  let apiOk = false;
-  try {
-    const res = await fetch(`/api/claims/${claimId}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    });
-    if (res.ok || res.status === 404) apiOk = true;
-  } catch (e) {}
-  const ok = supabaseClient && state.user?.id ? cloudOk : apiOk;
-  if (ok) {
-    removeMetaSync('claim', claimId);
-    return true;
-  }
-  if (!fromQueue) enqueueMetaSync('claim', 'delete', { id: claimId });
-  return false;
-}
+  /**
+   * ============================================================================
+   * STEP-BY-STEP IMPLEMENTATION HINTS (sync.js Spot 2 - 委托给 LedgerStore.claims.remove):
+   * 1. 删除下面从 `if (!claimId) return false;` 一直到 `return false;` 的全部代码
+   * 2. 保留函数结尾的 `}` 不动
+   * 3. 原地写成一行：
+   *      return LedgerStore.claims.remove(claimId, options);
+   * ============================================================================
+   */
+  // ✍️ YOUR TURN: Delete the inline delete block below and delegate to LedgerStore:
 
+  return LedgerStore.claims.remove(claimId, options);
+}
 function updateSyncStatusUI() {
   if (!elements.syncStatusPill || !elements.syncStatusText) return;
 

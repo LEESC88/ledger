@@ -34,11 +34,13 @@ Install and run **MonetaX** directly on your Android phone without needing to ho
 
 ---
 
-## 🆕 What's New in v1.6.1 (Security Hardening Release)
+## 🆕 What's New in v1.6.2 (Deep-Module Architecture & 15-Test Automated Suite)
 
-* 🔐 **Android & OTA Security Hardening**: Migrated release APK signing to private GitHub Actions Secrets, disabled cleartext HTTP (`usesCleartextTraffic="false"`, `cleartext: false`) and USB ADB backup (`allowBackup="false"`), and locked in-app OTA APK downloads strictly to `https://` GitHub Releases & official GitHub CDN hosts.
-* 🛡️ **Local Server Loopback Isolation**: Defaulted local NestJS server binding in `src/main.ts` to `127.0.0.1` (`process.env.HOST ?? '127.0.0.1'`) so local SQLite & `/api-docs` are unreachable from public Wi-Fi / LAN peers.
-* 🧩 **v1.6.0 Foundation**: Modular frontend (`4 CSS + 9 JS` precached by SW `v1.6.1`), unified 4-section Excel (`.xlsx`) & CSV report export, offline `metaQueue` auto-sync for Projects & Split Claims (including `data:image/` receipts), and dual-source OTA update checker.
+* 🧱 **Unified Persistence Facade (`LedgerStore` · Ports & Adapters)**: Consolidated scattered `supabaseClient` / `fetch` / offline queue writes for `records`, `projects`, `claims`, and `budgets` into [public/js/store.js](public/js/store.js) with pluggable `SupabaseAdapter` and `LocalApiAdapter` seams.
+* 🧮 **Pure Financial Domain & Explicit State (Native ES Modules)**: Extracted zero-DOM pure calculations (`computeMonthlySummary`, `computeBudgetPool`, `computeStreak`, `computeSplitBill`, `computeProjectProgress`) into [public/js/domain.mjs](public/js/domain.mjs) and explicit slice-based state into [public/js/app-state.mjs](public/js/app-state.mjs), all precached by SW `v1.6.2`.
+* 🛡️ **Backend Multi-Tenant Seam (`TenantRepository` + `@TenantId()`)**: Centralized `x-user-id` normalization and TypeORM tenant-scoped queries in `src/common/tenant/`, verified against real `:memory:` SQLite (`better-sqlite3`).
+* ✅ **15 / 15 Automated Vitest Suite**: Added unit & integration coverage across `LedgerDomain`, `LedgerStore`, `AppState`, and `TenantRepository` (`npm test`).
+* 🔐 **v1.6.1 & v1.6.0 Foundation**: GitHub Secrets APK signing, HTTPS-only Android traffic & OTA CDN allowlist, `127.0.0.1` local NestJS loopback binding, modular `4 CSS + 9 JS` frontend, unified 4-sheet Excel (`.xlsx`) & CSV export, and offline `metaQueue` auto-sync.
 
 ---
 
@@ -79,7 +81,7 @@ MonetaX follows a clean **Three-Tier Local-First + Dual-Track Persistence** arch
    * **Dual-Source OTA Engine (`public/js/updater.js`)**: Parallel polling against GitHub Releases API and `version.json` with unified `forceUpdate` / `minSupportedVersion` policy evaluation, real-time download progress bridge, and package installer invocation.
    * **Modular Responsive SPA (`4 CSS + 9 Vanilla ES2022 JS`)**: Zero-virtual-DOM modular architecture featuring fluid drag physics, 360° Anti-Peeking privacy mode, Chart.js 4 visual analytics, unified 4-sheet Excel (`.xlsx`) & CSV report exporter, and bilingual i18n (`zh-CN`, `en`).
    * **Local-First Sync Coordinator (`public/js/sync.js`)**: Instant optimistic CRUD with unified offline draft + `metaQueue` auto-replay for Records, Projects, Split Claims, and offline `data:image/` receipts.
-   * **PWA Service Worker & LocalStorage Vault**: Network-first asset delivery (`public/sw.js`, cache `v1.6.1`) and resilient local vault with offline replay queues.
+   * **PWA Service Worker & LocalStorage Vault**: Network-first asset delivery (`public/sw.js`, cache `v1.6.2`) and resilient local vault with offline replay queues.
 
 2. **Server Gateway & Cloud Sync Control Layer (服务网关与云同步控制层)**
    * **Release Manifest & Signing**: `version.json` endpoint coupled with CI `[FORCE]` / `[MIN:...]` policy tags and production V1/V2 keystore signatures.
@@ -256,7 +258,7 @@ MonetaX 整体遵循 **“三层拓扑 · 本地优先 · 存储双轨 · 零延
    * **双源 OTA 更新引擎 (`public/js/updater.js`)**：并行融合 GitHub Releases API 与 `version.json` 策略字段（`forceUpdate` / `minSupportedVersion`），实时回传 APK 下载进度并调起原生安装。
    * **模块化响应式 SPA (`4 CSS + 9 Vanilla ES2022 JS`)**：零虚拟 DOM 轻量模块化架构，包含四大视图、360° 防窥私密模式 (`👁️`)、Chart.js 4 图表、统一 4 工作表 Excel (`.xlsx`) & CSV 导出器与中英双语字典。
    * **Local-First 同步协调器 (`public/js/sync.js`)**：乐观 UI 毫秒级响应，断网自动将日常流水、专款、代垫与离线凭证图纳入持久化重放队列（`offlineQueue` + `metaQueue`），联网后自动静默补传。
-   * **PWA 离线缓存服务 & 本地金库**：`public/sw.js`（缓存 `v1.6.1`）预缓存全部模块化前端资产，保障离线秒开。
+   * **PWA 离线缓存服务 & 本地金库**：`public/sw.js`（缓存 `v1.6.2`）预缓存全部模块化前端资产，保障离线秒开。
 
 2. **服务网关与云同步控制层 (`Server & Sync Tier`)**：
    * **版本清单与签名配置**：`version.json` 客户端元数据、CI `[FORCE]` / `[MIN:...]` 策略标签与 Gradle V1/V2 签名体系。
